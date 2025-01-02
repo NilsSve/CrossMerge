@@ -1,0 +1,134 @@
+//****************************************************************************
+// $Module type: Class
+// $Module name: cDbIndexComboForm
+// $Author     : Nils Svedmyr, RDC Tools International
+// Created     : 2001-07-21 @ 11:18
+//
+// Description :
+//
+// $Rev History
+//    2001-07-21  Module header created
+//****************************************************************************
+Use Dfcentry.pkg
+
+{ OverrideProperty=Code_Display_Mode InitialValue=cb_Code_Display_Both }
+{ OverrideProperty=Code_Display_Mode EnumList="cb_Code_Display_Both, cb_Code_Display_Description, cb_Code_Display_Code" }
+{ OverrideProperty=Entry_State InitialValue=True }
+{ OverrideProperty=Combo_Sort_State InitialValue=True }
+{ OverrideProperty=Label_Row_Offset InitialValue=0 }
+{ OverrideProperty=Label_Col_Offset InitialValue=2 }
+{ OverrideProperty=Label_Justification_Mode InitialValue=jMode_Right }
+{ OverrideProperty=Label_Justification_Mode EnumList="jMode_Right, jMode_Left, jMode_Center" }
+{ OverrideProperty=Size InitialValue=13,246 }
+Class cDbIndexComboForm is a dbComboform
+
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Property Handle  phoDD       (Main_DD(Self))
+        Property Integer piFile      0
+        Property Integer piLowSize   0
+        Property Boolean pbFrom      True
+        Set Code_Display_Mode        to cb_Code_Display_Both
+        Set Combo_Sort_State         to False
+        Set Entry_State item 0       to False
+        Set Oem_Translate_State      to False
+        Set Label_Col_Offset         to 2
+        Set Label_Justification_Mode to jMode_Right
+    End_Procedure
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+        Set piLowSize to (Low(GuiSize(Self)))
+    End_Procedure
+
+    Procedure DoCheckClear
+        Send Combo_Delete_Data
+    End_Procedure
+
+    Procedure DoUpdateData Integer iFromFile Integer iToFile Boolean bFrom
+        Boolean bFromLocal
+        Get pbFrom to bFromLocal
+        If (bFrom <> bFromLocal) Begin
+            Procedure_Return
+        End
+        If bFromLocal Begin
+            Set piFile to iFromFile
+        End
+        Else Begin
+            Set piFile to iToFile
+        End
+        Send DoComboFillList
+    End_Procedure
+
+    Procedure DoComboFillList
+        String sFieldName sIndex sChar sLongIndex sDriver
+        Integer iFile iIndexes iCount iCount2 iField iSegments iOrgSize iNewSize iValue
+        Integer iDataFile iDataField iState iIndex                               
+        Boolean bOpen bFrom
+        Handle hoDD   
+        
+        Move False to bOpen
+        Get piLowSize to iOrgSize
+        Get piFile to iFile
+        Get phoDD to hoDD  
+        Get pbFrom to bFrom
+        If (iFile <> 0) Begin
+            Get_Attribute DF_FILE_OPENED of iFile to bOpen
+        End
+        If (iFile = 0 or hoDD = 0 or bOpen = False) Begin
+            Procedure_Return
+        End                
+        
+        Send Combo_Delete_Data
+        If (bFrom = True) Begin
+            Get Field_Current_Value of hoDD Field SncTable.FromDriver to sDriver
+        End
+        Else Begin
+            Get Field_Current_Value of hoDD Field SncTable.ToDriver   to sDriver
+        End
+        Get Data_File  to iDataFile
+        Get Data_Field to iDataField
+        Get File_Field_Changed_State of hoDD iDataFile iDataField to iState
+        Get File_Field_Current_Value of hoDD iDataFile iDataField to iValue
+        If (sDriver = DATAFLEX_ID) Begin
+            Send Combo_Add_Item "Recnum" "0"
+        End
+        
+        Get_Attribute DF_FILE_LAST_INDEX_NUMBER of iFile to iIndexes
+        For iCount From 1 to iIndexes
+            Get_Attribute DF_INDEX_NUMBER_SEGMENTS of iFile iCount to iSegments
+            If iSegments Begin
+                Move "" to sIndex
+                For iCount2 From 1 to iSegments
+                    Get_Attribute DF_INDEX_SEGMENT_FIELD of iFile iCount iCount2 to iField
+                    Get_Attribute DF_FIELD_NAME          of iFile iField         to sFieldName
+                    Move (Uppercase(Left(sFieldName, 1))) to sChar
+                    Move (sChar + Right(Lowercase(sFieldName), (Length(sFieldName) -1))) to sFieldName
+                    Move (sIndex + ", " + sFieldName ) to sIndex
+                Loop 
+                Move (Trim(sIndex)) to sIndex
+                If (Length(sIndex) > Length(sLongIndex)) Begin
+                    Move sIndex to sLongIndex
+                End
+                Move (Right(sIndex, (Length(sIndex) - 1))) to sIndex
+                Send Combo_Add_Item sIndex iCount
+            End 
+        Loop
+        
+        Get Text_Extent sLongIndex to iNewSize
+        Move (Low(iNewSize) + 20)  to iNewSize
+        If (iNewSize > iOrgSize)  Begin
+            Set ListWidth to iNewSize
+            Send DoSetListWidth
+        End 
+        If (sDriver <> DATAFLEX_ID and iValue = 0) Begin
+            Set File_Field_Changed_Value of hoDD iDataFile iDataField to 1
+        End                        
+        Get File_Field_Current_Value of hoDD iDataFile iDataField to iIndex
+        If (sDriver <> DATAFLEX_ID) Begin
+            Decrement iIndex
+        End
+        Set WinCombo_Current_Item to iIndex
+    End_Procedure
+
+End_Class

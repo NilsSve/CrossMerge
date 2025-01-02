@@ -1,0 +1,100 @@
+// File Name : SNCLOG.DD
+// Class Name: Snclog_DataDictionary
+// Revision  : 15
+// Version   : 2
+Use  Windows.pkg           // Basic Definitions
+Use  DataDict.pkg          // DataDictionary Class Definition
+Use  Ddvaltbl.pkg          // Validation Table Class Definitions
+
+Open Snclog
+Open Sncsys
+Use cRDSDataDictionary.pkg
+
+Class Snclog_DataDictionary  is a cRDSDataDictionary
+
+    Procedure Deleting
+        Forward Send Deleting
+        If (SncSys.SncLogID = SncLog.ID) Begin
+            Decrement SncSys.SncLogID
+            SaveRecord SncSys
+        End
+    End_Procedure
+
+    Procedure Request_Delete
+        If (not(pbGetHasCurrRowId(Self))) Begin
+            Procedure_Return // Do nothing if no active record.
+        End
+        Send DoShowStatusHelp "Deleting data..."
+        Forward Send Request_Delete
+        If (pbGetHasCurrRowId(Self)) Begin
+            Send Clear
+        End
+        Send DoShowStatusHelp "Data deleted."
+    End_Procedure
+
+    Procedure DoShowStatusHelp String sText
+        Handle hoStatBar
+        Delegate Get Statusbar_Id to hoStatBar
+        If (hoStatBar) Begin
+            Set Status_Help of hoStatBar to sText
+        End
+    End_Procedure
+
+    Procedure Construct_object
+        Forward Send Construct_Object
+
+        Set Main_File to Snclog.File_Number
+
+        Set Add_System_File to SncSys.File_Number DD_Lock_On_All
+
+        Set Foreign_Field_Options  DD_KEYFIELD   to DD_AUTOFIND    DD_NOPUT       DD_FINDREQ
+        Set Foreign_Field_Options  DD_INDEXFIELD to DD_NOPUT       DD_FINDREQ
+        Set Foreign_Field_Options  DD_DEFAULT    to DD_DISPLAYONLY
+
+        // External (System) file structure.............
+        Send Add_System_File  Sncsys.File_Number  DD_LOCK_ON_NEW_SAVE_DELETE
+
+        // Field-based properties.......................
+
+        // Snclog.Recid
+        Set Field_Class_Name Field SncLog.ID to "cRDSDbForm"
+        Set Field_Options Field SncLog.ID to DD_AUTOFIND
+        Set Status_Help Field SncLog.ID to "Unique record id for the Connection Engine log."
+        Set Field_Auto_Increment Field SncLog.ID to File_Field SncSys.SncLogID
+
+        // Snclog.Datetime
+        Set Field_Class_Name Field SncLog.DateTimeCreated to "cRDSDbForm"
+        Set Field_Label_Long Field SncLog.DateTimeCreated to "Date and Time"
+        Set Field_Label_Short Field SncLog.DateTimeCreated to "Date and Time"
+        Set Status_Help Field SncLog.DateTimeCreated to "Date and time the record was created."
+
+        // Snclog.Statustext
+        Set Field_Class_Name Field SncLog.StatusText to "cRDSDbEdit"
+        Set Field_Label_Long Field SncLog.StatusText to "Status Text"
+        Set Field_Label_Short Field SncLog.StatusText to "Status Text"
+        Set Status_Help Field SncLog.StatusText to "Error, Warning or Status message for the selected log record."
+
+        // Snclog.Networkusername
+        Set Field_Class_Name Field SncLog.NetworkUserName to "cRDSDbForm"
+        Set Field_Label_Long Field SncLog.NetworkUserName to "User Name"
+        Set Field_Label_Short Field SncLog.NetworkUserName to "User Name"
+        Set Status_Help Field SncLog.NetworkUserName to "Network Name of the logged in person when the Connection Engine was run."
+
+        // Snclog.Tablename
+        Set Field_Class_Name Field SncLog.TableName to "cRDSDbForm"
+        Set Field_Label_Long Field SncLog.TableName to "Database Connection Description"
+        Set Field_Label_Short Field SncLog.TableName to "Description"
+        Set Status_Help Field SncLog.TableName to "User display name/Name of the database tables that were synchronized."
+
+        Set Field_Class_Name Field SncLog.SncTableSortField to "cRDSDbForm"
+        Set Field_Label_Long Field SncLog.SncTableSortField to "Table Connection Name"
+        Set Field_Label_Short Field SncLog.SncTableSortField to "Connection Name"
+
+        Send DefineAllExtendedFields
+    End_Procedure    
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+    End_Procedure    
+
+End_Class    

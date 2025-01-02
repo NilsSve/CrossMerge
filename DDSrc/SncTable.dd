@@ -1,0 +1,990 @@
+﻿// File Name : SNCTABLE.DD
+// Class Name: SncTable_DataDictionary
+// Revision  : 204
+// Version   : 2
+Use Windows.pkg           // Basic Definitions
+Use Ddvaltbl.pkg          // Validation Table Class Definitions
+Use cRDSDataDictionary.pkg
+Use SyncFuncs.pkg
+Use xxSoftwareKey.pkg
+Use cDbUpdateFunctionLibrary.inc
+
+Open SncTable
+Open SncTHea
+Open SncSys
+Open SncSchem
+Open SncSchemRow
+
+Register_Object Snctable_Synchtype_VT
+Register_Object SNCTABLE_SL
+
+Object oSncTable_Synchtype_VT  is a DescriptionValidationTable
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value  "1"  "Matching Field Names"
+        Send Add_Table_Value  "2"  "Range of Field Numbers"
+        Send Add_Table_Value  "3"  "Selected Field Numbers"
+    End_Procedure
+End_Object
+
+Object oDUFDbTypes_VT is a DescriptionValidationTable
+    Procedure Fill_List
+        Forward Send Fill_List
+        Send Add_Table_Value EN_DbTypeDataFlex  CS_DbTypeDataFlex
+        Send Add_Table_Value EN_DbTypeMSSQL     CS_DbTypeMSSQL
+        Send Add_Table_Value EN_DbTypeMySQL     CS_DbTypeMySQL
+        Send Add_Table_Value EN_DbTypeOracle    CS_DbTypeOracle
+        Send Add_Table_Value EN_DbTypeDB2       CS_DbTypeDB2
+        Send Add_Table_Value EN_DbTypePostgre   CS_DbTypePostgre
+        Send Add_Table_Value EN_DbTypePervasive CS_DbTypePervasive
+    End_Procedure
+End_Object
+
+//Register_Object Snctable_Dbtype_VT
+//Object SncTable_Dbtype_VT  is a DescriptionValidationTable
+//    Procedure Fill_List
+//        Forward Send Fill_List
+//        Send Add_Table_Value  "1"  "DataFlex Embedded Database"
+//        Send Add_Table_Value  "2"  "IBM DB2 Universal Database"
+//        Send Add_Table_Value  "3"  "Microsoft SQL Server"
+//        Send Add_Table_Value  "4"  "ODBC - Open DataBase Connectivity"
+//        Send Add_Table_Value  "5"  "Oracle"
+//        Send Add_Table_Value  "6"  "Pervasive.SQL (Btrieve)"
+//    End_Procedure
+//End_Object
+
+Class SncTable_DataDictionary is a cRDSDataDictionary
+
+    Procedure Construct_object
+        Forward Send Construct_Object
+
+        Set Main_File to Snctable.File_Number
+
+        Set Add_System_File to SncSys.File_Number DD_Lock_On_All
+        Set Add_System_File to SncSchemRow.File_Number DD_Lock_On_All
+
+        Set Foreign_Field_Options  DD_KEYFIELD   to DD_AUTOFIND    DD_NOPUT       DD_FINDREQ
+        Set Foreign_Field_Options  DD_INDEXFIELD to DD_NOPUT       DD_FINDREQ
+        Set Foreign_Field_Options  DD_DEFAULT    to DD_DISPLAYONLY
+
+        // Child (Client) file structure................
+        Send Add_Client_File  Sncthea.File_Number
+
+        // External (System) file structure.............
+        Send Add_System_File  Sncsys.File_Number  DD_LOCK_ON_NEW_SAVE_DELETE
+        Send Add_System_File  Sncschem.File_Number  DD_LOCK_ON_ALL
+
+        // Field-based properties.......................
+
+        // SncTable.ID
+        Set Field_Class_Name Field SncTable.ID to "cRdsdbForm"
+        Set Field_Label_Long Field SncTable.ID to "ID (Auto generated)"
+        Set Field_Label_Short Field SncTable.ID to "ID"
+        Set Field_Options Field SncTable.ID to DD_AUTOFIND
+        Set Field_Prompt_Object Field SncTable.ID to SncTable_sl
+        Set Status_Help Field SncTable.ID to "Auto generated record id. Press F4 to display saved table setup records."
+        Set Field_Auto_Increment Field SncTable.ID to File_Field SncSys.SncTableID
+        Set Field_Option Field SncTable.ID DD_AUTOFIND to True
+
+        // Snctable.Text
+        Set Field_Class_Name Field SncTable.Text to "cRdsdbForm"
+        Set Field_Label_Long Field SncTable.Text to "Name"
+        Set Field_Label_Short Field SncTable.Text to "Name"
+        Set Status_Help Field SncTable.Text to "This text will get displayed in the 'Collections of Database Connections' grid and in the Connect Engine program grid. If you fill in nothing, it will be automatically generated for you."
+        Set Field_Prompt_Object Field SncTable.Text to SncTable_sl
+
+        // Snctable.Fromfile
+        Set Field_Class_Name Field SncTable.FromFile to "cDbFilelistComboForm"
+        Set Field_Label_Long Field SncTable.FromFile to "Source File Number"
+        Set Field_Label_Short Field SncTable.FromFile to "File number"
+        Set Status_Help Field SncTable.FromFile to "This is the table to read data from when running the Connection Engine."
+
+        // Snctable.Fromstartfield
+        Set Field_Class_Name Field SncTable.FromStartField to "cDbFieldComboForm"
+        Set Field_Label_Long Field SncTable.FromStartField to "Source Start Field"
+        Set Field_Label_Short Field SncTable.FromStartField to "Source Start Field"
+        Set Status_Help Field SncTable.FromStartField to "Start field number for source table. Only used if field selection type is 1 - Range of field numbers."
+
+        // Snctable.Fromstopfield
+        Set Field_Class_Name Field SncTable.FromStopField to "cDbFieldComboForm"
+        Set Field_Label_Long Field SncTable.FromStopField to "Source Stop Field"
+        Set Field_Label_Short Field SncTable.FromStopField to "Source Stop Field"
+        Set Status_Help Field SncTable.FromStopField to "Last field number for source table. Only used if field selection type is 1 - Range of field number."
+
+        // Snctable.Fromindex
+        Set Field_Class_Name Field SncTable.FromIndex to "cDbIndexComboForm"
+        Set Field_Label_Long Field SncTable.FromIndex to "Select Unique Index"
+        Set Field_Label_Short Field SncTable.FromIndex to "Source Index"
+        Set Status_Help Field SncTable.FromIndex to "Select an unique index to use for the source table. Only used when 'Auto detete old records' has been selected."
+
+        // Snctable.Tofile
+        Set Field_Class_Name Field SncTable.ToFile to "cDbFilelistComboForm"
+        Set Field_Label_Long Field SncTable.ToFile to "Target File Number"
+        Set Field_Label_Short Field SncTable.ToFile to "Target file number"
+        Set Status_Help Field SncTable.ToFile to "This is the table to connect data to."
+
+        // Snctable.Tostartfield
+        Set Field_Class_Name Field SncTable.ToStartField to "cDbFieldComboForm"
+        Set Field_Label_Long Field SncTable.ToStartField to "Target Start Field"
+        Set Field_Label_Short Field SncTable.ToStartField to "Target Start Field"
+        Set Status_Help Field SncTable.ToStartField to "Start field number for target table. Only used if field selection type is 1 - Range of field numbers."
+
+        // Snctable.Toindex
+        Set Field_Class_Name Field SncTable.ToIndex to "cDbIndexComboForm"
+        Set Field_Label_Long Field SncTable.ToIndex to "Select Unique Index"
+        Set Field_Label_Short Field SncTable.ToIndex to "Destination Index"
+        Set Status_Help Field SncTable.ToIndex to "Select an unique index. This is the index to use when finding an existing equal record in the target table when data are connected."
+
+        // Snctable.Workspace
+        Set Status_Help Field SncTable.Workspace to "Not used"
+
+        // Snctable.Dfver
+        Set Status_Help Field SncTable.DFVer to "Not used"
+
+        // Snctable.Synchtype
+        Set Field_Class_Name Field SncTable.SynchType to "cRDSDbComboForm"
+        Set Field_Label_Long Field SncTable.SynchType to "Field Selection Type"
+        Set Field_Value_Table Field SncTable.SynchType to oSncTable_Synchtype_VT
+        Set Status_Help Field SncTable.SynchType to "1 - Use all fields with the same name. 2 - Select a range of fields to use. 3 - Select individual fields to connect."
+
+        // Snctable.Selfromfields
+        Set Status_Help Field SncTable.SelFromFields to "Selected source fields"
+
+        // Snctable.Seltofields
+        Set Status_Help Field SncTable.SelToFields to "Selected target fields"
+
+        // Snctable.Selfieldcount
+        Set Field_Class_Name Field SncTable.SelFieldCount to "cRDSDbForm"
+        Set Field_Label_Long Field SncTable.SelFieldCount to "Field Count"
+        Set Field_Label_Short Field SncTable.SelFieldCount to "Count"
+        Set Field_Options Field SncTable.SelFieldCount to DD_NOENTER DD_ZERO_SUPPRESS
+        Set Status_Help Field SncTable.SelFieldCount to "Number of selected fields/columns."
+
+        // Snctable.Fromfieldstoidx
+        Set Field_Options Field SncTable.FromFieldsToIdx to DD_NOENTER
+        Set Status_Help Field SncTable.FromFieldsToIdx to "Number of selected fields to load the source table's index fields (segments). Only used when 'Auto Delete old records' has benn checked."
+
+        // Snctable.Toidxselcount
+        Set Field_Class_Name Field SncTable.ToIdxSelCount to "cRDSDbForm"
+        Set Field_Label_Long Field SncTable.ToIdxSelCount to "Select Count"
+        Set Field_Label_Short Field SncTable.ToIdxSelCount to "Idx count"
+        Set Field_Options Field SncTable.ToIdxSelCount to DD_NOENTER DD_ZERO_SUPPRESS
+        Set Status_Help Field SncTable.ToIdxSelCount to "Number of selected fields to load the target table's index fields (segments)."
+
+        // Snctable.Tofieldsfromidx
+        Set Field_Options Field SncTable.ToFieldsFromIdx to DD_NOENTER
+        Set Status_Help Field SncTable.ToFieldsFromIdx to "Selected fields to load the target table's index fields (segments)."
+
+        // Snctable.Fridxselcount
+        Set Field_Class_Name Field SncTable.FrIdxSelCount to "cRDSDbForm"
+        Set Field_Label_Long Field SncTable.FrIdxSelCount to "Select Count"
+        Set Field_Label_Short Field SncTable.FrIdxSelCount to "Idx count"
+        Set Field_Options Field SncTable.FrIdxSelCount to DD_NOENTER DD_ZERO_SUPPRESS
+        Set Status_Help Field SncTable.FrIdxSelCount to "Number of selected fields to load source table's index fields (segments)."
+
+        // Snctable.Frfileoemtoansi
+        Set Field_Checkbox_Values Field SncTable.FrFileOEMToANSI to "1" "0"
+        Set Field_Class_Name Field SncTable.FrFileOEMToANSI to "cRDSDbCheckBox"
+        Set Field_Label_Long Field SncTable.FrFileOEMToANSI to "Data Saved in ANSI Format"
+        Set Status_Help Field SncTable.FrFileOEMToANSI to "Defines in what format data was stored in the source data table. OEM also known as 'DOS-format' or ANSI which is the format Windows uses."
+
+        // Snctable.Tofileoemtoansi
+        Set Field_Checkbox_Values Field SncTable.ToFileOEMToANSI to "1" "0"
+        Set Field_Class_Name Field SncTable.ToFileOEMToANSI to "cRDSDbCheckBox"
+        Set Field_Label_Long Field SncTable.ToFileOEMToANSI to "Save Data in ANSI Format"
+        Set Status_Help Field SncTable.ToFileOEMToANSI to "Defines in what format data should be stored in the target data table. Unchecked=OEM or 'DOS-format' and checked=ANSI which is the format used by Windows."
+
+        // Snctable.Delete_Records
+        Set Field_Checkbox_Values Field SncTable.Delete_Records to "1" "0"
+        Set Field_Class_Name Field SncTable.Delete_Records to "cRDSDbCheckBox"
+        Set Field_Label_Long Field SncTable.Delete_Records to "Auto delete old Target table records"
+        Set Field_Label_Short Field SncTable.Delete_Records to "Auto delete 'Target'"
+        Set Status_Help Field SncTable.Delete_Records to "Delete records in the target data table that is missing in the source data table. Note: This will add approximately an extra 60% to the total connection time."
+
+        // Snctable.DeleteSourceRecords
+        Set Field_Checkbox_Values Field SNCTABLE.DeleteSourceRecords to "1" "0"
+        Set Field_Class_Name Field SNCTABLE.DeleteSourceRecords to "cRDSDbCheckBox"
+        Set Field_Label_Long Field SNCTABLE.DeleteSourceRecords to "Auto delete Source table records"
+        Set Field_Label_Short Field SNCTABLE.DeleteSourceRecords to "Auto Delete 'Source'"
+        Set Status_Help Field SNCTABLE.DeleteSourceRecords to "Remove all records from the Source data table after records in the Target table has been updated."
+
+        // Snctable.Zerolengthok
+        Set Field_Checkbox_Values Field SncTable.ZeroLengthOK to "1" "0"
+        Set Field_Class_Name Field SncTable.ZeroLengthOK to "cRDSDbCheckBox"
+        Set Field_Label_Long Field SncTable.ZeroLengthOK to "Null Defaults Specified"
+        Set Field_Options Field SncTable.ZeroLengthOK to DD_NOENTER
+        Set Status_Help Field SncTable.ZeroLengthOK to "Has default values been specified for 'Null' values?"
+
+        // Snctable.Fromlogin
+        Set Field_Class_Name Field SncTable.FromLogin to "cRDSDbForm"
+        Set Field_Label_Long Field SncTable.FromLogin to "Login"
+        Set Field_Label_Short Field SncTable.FromLogin to "Login"
+        Set Status_Help Field SncTable.FromLogin to "Login parameters. Only available for database formats other than Dataflex."
+
+        // Snctable.Tologin
+        Set Field_Class_Name Field SncTable.ToLogin to "cRDSDbForm"
+        Set Field_Label_Long Field SncTable.ToLogin to "Login"
+        Set Field_Label_Short Field SncTable.ToLogin to "Login"
+        Set Status_Help Field SncTable.ToLogin to "Login parameters. Only available for database formats other than Dataflex."
+
+        // Snctable.Constraints
+        Set Status_Help Field SncTable.Constraints to "Filters. Used to filter the source table records that should be read when connecting data."
+
+        // Snctable.Constraincount
+        Set Field_Class_Name Field SncTable.ConstrainCount to "cRDSDbForm"
+        Set Field_Label_Long Field SncTable.ConstrainCount to "Selected Number of Filters"
+        Set Field_Options Field SncTable.ConstrainCount to DD_NOENTER DD_ZERO_SUPPRESS
+        Set Status_Help Field SncTable.ConstrainCount to "Selected number of filters"
+
+        // Snctable.Fromowner
+        Set Field_Class_Name Field SncTable.FromOwner to "cDbFormSchema"
+        Set Field_Label_Long Field SncTable.FromOwner to "Schema/Owner"
+        Set Field_Label_Short Field SncTable.FromOwner to "Schema/Owner"
+        Set Status_Help Field SncTable.FromOwner to "Schema or Owner of the source database table"
+
+        // Snctable.Toowner
+        Set Field_Class_Name Field SncTable.ToOwner to "cDbFormSchema"
+        Set Field_Label_Long Field SncTable.ToOwner to "Schema/Owner"
+        Set Field_Label_Short Field SncTable.ToOwner to "Schema/Owner"
+        Set Status_Help Field SncTable.ToOwner to "Schema or Owner of the target database table"
+
+        // Snctable.ToDefaults
+        Set Status_Help Field SncTable.ToDefaults to "Default values to use for the target data table when an undefined or 'Null' value is found in the source data table."
+
+        // Snctable.Hide
+        Set Field_Checkbox_Values Field SncTable.Hide to "1" "0"
+        Set Field_Class_Name Field SncTable.Hide to "cRDSDbCheckBox"
+        Set Field_Label_Long Field SncTable.Hide to "Hide Record"
+        Set Field_Label_Short Field SncTable.Hide to "Hide"
+        Set Status_Help Field SncTable.Hide to "Hide this record from the CrossMerge Engine grid, so it won't be used when updating data tables"
+
+        // Snctable.Fromdriver
+        Set Field_Class_Name Field SncTable.FromDriver to "cDbComboformDriver"
+        Set Field_Label_Long Field SncTable.FromDriver to "Database Driver"
+        Set Field_Label_Short Field SncTable.FromDriver to "Database Driver"
+        Set Status_Help Field SncTable.FromDriver to "Driver DLL to use for the source database table."
+
+        // Snctable.Todriver
+        Set Field_Class_Name Field SncTable.ToDriver to "cDbComboformDriver"
+        Set Field_Label_Long Field SncTable.ToDriver to "Database Driver"
+        Set Field_Label_Short Field SncTable.ToDriver to "Database Driver"
+        Set Status_Help Field SncTable.ToDriver to "Driver DLL to use for the target database table."
+
+        // Snctable.Sncthea_Count
+        Set Field_Class_Name Field SncTable.SncTHea_Count to "cRDSDbForm"
+        Set Field_Label_Long Field SncTable.SncTHea_Count to "No of Transformation Tables"
+        Set Field_Options Field SncTable.SncTHea_Count to DD_NOENTER DD_ZERO_SUPPRESS
+        Set Status_Help Field SncTable.SncTHea_Count to "Number of value transformation tabels created."
+
+        // Snctable.Checkintegrity
+        Set Field_Checkbox_Values Field SncTable.CheckIntegrity to "1" "0"
+        Set Field_Class_Name Field SncTable.CheckIntegrity to "cRDSDbCheckBox"
+        Set Field_Label_Long Field SncTable.CheckIntegrity to "Check For Database Table Layout Changes before Connecting"
+        Set Field_Label_Short Field SncTable.CheckIntegrity to "db Integrity"
+        Set Status_Help Field SncTable.CheckIntegrity to "Check for database table layout changes before connecting data. Checks that no selected fields for the two tables have been changed after this record was last edited."
+
+        // Snctable.Fromlayout
+
+        // Snctable.Tolayout
+
+        // Snctable.Fromfilepath
+        Set Field_Class_Name Field SncTable.FromFilepath to "cDbFormPath"
+        Set Field_Label_Long Field SncTable.FromFilepath to "Table Path"
+        Set Field_Label_Short Field SncTable.FromFilepath to "Table Path"
+        Set Status_Help Field SncTable.FromFilepath to "Name and full path to the source data table. Only for database formats 'DataFlex' and 'Pervasive.SQL'."
+
+        // Snctable.Tofilepath
+        Set Field_Class_Name Field SncTable.ToFilePath to "cDbFormPath"
+        Set Field_Label_Long Field SncTable.ToFilePath to "Table Path"
+        Set Field_Label_Short Field SncTable.ToFilePath to "Table Path"
+        Set Status_Help Field SncTable.ToFilePath to "Name and full path to the source data table. Only for database formats 'DataFlex' and 'Pervasive.SQL'"
+
+        // Snctable.Interface
+
+        // Snctable.Fromdatatable
+        Set Field_Class_Name Field SncTable.FromDataTable to "cDbComboformDataTable"
+        Set Field_Label_Long Field SncTable.FromDataTable to "Source Table Name"
+        Set Field_Label_Short Field SncTable.FromDataTable to "Table Name"
+        Set Status_Help Field SncTable.FromDataTable to "Name of the source database table. Note: You need to open and close the list for changes to take effect."
+
+        // Snctable.Todatatable
+        Set Field_Class_Name Field SncTable.ToDataTable to "cDbComboformDataTable"
+        Set Field_Label_Long Field SncTable.ToDataTable to "Target Table Name"
+        Set Field_Label_Short Field SncTable.ToDataTable to "Table Name"
+        Set Status_Help Field SncTable.ToDataTable to "Name of the target database table. Note: You need to open and close the list for changes to take effect."
+
+        // Snctable.Frompv
+        Set Field_Class_Name Field SncTable.FromPv to "cDbFormPassword"
+        Set Field_Label_Long Field SncTable.FromPv to "Password"
+        Set Field_Label_Short Field SncTable.FromPv to "Password"
+        Set Status_Help Field SncTable.FromPv to "Password for the source database"
+
+        // Snctable.Topv
+        Set Field_Class_Name Field SncTable.ToPv to "cDbFormPassword"
+        Set Field_Label_Long Field SncTable.ToPv to "Password"
+        Set Field_Label_Short Field SncTable.ToPv to "Password"
+        Set Status_Help Field SncTable.ToPv to "Password for the target database"
+
+        // Snctable.Fromdbtype
+        Set Field_Class_Name Field SncTable.FromDbType to "cDbComboformFormat"
+        Set Field_Label_Long Field SncTable.FromDbType to "Database Format"
+        Set Field_Label_Short Field SncTable.FromDbType to "Source Format"
+        Set Field_Value_Table Field SncTable.FromDbType to oDUFDbTypes_VT
+        Set Status_Help Field SncTable.FromDbType to "Select the appropriate format from the list. If you don't find the needed Database Format select 'Other - ODBC - Open DataBase Connectivity' and connect with an installed ODBC driver. Note: You need to open and close the list for changes to take effect."
+
+        // Snctable.Todbtype
+        Set Field_Class_Name Field SncTable.ToDbType to "cDbComboformFormat"
+        Set Field_Label_Long Field SncTable.ToDbType to "Database Format"
+        Set Field_Label_Short Field SncTable.ToDbType to "Target Format"
+        Set Field_Value_Table Field SncTable.ToDbType to oDUFDbTypes_VT
+        Set Status_Help Field SncTable.ToDbType to "Select the appropriate format from the list. If you don't find the needed Database Format select 'Other - ODBC - Open DataBase Connectivity' and connect with an installed ODBC driver. Note: You need to open and close the list for changes to take effect."
+
+        // Snctable.Fromserver
+        Set Field_Class_Name Field SncTable.FromServer to "cDbComboformServer"
+        Set Field_Label_Long Field SncTable.FromServer to "Server"
+        Set Field_Label_Short Field SncTable.FromServer to "Server"
+        Set Status_Help Field SncTable.FromServer to "Database Server or DSN (Data Source Name) for the source database table."
+
+        // Snctable.Toserver
+        Set Field_Class_Name Field SncTable.ToServer to "cDbComboformServer"
+        Set Field_Label_Long Field SncTable.ToServer to "Server"
+        Set Field_Label_Short Field SncTable.ToServer to "Server"
+        Set Status_Help Field SncTable.ToServer to "Database Server or DSN (Data Source Name) for the target database table."
+
+        // Snctable.Fromuser
+        Set Field_Class_Name Field SncTable.FromUser to "cDbFormUser"
+        Set Field_Label_Long Field SncTable.FromUser to "User Name"
+        Set Field_Label_Short Field SncTable.FromUser to "User Name"
+        Set Status_Help Field SncTable.FromUser to "The user name for logging into the source database table."
+
+        // Snctable.Touser
+        Set Field_Class_Name Field SncTable.ToUser to "cDbFormUser"
+        Set Field_Label_Long Field SncTable.ToUser to "User Name"
+        Set Field_Label_Short Field SncTable.ToUser to "User Name"
+        Set Status_Help Field SncTable.ToUser to "The user name for logging into the target database table."
+
+        // Snctable.Fromntauth
+        Set Field_Checkbox_Values Field SncTable.FromNTAuth to "1" "0"
+        Set Field_Class_Name Field SncTable.FromNTAuth to "cRDSDbCheckBox"
+        Set Field_Label_Long Field SncTable.FromNTAuth to "Use Windows Authentication"
+        Set Field_Label_Short Field SncTable.FromNTAuth to "Authentication Type"
+        Set Status_Help Field SncTable.FromNTAuth to "Use Windows Authentication when logging into the source database. This is the same as your Windows login."
+
+        // Snctable.Tontauth
+        Set Field_Checkbox_Values Field SncTable.ToNTAuth to "1" "0"
+        Set Field_Class_Name Field SncTable.ToNTAuth to "cRDSDbCheckBox"
+        Set Field_Label_Long Field SncTable.ToNTAuth to "Use Windows NT Authentication"
+        Set Field_Label_Short Field SncTable.ToNTAuth to "NT authentication"
+        Set Status_Help Field SncTable.ToNTAuth to "Use NT Authentication when logging into the target database. This is the same as using Windows login info."
+
+        // Snctable.Synchflags
+
+        // Snctable.Synchflagcount
+        Set Field_Label_Long Field SncTable.SynchFlagCount to "Number of Selected Fields"
+        Set Field_Options Field SncTable.SynchFlagCount to DD_NOENTER DD_ZERO_SUPPRESS
+        Set Status_Help Field SncTable.SynchFlagCount to "Number of selected target flag fields."
+
+        // Snctable.Fromdsntype
+
+        // Snctable.Todsntype
+
+        // Snctable.Fromdatabase
+        Set Field_Class_Name Field SncTable.FromDatabase to "cDbComboFormDatabase"
+        Set Field_Label_Long Field SncTable.FromDatabase to "Database Name"
+        Set Field_Label_Short Field SncTable.FromDatabase to "Database"
+        Set Status_Help Field SncTable.FromDatabase to "Only for MS SQL. The name of the database where the SQL Server tables have been placed."
+
+        // Snctable.Todatabase
+        Set Field_Class_Name Field SncTable.ToDatabase to "cDbComboFormDatabase"
+        Set Field_Label_Long Field SncTable.ToDatabase to "Database Name"
+        Set Field_Label_Short Field SncTable.ToDatabase to "Database"
+        Set Status_Help Field SncTable.ToDatabase to "Only for MS SQL. The name of the database where the SQL Server tables have been placed."
+
+        // Snctable.Sortfield
+        Set Field_Class_Name Field SncTable.SortField to "cRDSDbForm"
+        Set Field_Label_Long Field SncTable.SortField to "Sort Name"
+        Set Field_Label_Short Field SncTable.SortField to "Sort Name"
+        Set Field_Prompt_Object Field SncTable.SortField to SncTable_sl
+        Set Status_Help Field SncTable.SortField to "Sort name. Enter the name to sort this record in the 'CrossMerge Engine Collections' grid."
+        Set Field_Option Field SncTable.SortField DD_AUTOFIND to True
+
+        // Snctable.Datetime
+        Set Field_Label_Long Field SncTable.Date_Time to "Record Created"
+        Set Field_Label_Short Field SncTable.Date_Time to "Created"
+        Set Field_Options Field SncTable.Date_Time to DD_NOENTER
+        Set Status_Help Field SncTable.Date_Time to "The date and time when this connect record was created."
+
+        // Snctable.Createdby
+        Set Field_Label_Long Field SncTable.CreatedBy to "By"
+        Set Field_Label_Short Field SncTable.CreatedBy to "By"
+        Set Field_Options Field SncTable.CreatedBy to DD_NOENTER
+        Set Status_Help Field SncTable.CreatedBy to "The network user name of the logged in person that created this record."
+
+        // Snctable.Lastedited
+        Set Field_Label_Long Field SncTable.LastEdited to "Last Edited"
+        Set Field_Label_Short Field SncTable.LastEdited to "Last Edited"
+        Set Field_Options Field SncTable.LastEdited to DD_NOENTER
+        Set Status_Help Field SncTable.LastEdited to "The date and time when this connect record was last edited."
+
+        // Snctable.Editedby
+        Set Field_Label_Long Field SncTable.EditedBy to "By"
+        Set Field_Label_Short Field SncTable.EditedBy to "By"
+        Set Field_Options Field SncTable.EditedBy to DD_NOENTER
+        Set Status_Help Field SncTable.EditedBy to "The network user name of the logged in person that last edited this record"
+
+        // Snctable.Notes
+        Set Field_Class_Name Field SncTable.Notes to "cRDSDbEdit"
+        Set Field_Label_Long Field SncTable.Notes to "Notes"
+        Set Field_Label_Short Field SncTable.Notes to "Notes"
+        Set Status_Help Field SncTable.Notes to "Here you can enter your personal notes about the connection record."
+
+        // This is needed for text fields:
+        Send DefineAllExtendedFields
+    End_Procedure
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        Set Field_Changed_Value Field SncTable.FromFile to giFromFile
+        Set Field_Changed_Value Field SncTable.ToFile to giToFile
+        Set Field_Changed_Value Field SncTable.SynchType to 1
+        Set Field_Changed_Value Field SncTable.FrFileOEMToANSI to 0
+        Set Field_Changed_Value Field SncTable.ToFileOEMToANSI to 0
+        Set Field_Changed_Value Field SncTable.Delete_Records to 0
+        Set Field_Changed_Value Field SncTable.ZeroLengthOK to 0
+        Set Field_Changed_Value Field SncTable.FromOwner to "dbo"
+        Set Field_Changed_Value Field SncTable.ToOwner to "dbo"
+        Set Field_Changed_Value Field SncTable.Hide to 0
+        Set Field_Changed_Value Field SncTable.FromDbType to EN_DbTypeDataFlex
+        Set Field_Changed_Value Field SncTable.ToDbType to EN_DbTypeDataFlex
+        Set Field_Changed_Value Field SncTable.FromServer to CS_None
+        Set Field_Changed_Value Field SncTable.ToServer to CS_None
+        Set Field_Changed_Value Field SncTable.FromDriver to DATAFLEX_ID
+        Set Field_Changed_Value Field SncTable.ToDriver to DATAFLEX_ID
+        Set Field_Changed_Value Field SncTable.CheckIntegrity to 1
+        Set Field_Changed_Value Field SncTable.Interface to 0
+        Set Field_Changed_Value Field SncTable.FromDataTable to CS_None
+        Set Field_Changed_Value Field SncTable.ToDataTable to CS_None
+        Set Field_Changed_Value Field SncTable.FromNTAuth to 0
+        Set Field_Changed_Value Field SncTable.ToNTAuth to 0
+        Set Field_Changed_Value Field SncTable.FromDSNType to 0
+        Set Field_Changed_Value Field SncTable.ToDSNType to 0
+        Set Field_Changed_Value Field SncTable.FromDatabase to CS_None
+        Set Field_Changed_Value Field SncTable.ToDatabase to CS_None   
+    End_Procedure
+
+    // Decrypt passwords when finding a record:
+    Procedure New_Current_Record Integer iOld Integer iNew
+        String sFromPv sToPv
+        Forward Send New_Current_Record iOld iNew
+        If (Operation_Mode = Mode_Finding or Operation_Mode = Mode_Saving) Begin
+            // Get passwords:
+            Get Field_Current_Value Field SncTable.FromPv to sFromPv
+            Get Field_Current_Value Field SncTable.ToPv   to sToPv
+            // Decrypt passwords:
+            If (sFromPv <> "") Begin
+                Get CMDecryptPassword sFromPv to sFromPv
+                // Display decrypted value and reset changed_state:
+                Move sFromPv to SncTable.FromPv
+                Set Field_Changed_Value Field SncTable.FromPv to sFromPv
+            End
+            If (sToPv <> "") Begin
+                Get CMDecryptPassword sToPv to sToPv
+                // Display decrypted value and reset changed_state:
+                Move sToPv to SncTable.ToPv
+                Set Field_Changed_Value Field SncTable.ToPv   to sToPv
+            End
+        End
+    End_Procedure
+
+    Procedure Update
+        DateTime dtCurrentDateTime
+        String sUser sFromPv sToPv
+        Integer iFromItems iToItems
+        Boolean bHideChanged
+       
+        Forward Send Update
+
+        // Encrypt passwords:
+        Move (Trim(SncTable.FromPv)) to sFromPv
+        If (sFromPv <> "") Begin
+            Get CMEncryptPassword SncTable.FromPv to SncTable.FromPv
+        End
+        Move (Trim(SncTable.ToPv)) to sToPv
+        If (sToPv <> "") Begin
+            Get CMEncryptPassword SncTable.ToPv to SncTable.ToPv
+        End
+
+        If (SncTable.FromFile < 1 or SncTable.ToFile < 1) Begin
+            Move giFromFile to SncTable.FromFile
+            Move giToFile to SncTable.Tofile
+        End
+
+        If (SncTable.FromStartField contains "<") Begin
+            Move 0 to SncTable.FromStartField
+        End
+        If (SncTable.FromStopField  contains "<") Begin
+            Move 0 to SncTable.FromStopField
+        End
+        If (SncTable.ToStartField   contains "<") Begin
+            Move 0 to SncTable.ToStartField
+        End
+
+        If (pbGetHasCurrRowId(Self)) Begin
+            Move (CurrentDateTime()) to dtCurrentDateTime
+            Move dtCurrentDateTime   to SncTable.LastEdited
+            Get Network_User_Name    to sUser
+            Move sUser               to SncTable.EditedBy
+        End
+
+        Get CheckNoOfFields SncTable.SelFromFields to iFromItems
+        Get CheckNoOfFields SncTable.SelToFields   to iToItems
+
+        If (Trim(SncTable.Constraints) = "") Begin
+            Move 0  to SncTable.ConstrainCount
+        End
+        If (SncTable.ConstrainCount = 0) Begin
+            Move "" to SncTable.Constraints
+        End
+
+        If (SncTable.CheckIntegrity = 0) Begin
+            Move "" to SncTable.FromLayOut
+            Move "" to SncTable.ToLayOut
+        End
+        
+        Send DoPadSncScheme
+        
+        // *** If the format is changed, reset various connection properties:
+        //
+        // DataFlex Embedded database
+        If (SncTable.FromDbType = EN_DbTypeDataFlex) Begin
+            Move 0  to SncTable.FrFileOEMToANSI
+            Move "" to SncTable.FromLogin
+            Move "" to SncTable.FromOwner
+            Move "" to SncTable.FromPv
+            Move "" to SncTable.FromServer
+            Move "" to SncTable.FromUser
+            Move 0  to SncTable.FromNTAuth
+            Move 0  to SncTable.FromDSNType
+            Move "" to SncTable.FromDatabase
+            Move "" to SncTable.FromConnectionID
+            Move DATAFLEX_ID to SncTable.FromDriver
+        End
+        If (SncTable.ToDbType = EN_DbTypeDataFlex) Begin
+            Move 0  to SncTable.ToFileOEMToANSI
+            Move "" to SncTable.ToLogin
+            Move "" to SncTable.ToOwner
+            Move "" to SncTable.ToPv
+            Move "" to SncTable.ToServer
+            Move "" to SncTable.ToUser
+            Move 0  to SncTable.ToNTAuth
+            Move 0  to SncTable.ToDSNType
+            Move "" to SncTable.ToDatabase
+            Move "" to SncTable.ToConnectionID  
+            Move DATAFLEX_ID to SncTable.ToDriver
+        End
+        
+        // IBM DB2 database
+        If (SncTable.FromDbType = EN_DbTypeDB2) Begin
+            Move "" to SncTable.FromFilepath
+        End
+        If (SncTable.ToDbType = EN_DbTypeDB2) Begin
+            Move "" to SncTable.ToFilePath
+        End
+            
+        // MS-SQL database
+        If (SncTable.FromDbType = EN_DbTypeMSSQL) Begin
+            Move "" to SncTable.FromFilepath
+        End
+        If (SncTable.ToDbType = EN_DbTypeMSSQL) Begin
+            Move "" to SncTable.ToFilePath
+        End
+            
+        // My SQL database
+        If (SncTable.FromDbType = EN_DbTypeMySQL) Begin
+            Move "" to SncTable.FromFilepath
+        End
+        If (SncTable.ToDbType = EN_DbTypeMySQL) Begin
+            Move "" to SncTable.ToFilePath
+        End
+            
+        // Oracle database
+        If (SncTable.FromDbType = EN_DbTypeOracle) Begin
+            Move "" to SncTable.FromFilepath
+        End
+        If (SncTable.ToDbType = EN_DbTypeOracle) Begin
+            Move "" to SncTable.ToFilePath
+        End
+            
+        // PostGre database
+        If (SncTable.FromDbType = EN_DbTypePostgre) Begin
+            Move "" to SncTable.FromFilepath
+        End
+        If (SncTable.ToDbType = EN_DbTypePostgre) Begin
+            Move "" to SncTable.ToFilePath
+        End
+            
+        // Pervasive database
+        If (SncTable.FromDbType = EN_DbTypePervasive) Begin
+            Move 0  to SncTable.FrFileOEMToANSI
+            Move "" to SncTable.FromServer
+            Move 0  to SncTable.FromNTAuth
+            Move 0  to SncTable.FromDSNType
+            Move "" to SncTable.FromDatabase
+            Move "" to SncTable.FromConnectionID
+            Move DFBTRDRV_ID to SncTable.FromDriver
+        End
+        If (SncTable.ToDbType = EN_DbTypePervasive) Begin
+            Move 0  to SncTable.ToFileOEMToANSI
+            Move "" to SncTable.ToServer
+            Move 0  to SncTable.ToNTAuth
+            Move 0  to SncTable.ToDSNType
+            Move "" to SncTable.ToDatabase
+            Move "" to SncTable.ToConnectionID
+            Move DFBTRDRV_ID to SncTable.ToDriver
+        End                       
+        
+        Get Field_Changed_State Field SncTable.Hide to bHideChanged
+        If (bHideChanged = True) Begin
+            Send UpdateSnchSchemRowHideStatus    
+        End
+    End_Procedure
+    
+    Procedure UpdateSnchSchemRowHideStatus
+        Clear SncSchemRow
+        Move SncTable.ID to SncSchemRow.SncTableID
+        Find ge SncSchemRow by Index.3
+        While (Found)
+            If (SncTable.ID = SncSchemRow.SncTableID) Begin
+                Move SncTable.Hide to SncSchemRow.SncTableHide
+                SaveRecord SncSchemRow
+            End
+            Find gt SncSchemRow by Index.3
+        End
+    End_Procedure
+
+    Procedure Creating
+        DateTime dtCurrentDateTime
+        String sUser
+
+        Forward Send Creating
+
+        Move (CurrentDateTime()) to dtCurrentDateTime
+        Move dtCurrentDateTime   to SncTable.Date_Time
+        Get Network_User_Name    to sUser
+        Move sUser               to SncTable.Createdby
+        Send DoAddToSncScheme
+    End_Procedure
+
+    Procedure Deleting
+        Forward Send Deleting
+        If (SncSys.SncTableID = SncTable.ID) Begin
+            Decrement SncSys.SncTableID
+            SaveRecord SncSys
+        End
+        Send DoRemoveFromSncScheme
+    End_Procedure
+
+    // ToDo: Needs to be changd to add/delete records to the SncSchemRow table:
+    Procedure DoPadSncScheme
+        Integer iRecords
+        String sTables sDeletes
+
+        Get_Attribute DF_FILE_RECORDS_USED of SncTable.File_Number to iRecords
+        Constraint_Set Self
+        Constrained_Find First SncSchem by Recnum
+        While (Found)
+            Move (Trim(SncSchem.Tables))  to sTables
+            Move (Trim(SncSchem.Deletes)) to sDeletes
+            If (Length(sTables) < iRecords or Length(sDeletes) < iRecords) Begin
+                Move (Pad(sTables, iRecords))       to sTables
+                Move (Replaces(" ", sTables, "0"))  to sTables
+                Move sTables                        to SncSchem.Tables
+                Move (Pad(sDeletes, iRecords))      to sDeletes
+                Move (Replaces(" ", sDeletes, "0")) to sDeletes
+                Move sDeletes                       to SncSchem.Deletes
+                SaveRecord SncSchem
+            End
+            Constrained_Find Next
+        Loop          
+        Constraint_Set Self Delete
+    End_Procedure
+
+    // ToDo: Needs to be changd to add/delete records to the SncSchemRow table:
+    Procedure DoAddToSncScheme
+        Constraint_Set Self
+        Constrained_Find First SncSchem by Recnum
+        While (Found)
+            Move (String(SncSchem.Tables)  - "0") to SncSchem.Tables
+            Move (String(SncSchem.Deletes) - "0") to SncSchem.Deletes
+            SaveRecord SncSchem
+            Constrained_Find Next
+        Loop
+        Constraint_Set Self Delete
+    End_Procedure
+
+    // ToDo: Needs to be changd to add/delete records to the SncSchemRow table:
+    Procedure DoRemoveFromSncScheme
+        String sTables sDeletes
+        Constraint_Set Self
+        Constrained_Find First SncSchem by Recnum
+        While (Found)
+            Move (Trim(SncSchem.Tables))  to sTables
+            Move (Trim(SncSchem.Deletes)) to sDeletes
+            Move (Left(sTables,  (Length(sTables)  -1))) to SncSchem.Tables
+            Move (Left(sDeletes, (Length(sDeletes) -1))) to SncSchem.Deletes
+            If (not(Length(sTables) > 0)) Begin
+                // Delete Schema & rows if no SncTable records remains.
+                Clear SncSchemRow
+                Move SncSchem.ID to SncSchemRow.SncSchemID
+                Move SncTable.ID to SncSchemRow.SncTableID
+                Find eq SncSchemRow by Index.2
+                If (SncSchem.ID = SncSchemRow.SncSchemID and SncTable.ID = SncSchemRow.SncTableID) Begin
+                    Delete SncSchemRow
+                End        
+                Delete SncSchem 
+            End
+            Else Begin
+                SaveRecord SncSchem
+            End
+            Constrained_Find Next 
+        Loop         
+        Constraint_Set Self Delete        
+    End_Procedure
+
+    Procedure Request_Save
+        Boolean bCheck
+        Integer iErr
+        
+        Send DoShowStatusHelp "Saving data..."
+        Move False to Err
+        Get Field_Current_Value Field SncTable.CheckIntegrity to bCheck
+        If (bCheck = True) Begin
+            Move Err to iErr
+            Send Ignore_Error of Error_Info_Object DFERR_CANT_FIND_FIELD // To not trigger error while trying to find a matching field name in ToFile.
+            Get UpdateIntegrityInfo to iErr
+            Set Field_Changed_Value Field SncTable.FromLayout to SncTable.FromLayout
+            Set Field_Changed_Value Field SncTable.ToLayout   to SncTable.ToLayout
+            Send Trap_Error of Error_Info_Object   DFERR_CANT_FIND_FIELD
+            Move (iErr) to Err
+        End
+
+        Forward Send Request_Save
+
+        If (Err) Begin
+            Send DoShowStatusHelp "Changes not saved."
+        End
+        Else Begin
+            Send DoShowStatusHelp "Changes saved."
+        End
+    End_Procedure
+
+    Procedure Request_Delete
+        If (not(pbGetHasCurrRowId(Self))) Begin
+            Procedure_Return // Do nothing if no active record.
+        End
+        Send DoShowStatusHelp "Deleting data..."
+        Move False to Err
+
+        Forward Send Request_Delete
+
+        If (Err) Begin
+            Send DoShowStatusHelp "Data not deleted."
+        End
+        Else Begin
+            Send DoShowStatusHelp "Data deleted."
+        End
+        If (not(pbGetHasCurrRowId(Self) and Err)) Begin
+            Send Clear
+        End
+    End_Procedure
+
+    Procedure DoShowStatusHelp String sText
+        Handle hoStatBar
+        If (pbGetHasCurrRowId(Self)) Begin
+            Delegate Get Statusbar_Id to hoStatBar
+            If hoStatBar Begin
+                Set Status_Help of hoStatBar to sText
+            End
+        End
+    End_Procedure
+
+    Function Validate_Save Returns Integer
+        Integer iRetval
+
+        Forward Get Validate_Save to iRetval
+
+        If (not(iRetval)) Begin
+            If (Trim(SncTable.SortField) = "") Begin
+                Error DfErr_Operator "You need to enter a 'Name' (sort field) for the table connection record."
+            End
+        End
+        Function_Return iRetval
+    End_Function
+
+    // Returns the number of fields selected.
+    // If fields have been appended, the field number is
+    // preceded with a minus sign (-) and will not be counted.
+    Function CheckNoOfFields String sSelFields Returns Integer
+        Integer iRetval iMinusFields iPos
+
+        Move (Trim(sSelFields)) to sSelFields
+        If (Length(sSelFields) = 0) Begin
+            Function_Return 0
+        End
+        Repeat
+            Move (Replace(" ", sSelFields, "")) to sSelFields
+            Increment iRetval
+        Until (not(Pos(" ", sSelFields)))
+
+        Increment iRetval
+        Move (Pos("-", sSelFields)) to iPos
+        If iPos Begin
+            Repeat
+                Move (Replace("-", sSelFields, "")) to sSelFields
+                Increment iMinusFields
+            Until (not(Pos("-", sSelFields)))
+        End
+        Function_Return (iRetval - iMinusFields)
+    End_Function
+
+    Function CheckHighestFieldNumber String sSelFields Returns Integer
+        Integer iRetval iPos iField
+
+        Move (Trim(sSelFields)) to sSelFields
+        If (sSelFields = "") Begin
+            Function_Return 0
+        End
+        Move (sSelFields + " ") to sSelFields
+        Repeat
+            Move (Pos(" ", sSelFields)) to iPos
+            If iPos Begin
+                Move (Left(sSelFields, (iPos - 1))) to iField
+                If (iField > iRetval) Begin
+                    Move iField   to iRetval
+                End
+                Move (Right(sSelFields, (Length(sSelFields) - iPos))) to sSelFields
+                If (sSelFields = " ") Begin
+                    Move 0 to iPos
+                End
+            End
+        Until (not(iPos))     
+        
+        Function_Return iRetval
+    End_Function
+
+    Function CheckHighestMatchField Integer iFromFile Integer iToFile Boolean bFrom Returns Integer
+        Integer iRetval iCount iFields iFrField iToField iField
+        String sFieldName
+
+        Get_Attribute DF_FILE_NUMBER_FIELDS of iFromFile to iFields
+
+        For iCount From 1 to iFields
+            Move iCount                  to iFrField
+            Get_Attribute DF_FIELD_NAME  of iFromFile iCount to sFieldname
+            Move False to Err
+            Field_Map iToFile sFieldName to iToField // Generates error 4100 if not found. Has been trapped.
+            If (Err) Begin
+                Move -1 to iToField
+            End
+            If (iToField >= 0) Begin
+                If (bFrom and iFrField > iRetval) Begin
+                    Move iFrField to iRetval // iFromFile field number
+                End
+                Else If      (iToField > iRetval) Begin
+                    Move iToField to iRetval // iToFile field number
+                End
+            End
+        Loop
+
+        Function_Return iRetval
+    End_Function
+
+    Function UpdateIntegrityInfo Returns Integer
+        String sFromLayout sToLayout sSelFields sValue
+        Integer iCount iType iFromStart iFromStop iToStart iToStop iFromFile iToFile
+        Integer iLength iPrecision iOpen
+
+        Get Field_Current_Value Field SncTable.SynchType to iType
+        Get Field_Current_Value Field SncTable.FromFile  to iFromFile
+        Get Field_Current_Value Field SncTable.ToFile    to iToFile
+
+        If (not(iFromFile) or not(iToFile)) Begin
+//            Error DfErr_Operator "Cannot update 'Check for database table layout changes' information. You need to select both a Source and a Destination table name."
+            Function_Return 1
+        End
+
+        Get_Attribute DF_FILE_OPENED of iFromFile to iOpen
+        If (not(iOpen)) Begin
+//            Error DfErr_Operator "The Source data table is not open. Cannot update 'Check for database table layout changes' information\n(Checkbox on tab page 'Other')."
+            Function_Return 1
+        End
+        Get_Attribute DF_FILE_OPENED of iToFile to iOpen
+        If (not(iOpen)) Begin
+//            Error DfErr_Operator "The Destination data table is not open. Cannot update 'Check for database table layout changes' information."
+            Function_Return 1
+        End
+
+        If (iType = 1) Begin              // "Matching Field Names"
+            Get CheckHighestMatchField iFromFile iToFile (True)   to iFromStop
+            Get CheckHighestMatchField iFromFile iToFile (False)  to iToStop
+            Send Trap_All of Error_Info_Object
+        End
+
+        If (iType = 2) Begin              // "Range of Field Numbers"
+            Get Field_Current_Value Field SncTable.FromStartField to sValue
+            If (sValue contains "<") Begin
+                Move 0 to iFromStart
+            End 
+            Else Begin
+                Move (Trim(sValue)) to iFromStart
+            End
+            Get Field_Current_Value Field SncTable.FromStopField to sValue
+            If (sValue contains "<") Begin
+                Move 0 to iFromStop
+            End 
+            Else Begin
+                Move (Trim(sValue)) to iFromStop
+            End
+            Get Field_Current_Value Field SncTable.ToStartField to sValue
+            If (sValue contains "<") Begin
+                Move 0 to iToStart
+            End 
+            Else Begin
+                Move (Trim(sValue)) to iToStart
+            End
+            Move (iFromStop - iFromStart + iToStart) to iToStop
+        End
+
+        Else If (iType = 3) Begin         // "Selected Fields Numbers"
+            Get Field_Current_Value Field SncTable.SelFromFields  to sSelFields
+            Get CheckHighestFieldNumber sSelFields                to iFromStop
+            Get Field_Current_Value Field SncTable.SelToFields    to sSelFields
+            Get CheckHighestFieldNumber sSelFields                to iToStop
+        End
+
+        For iCount From 1 to iFromStop
+            Get_Attribute DF_FIELD_TYPE      of iFromFile iCount  to iType
+            Get_Attribute DF_FIELD_LENGTH    of iFromFile iCount  to iLength
+            Get_Attribute DF_FIELD_PRECISION of iFromFile iCount  to iPrecision
+            Move (sFromLayout + "|" + String(iCount) * String(iType) * String(iLength) * String(iPrecision)) to sFromLayout
+        Loop
+
+        Move (Right(sFromLayout, (Length(sFromLayout) - 1)))    to SncTable.FromLayout
+
+        For iCount From 1 to iToStop
+            Get_Attribute DF_FIELD_TYPE      of iToFile iCount    to iType
+            Get_Attribute DF_FIELD_LENGTH    of iToFile iCount    to iLength
+            Get_Attribute DF_FIELD_PRECISION of iToFile iCount    to iPrecision
+            Move (sToLayout + "|" + String(iCount) * String(iType) * String(iLength) * String(iPrecision)) to sToLayout
+        Loop
+
+        Move (Right(sToLayout, (Length(sToLayout) - 1)))        to SncTable.ToLayout
+        Function_Return 0
+    End_Function
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+    Use SNCTABLE.SL
+#ENDIF

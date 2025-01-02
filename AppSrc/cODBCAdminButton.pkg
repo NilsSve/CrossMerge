@@ -1,0 +1,48 @@
+//****************************************************************************
+// $Module type: CLASS
+// $Module name: cFileDSNButton.pkg
+// $Author     : Nils Svedmyr
+// Created     : 2002-10-28 @ 10:44
+//
+// Description :
+//
+// $Rev History
+//    2002-10-28  Module header created
+//****************************************************************************
+Use cRDCButton.pkg
+Use SyncFuncs.pkg
+Use cControlPanel.pkg
+
+//{ OverrideProperty=piTransparentColor InitialValue=clWhite }
+{ OverrideProperty=Bitmap_Style InitialValue=Bitmap_Actual }
+{ OverrideProperty=Bitmap_Style DesignTime=False }
+Class cODBCAdminButton is a cRDCButton
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        
+        Property Handle phoControlPanel (Create(Self,RefClass(cControlPanel)))
+
+        Set psImage to "ODBCAD32.ico"
+    End_Procedure
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+        Set Status_Help to "Start Windows 'ODBC Data Source Administrator'."
+    End_Procedure
+
+    Procedure DoCheckEntering
+        If (not(Visible_State(Self))) Begin
+            Send Next
+        End
+        Else Begin
+            If (not(Enabled_State(Self))) Begin
+                Send Next
+            End
+        End
+    End_Procedure 
+
+    Procedure OnClick
+        Send OpenOdbcAdministrator of (phoControlPanel(Self))
+    End_Procedure
+
+End_Class

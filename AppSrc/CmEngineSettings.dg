@@ -1,0 +1,454 @@
+﻿Use DFClient.pkg
+Use cRDCDbModalPanel.pkg
+Use cRDCComboForm.pkg
+Use cRDCDbForm.pkg
+Use cRDCForm.pkg
+Use cRDCButton.pkg   
+Use cRDCHeaderDbGroup.pkg
+
+Use SncSys.dd
+Use SncTable.dd
+Use SncSchem.dd
+Use SncLog.dd
+Use SncTHea.dd
+Use SncTRow.dd
+
+Object oCmEngineSettings_dg is a cRDCDbModalPanel
+    Set Label to "CrossMerge Engine Settings"
+    Set Size to 238 354
+    Set Location to 1 4
+    Set Icon to "Configure.ico"
+
+    Object Sncsys_DD is a Sncsys_DataDictionary
+    End_Object
+
+    Object Snctable_DD is a SncTable_DataDictionary
+        Procedure New_Current_Record Integer iOld Integer iNew
+
+            Forward Send New_Current_Record iOld iNew
+            If (Operation_Mode = Mode_Finding) Begin
+                // This will be received by the cDbComboformFormat and cDbComboformServer classes.
+                // and cDbComboformServer sends a message to cDbComboformDataTable to open
+                // the tables and then update other DEO's:
+//                Broadcast Recursive Send DoFindData of (Parent(Self))
+            End
+        End_Procedure
+
+        Procedure Set Field_Changed_State Integer iField Boolean bState
+            Handle hoDD
+            Boolean bFromTableChanged bToTableChanged
+            String sFromTo
+
+            Forward Set Field_Changed_State to iField bState
+
+            Move (SncTHea_DD(Self)) to hoDD
+            // If table has been changed for an existing record and SncTHea (and rows) exist,
+            // warn user that the Value Transformation tables are not valid any longer:
+            If (pbGetHasCurrRowId(Self) and pbGetHasCurrRowId(hoDD)) Begin
+                Get Field_Changed_State Field SncTable.FromDataTable to bFromTableChanged
+                Get Field_Changed_State Field SncTable.ToDataTable   to bToTableChanged
+                If (bFromTableChanged or bToTableChanged) Begin
+                    If (bFromTableChanged and not(bToTableChanged)) Begin
+                        Move "Source"                 to sFromTo
+                    End
+                    Else If (not(bFromTableChanged) and bToTableChanged) Begin
+                        Move "Destination"       to sFromTo
+                    End
+                    Else If (bFromTableChanged and bToTableChanged) Begin
+                        Move "Source and Destination" to sFromTo
+                    End
+                    Send Info_Box ("WARNING! The Table Name has been changed for the" * sFromTo * "database(s) and Value Conversion table(s) exists for the old Table Name. You need to delete them on the 'Value Conversion' tab page.")
+                End
+            End
+        End_Procedure
+
+        Procedure Clear
+            Integer iFile iOpen
+            Forward Send Clear
+            Move giFromFile to iFile                        // From File
+            Get_Attribute DF_FILE_OPENED of iFile  to iOpen
+            If iOpen Begin
+                Close iFile
+            End
+            Move giToFile to iFile                          // to File
+            Get_Attribute DF_FILE_OPENED of iFile  to iOpen
+            If iOpen Begin
+                Close iFile
+            End
+            Move 100 to iFile                               // From DDF File
+            Get_Attribute DF_FILE_OPENED of iFile to iOpen
+            If iOpen Begin
+                Close iFile
+            End
+            Move 110 to iFile                               // to DDF File
+            Get_Attribute DF_FILE_OPENED of iFile to iOpen
+            If iOpen Begin
+                Close iFile
+            End
+//            Broadcast Recursive Send DoCheckClear of (Parent(Self))
+            // Must be after Recursive Send DoCheckClear...
+            Set Changed_State to False
+        End_Procedure
+
+        Procedure Clear_All
+            Forward Send Clear_All
+            Send Clear
+        End_Procedure
+
+        Procedure Request_Save
+            Integer iRetval iFormat
+            String sValue
+            Get Field_Current_Value Field SncTable.ToIdxSelCount to iRetval
+            If not iRetval Begin
+                Get YesNo_Box "Warning. You have not specified any index fields on the 'Index/Sorting' tab page. This will probably lead to an unsuccessful connection. Would you like to adjust before saving?" ;
+                to iRetval
+                If (iRetval = MBR_Yes) Begin
+                    Procedure_Return
+                End
+            End
+            Get Field_Current_Value Field SncTable.ToDefaults    to sValue
+            Get Field_Current_Value Field SncTable.ToDbType      to iFormat
+            Move (Trim(sValue)) to sValue
+            If (iFormat <> 1 and iFormat <> 6 and not(Length(sValue))) Begin // 1=DataFlex, 6=P.SQL
+                Get YesNo_Box "Warning. You have not specified any null defaults on the 'Null Defaults' tab page. This will probably lead to an unsuccessful connection. Would you like to adjust before saving?" ;
+                to iRetval
+                If (iRetval = MBR_Yes) Begin
+                    Procedure_Return
+                End
+            End
+            Forward Send Request_Save
+        End_Procedure
+
+    End_Object
+
+    Object Sncschem_DD is a Sncschem_DataDictionary
+    End_Object
+
+    Object Snclog_DD is a Snclog_DataDictionary
+    End_Object
+
+    Object Sncthea_DD is a Sncthea_DataDictionary
+        Set Auto_Fill_State to True
+        Set Ordering to 1
+        // TEST THIS!
+        //Set Allow_Foreign_New_Save_State to True
+
+        Set DDO_Server to Snctable_DD
+        Set Constrain_File to Snctable.File_Number
+
+        Procedure Request_Save
+            Integer iID
+            Get File_Field_Current_Value File_Field SncTable.ID to iID
+            If (not(pbGetHasCurrRowId(Self))) Begin
+                Set Field_Changed_Value Field SncTHea.SncTableID to iID                
+            End
+            Forward Send Request_Save
+        End_Procedure
+
+        Procedure DoCreateNewRecord  // Initialize new SncTHea record.
+            Integer iID
+            Get File_Field_Current_Value File_Field SncTable.ID to iID
+            Send Clear
+            Set Field_Changed_Value Field SncTHea.SncTableID to iID
+        End_Procedure
+
+        // Send from field value transformation table:
+        Procedure DoFindRecord Integer iMode
+            Integer iRecnum iOrdering
+            Move SncTHea.Recnum to iRecnum
+            Get Ordering to iOrdering
+            Constraint_Set Self
+            Constrain SncTHea Relates to SncTable
+            If (iMode >= 0) Begin
+                Constrained_Find iMode SncTHea.File_Number by iOrdering
+            End
+            Else If (iMode = -1) Begin
+                Constrained_Find First SncTHea.File_Number by iOrdering
+            End
+            Else If (iMode = -2) Begin
+                Constrained_Find Last  SncTHea.File_Number by iOrdering
+            End
+            If (Found) Begin
+                Send Find_By_Recnum SncTHea.File_Number SncTHea.Recnum
+            End
+            Else Begin        // Reset record buffer.
+                Clear SncTHea
+                Move iRecnum to SncTHea.Recnum
+                Find Eq SncTHea by Recnum
+            End
+        End_Procedure
+
+    End_Object
+
+    Object Snctrow_DD is a Snctrow_DataDictionary
+        Set DDO_Server to Sncthea_DD
+        Set Constrain_File to Sncthea.File_Number
+    End_Object
+
+    Set Main_DD to Snctable_DD
+    Set Server to Snctable_DD
+
+    Object oGlobal_grp is a cRDCHeaderDbGroup
+        Set Size to 132 334
+        Set Location to 8 10
+        Set peAnchors to anTopLeftRight
+        Set Label to "Default CrossMerge Engine Settings"
+        Set psImage to "CMEngine.ico"
+        
+        Property String psWarning "WARNING!\n If you un-check this choice, there will be no way of cancelling the synchronize process until it has finished."
+
+        Object oDefaultSchemeName_cf is a cRDCComboForm
+            Set Label to "Default Collection"
+            Set Size to 14 245
+            Set Location to 25 78
+            Set Status_Help to "Use this default Collection Name for the CrossMerge Engine program"
+            Set Form_Border to 0
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Entry_State Item 0 to False
+            Set Combo_Sort_State to False
+            Set Entry_State Item 0 to False
+            Property Boolean pbFirst True
+
+            Set peAnchors to anTopLeftRight
+
+            // Combo_Fill_List is called when the list needs filling
+            Procedure Combo_Fill_List
+                Handle hoDD
+                Move (SncSchem_DD(Self)) to hoDD
+                Send Combo_Delete_Data
+                Send Combo_Add_Item CS_None
+                Send Clear               of hoDD
+                Send Find                of hoDD First_Record Index.1
+                While (Found)
+                    Send Combo_Add_Item (Trim(SncSchem.Name))
+                    Send Find              of hoDD Next_Record Index.1
+                Loop
+                Send Clear               of hoDD
+                Set Value Item 0 to (Trim(SncSys.Default_Scheme))
+            End_Procedure
+
+            // We may need to refresh the list if new records
+            // have been created with the Scheme program.
+            Procedure OnDropDOwn
+                Send Combo_Fill_List
+            End_Procedure
+
+            // Notification of a selection change.
+            Procedure OnChange
+                Handle hoDD
+                Integer iItem
+                String sValue
+                If (pbFirst(Self)) Begin
+                    Set pbFirst to False
+                    Procedure_Return
+                End
+                Move (SncSys_DD(Self))        to hoDD
+                Get WinCombo_Current_Item     to iItem
+                Get WinCombo_Value Item iItem to sValue
+                If (Trim(SncSys.Default_Scheme) <> Trim(sValue)) Begin
+                    Set Field_Changed_Value of hoDD Field SncSys.Default_Scheme to sValue
+                End
+            End_Procedure
+        End_Object
+
+//        Object oSncsys_Dsn_Names is a cRDCDbForm
+//            Entry_Item Sncsys.Dsn_names
+//            Set Server to Sncsys_DD
+//            Set Label to "Check ODBC DSN's"
+//            Set Size to 14 259
+//            Set Location to 42 78
+//            Set peAnchors to anTopLeftRight
+//            Set Label_Col_Offset to 2
+//            Set Label_Justification_Mode to jMode_Right
+//
+//            Procedure OnChange
+//                Boolean bState
+//                Get Changed_State of (SncSys_DD(Self)) to bState
+//            End_Procedure
+//        End_Object
+
+        Object oSncsys_Allowtblchange is a DbCheckBox
+            Entry_Item Sncsys.Allowtblchange
+            Set Server to Sncsys_DD
+            Set Label to "Allow user to change selections of Database Table items"
+            Set Size to 10 283
+            Set Location to 49 78
+        End_Object
+
+//        Object oSncsys_Allowautodelete is a DbCheckBox
+//            Entry_Item Sncsys.Allowautodelete
+//            Set Server to Sncsys_DD
+//            Set Label to "Allow user to change ' Auto Delete' (right checkbox column)"
+//            Set Size to 10 283
+//            Set Location to 61 78
+//            Set Visible_State to False
+//        End_Object
+
+        Object oSncsys_Allowcancelsent is a DbCheckBox
+            Entry_Item Sncsys.Allowcancelsent
+            Set Server to Sncsys_DD
+            Set Label to "Allow to cancel running of the CrossMerge Engine"
+            Set Size to 10 283
+            Set Location to 61 78
+            Set Enabled_State to SncSys.Show_Info
+
+            Procedure Select_Toggling Integer iItem Integer bState
+                Forward Send Select_Toggling iItem bState
+                Get Select_State Item 0 to bState
+                If not bState Begin
+                    Send Info_Box (psWarning(Self)) // Group property
+                End
+            End_Procedure
+        End_Object
+
+        Object oSncsys_Allowdeletelog is a DbCheckBox
+            Entry_Item SncSys.AllowDeleteLog
+            Set Server to Sncsys_DD
+            Set Label to "Allow delete of the connection log"
+            Set Size to 10 283
+            Set Location to 73 78
+        End_Object
+
+        Object oSncsys_Show_Info is a DbCheckBox
+            Entry_Item Sncsys.Show_info
+            Set Server to Sncsys_DD
+            Set Label to "Display status panel with info while CrossMerge Engine is running"
+            Set Size to 10 283
+            Set Location to 92 78
+
+            Procedure Select_Toggling Integer iItem Integer bState
+                Forward Send Select_Toggling iItem bState
+                Get Select_State Item 0 to bState
+                If not bState Begin
+                    Send Info_Box (psWarning(Self)) // Group property
+                End
+                Set Enabled_State of oSncSys_AllowCancelSent to bState
+            End_Procedure
+        End_Object
+
+        Object oSncsys_Runminimized is a DbCheckBox
+            Entry_Item Sncsys.Runminimized
+            Set Server to Sncsys_DD
+            Set Label to "Run Program Minimized when scheduled to Autorun"
+            Set Size to 10 283
+            Set Location to 104 78
+        End_Object
+
+    End_Object
+
+    Object oProgramStart_grp is a cRDCHeaderDbGroup
+        Set Size to 56 334
+        Set Location to 150 10
+        Set peAnchors to anTopLeftRight
+        Set Label to "Scheduled Tasks"   
+        Set psImage to "Schedule.ico"
+
+        Object oScheduledTasksHelp_Bn is a cRDCButton
+            Set Label to "How to Create a Scheduled Task"
+            Set Size to 16 120
+            Set Location to 25 78
+            Set Status_Help to "Display Help on how to Auto Start the CrossMerge Engine program with Windows Scheduled tasks."
+            Set psImage to "ActionHelp.ico"    
+            Set Help_Id to 5 
+            Procedure OnClick
+                Send DoDisplayKeyword of ghoHtmlHelp "How to Create a Windows Scheduled Task"  
+            End_Procedure
+        End_Object
+
+        Object oScheduledTasks_bn is a cRDCButton
+            Set Label to "Start Windows Scheduled &Tasks"
+            Set Size to 16 120
+            Set Location to 25 202
+            Set Status_Help to "Create a scheduled activity to automatically run the CrossMerge Engine program"
+            Set psImage to "ScheduledTask.ico"
+
+            Procedure OnClick
+                Handle hoPanel
+                Send Info_Box "Temporary disabled!"
+                
+//                Get Create (RefClass(cControlPanel)) to hoPanel
+//                If (hoPanel <> 0) Begin
+//                    Send OpenScheduledTasks  of hoPanel
+//                    Send Destroy             of hoPanel
+//                End
+            End_Procedure
+        End_Object
+
+        Object oDummy_fm is a cRDCForm
+            Set Size to 13 2
+            Set Location to 150 444
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+        End_Object
+
+    End_Object
+
+    Object oOK_btn is a Button
+        Set Label    to "&OK"
+        Set Location to 215 239
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Handle hoDD
+            Boolean bChanged
+            Move (SncSys_DD(Self))   to hoDD
+            Get Changed_State        of hoDD to bChanged
+            If (bChanged = False) Begin
+                Send Info_Box "No changes detected."
+                Procedure_Return
+            End
+            Send Request_Save        of hoDD
+            Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+    Object oCancel_btn is a Button
+        Set Size to 14 50
+        Set Label    to "&Cancel"
+        Set Location to 215 294
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+//    Object oSynchronizeProgram_bn is a cRDCButton
+//        Set Label to "Run CrossMerge &Engine"
+//        Set Size to 14 120
+//        Set Location to 211 138
+//        Set Status_Help to "Start the CrossMerge Engine program manually to synchronize data."
+//        Set psImage to "CmEngine.ico"
+//        Set peAnchors to anBottomLeft
+//
+//        Procedure OnClick
+//            Boolean bSave
+//            String sPath
+//            Integer iRetval
+//            Get Should_Save of (Main_DD(Self)) to bSave
+//            If (bSave = False) Begin
+//                Get Should_Save of (SncSys_DD(Self))   to bSave
+//            End
+//            If (bSave = False) Begin
+//                Get Should_Save of (SncSchem_DD(Self)) to bSave
+//            End
+//            If (bSave = True) Begin
+//                Get YesNo_Box "Changes exist. Save them first?" to iRetval
+//                If (iRetval = Mbr_Yes) Begin
+//                    Send Request_Save
+//                End
+//            End
+//            Move (psProgramPath(phoWorkspace(ghoApplication))) to sPath
+//            Send vShellExecute "open" "CMEngine.exe" "" sPath
+//        End_Procedure
+//    End_Object
+
+    On_Key Key_Alt+Key_D  Send KeyAction of oScheduledTasksHelp_Bn
+//    On_Key Key_Alt+Key_T  Send KeyAction of oScheduledTasks_bn
+//    On_Key Key_Alt+Key_E  Send KeyAction of oSynchronizeProgram_bn
+    On_Key Key_Alt+Key_O Send KeyAction of oOk_btn
+    On_Key Key_Alt+Key_C Send KeyAction of oCancel_btn
+End_Object

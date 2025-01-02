@@ -1,0 +1,141 @@
+//****************************************************************************
+// $Module type: CLASS
+// $Module name: cTransformMainArray
+// $Author     : Nils Svedmyr
+// Created     : 2002-03-06 @ 10:20
+//
+// Description : Holds and creates arrays for field transformation values.
+//               One array is created with values for each pair of Source and Destination fields
+//               This array object will contain handles to those dynamically created arrays.
+// $Rev History
+//    2002-03-06  Module header created
+//****************************************************************************
+Use SyncFuncs.pkg
+
+Declare_Datafile SncTable
+Declare_Datafile SncTHea
+Declare_Datafile SncTRow
+
+Class cTransformMainArray is an Array
+    Procedure Construct_Object
+        Forward Send Construct_Object
+    End_Procedure
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+    End_Procedure
+
+    Procedure DoFillArray Integer iItems Integer iSncTable_Recid
+        Handle ho
+        Integer iCount iSet
+
+        Send DoDestroyChildArrays
+        Send Delete_Data
+        If not iItems Begin
+            Procedure_Return
+        End
+        Move Self to iSet
+        Constraint_Set iSet Delete
+        Constraint_Set iSet
+        Constrain SncTHea Relates to SncTable
+        Constrained_Find First SncTHea by Index.2 // Recid.
+        For iCount From 1 to iItems
+            Get Create (RefClass(Array)) to ho
+            Set Array_Value Item (Item_Count(Self)) to ho           // Save the newly created array handle in this main array.
+            Send DoFillNewTransformArray ho SncTHea.NextSncTRowID   // Fill new array with transform values. (Proc below)
+            Constraint_Set iSet
+            Constrained_Find Gt SncTHea by Index.2
+        Loop
+        Constraint_Set iSet Delete
+    End_Procedure
+
+    Procedure DoFillNewTransformArray Handle ho Integer iItems
+        Integer iCount iSet
+        String sFromValue sToValue
+
+        If not iItems Begin
+            Procedure_Return
+        End
+        Move ho to iSet
+        Constraint_Set iSet
+        Constrain SncTRow Relates to SncTHea
+        Constrained_Find First SncTRow by Index.1 
+        For iCount From 1 to iItems
+            Move (Trim(SncTRow.FromValue)) to sFromValue
+            Move (Trim(SncTRow.ToValue))   to sToValue
+            Set Array_Value of ho Item (Item_Count(ho)) to (String(SncTHea.FromField) * String(SncTHea.ToField) * String(SncTRow.IgnoreCase) * String(sFromValue) + String("|") + String(sToValue))
+            Constrained_Find Gt SncTRow by Index.1
+        Loop
+    End_Procedure
+
+    // Takes a Source field number and a Destination table field number as a parameters.
+    // Returns the array handle if the field number is used in any of
+    // the dynamically created arrays.
+    // Else returns 0.
+    Function IsFieldInArray Integer iFromField Integer iToField Returns Handle
+        Handle ho
+        Integer iItems iCount iItems2 iCount2 iPos iFromCheck iToCheck
+        String sValue
+
+        Get Item_Count to iItems
+        If not iItems Begin
+            Function_Return 0
+        End
+        For iCount From 0 to (iItems - 1)
+            Get Integer_Value Item iCount to ho
+            If ho Begin
+                Get Item_Count of ho to iItems2
+                For iCount2 From 0 to (iItems2 - 1)
+                    Get String_Value of ho Item iCount2    to sValue
+                    Move (Pos(" ", sValue))                to iPos
+                    Move (Left(sValue, (iPos - 1)))        to iFromCheck
+                    Move (Replace(iFromCheck, sValue, "")) to sValue
+                    Move (Trim(sValue))                    to sValue
+                    Move (Pos(" ", sValue))                to iPos
+                    Move (Left(sValue, (iPos - 1)))        to iToCheck
+                    If (iFromCheck = iFromField and iToCheck = iToField) Begin
+                        Function_Return ho
+                    End
+                Loop
+            End
+        Loop
+        Function_Return 0
+    End_Function
+
+    // Destroy all dynamically created arrays
+    // that holds field transformation values.
+    Procedure DoDestroyChildArrays
+        Handle ho
+        Integer iItems iCount
+        Get Item_Count to iItems
+        For iCount From 0 to (iItems -1)
+            Get Integer_Value Item iCount to ho
+            If ho Begin
+                Send Destroy of ho
+            End
+        Loop
+    End_Procedure
+
+    Procedure Dump
+        Handle ho
+        Integer iCount iItems iCount2 iItems2
+        String sValue
+
+        Get Item_Count to iItems
+        If not iItems Begin
+            Showln "Transform Main array is empty."
+            Procedure_Return
+        End
+        Showln "Transform Main array: " Self
+        For iCount From 0 to (iItems - 1)
+            Get Integer_Value Item iCount to ho
+            Get Item_Count of ho to iItems2
+            For iCount2 From 0 to (iItems2 - 1)
+                Get String_Value of ho Item iCount2 to sValue
+                Showln "SncTable id = " SncTable.ID " Main array item = " iCount " sub array handle, field# and value = " (String(ho) * String(sValue))
+            Loop
+        Loop
+        Showln ""
+    End_Procedure
+
+End_Class

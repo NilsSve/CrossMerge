@@ -1,0 +1,216 @@
+//****************************************************************************
+// $Module type: CLASS
+// $Module name: cCheckboxColumnGrid
+// $Author     : VINCENT
+// Created     : 11/06/99 @ 4:22
+//
+// Description
+//    This class makes it possible to create a grid in which one column (user
+//    definable) shows a checkbox to indicate whether the current row is
+//    considered selected or not.
+//
+// $Rev History
+//    11/06/99 VINCENT Module header created
+//****************************************************************************
+Use Windows.pkg
+
+Class cCheckboxColumnGrid is a Grid
+    //****************************************************************************
+    // $Module type: PROCEDURE
+    // $Module name: Construct_Object
+    // $Author     : VINCENT
+    // Created     : 11/06/99 @ 4:24
+    //
+    // Description
+    //    Create a property to store the checkbox column number in. This will make
+    //    it possible to toggle the checkbox from true to false and vice-versa
+    //    when the user clicks anywhere in the row. The value will be -1 to
+    //    avoid that the toggle_select message is send with a item which is not
+    //    a checkbox item.
+    //
+    //    The default will be two columns in the grid, most likely at least two.
+    //    The select_mode is set to multi_select to be able to select more than
+    //    one line. The scroll_bar_visible_state is set to false because this kind
+    //    of lists usually do not have so many items. Developers can set the
+    //    property to true. Because this kind of grids do have usually fixed item
+    //    value texts to display the resize_column_state is default false.
+    //
+    //    The values in this class reflect the settings in the DFC and DFO.
+    //
+    // $Rev History
+    //    11/06/99 VINCENT Module header created
+    //****************************************************************************
+    Register_Object oToolbar
+    Register_Procedure Set phoCopy  Handle ho
+    Register_Procedure Set phoPaste Handle ho
+    Register_Procedure Set phoCut   Handle ho
+
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        Property Integer piCheckboxColumn  0
+        Property Integer piCheckboxColumn2 3
+        Property Integer piCheckboxColumn3 4
+        Property Handle Private.phoToolTip 0
+        //      Object oTooltip Is A cTooltip
+        //        Set Private.phoToolTip to (Self)
+        //      End_Object
+
+        Set Line_Width to 4 0
+        Set Resize_Column_State to False
+        Set Select_Mode to Multi_Select
+        Set Oem_Translate_State to False
+        //      Set Entry_msg to DoDisableToolbarButtons
+        //      Set Exit_msg  to DoEnableToolbarButtons
+    End_Procedure
+
+    Procedure End_Construct_Object
+        Handle ho
+        Boolean bVisible bPopup
+        Forward Send End_Construct_Object
+        Get Private.phoToolTip to ho
+        Get Visible_State      to bVisible
+        If (ho > 0 And bVisible = True) Begin
+            Delegate Get Popup_State to bPopup
+            Send Activate of ho
+        End
+    End_Procedure
+
+    //    Procedure DoEnableToolbarButtons
+    //      Handle ho
+    //      Move (oToolBar(Self)) to ho
+    //      If ho Begin
+    //        Get phoCut          to ho
+    //        If ho Begin
+    //            Set pbEnabled of ho to True
+    //        End
+    //        Get phoCopy         to ho
+    //        If ho Begin
+    //            Set pbEnabled of ho to True
+    //        End
+    //        Get phoPaste        to ho
+    //        If ho Begin
+    //            Set pbEnabled of ho to True
+    //        End
+    //      End
+    //    End_Procedure
+    //
+    //    Procedure DoDisableToolbarButtons
+    //      Handle ho
+    //      Move (oToolBar(Self)) to ho
+    //      If ho Begin
+    //        Get phoCut          to ho
+    //        If ho Begin
+    //            Set pbEnabled of ho to False
+    //        End
+    //        Get phoCopy         to ho
+    //        If ho Begin
+    //            Set pbEnabled of ho to False
+    //        End
+    //        Get phoPaste        to ho
+    //        If ho Begin
+    //            Set pbEnabled of ho to False
+    //        End
+    //      End
+    //    End_Procedure
+
+    //  Procedure Page Integer iFlag
+    //    Handle ho
+    //    Boolean bVisible
+    //
+    //    Forward Send Page iFlag
+    //
+    //    Get Private.phoToolTip to ho
+    //    Get Visible_State      to bVisible
+    //    If (ho And bVisible) Begin
+    ////      Get Status_Help item 0 to sHelp
+    ////      Set psTooltip    of ho to (ToAnsi(sHelp))
+    ////      Get Window_Handle      to hWnd
+    ////      If (iFlag and ho > 0 and hWnd > 0) Begin
+    ////         Send AddTool of ho hWnd
+    //    End
+    //  End_Procedure
+
+    //****************************************************************************
+    // $Module type: PROCEDURE
+    // $Module name: DoAddCheckboxItem
+    // $Author     : VOO
+    // Created     : 15-09-96 @ 13:25
+    //
+    // Description
+    //    This procedure will add an item to the grid but will tell the grid to
+    //    show the item as checkbox and show selected or not.
+    //
+    // $Rev History
+    //    15-09-96  Module header created
+    //****************************************************************************
+    Procedure DoAddCheckboxItem
+        Integer iItem
+
+        Send Add_Item Msg_None ""
+        Move (Item_Count(Self) - 1) to iItem
+        Set Checkbox_Item_State Item iItem to True
+    End_Procedure
+
+    //****************************************************************************
+    // $Module type: PROCEDURE
+    // $Module name: DoAddTextItem
+    // $Author     : VOO
+    // Created     : 03-11-99 @ 21:10
+    //
+    // Description
+    //    After adding an item we will make that the item cannot be changed.
+    //
+    // $Rev History
+    //    03-11-99 Module header created
+    //****************************************************************************
+    Procedure DoAddTextItem String sValue
+        Integer iItem
+
+        Send Add_Item Msg_None sValue
+
+        Move (Item_Count(Self) - 1) to iItem
+        Set Entry_State Item iItem to False
+    End_Procedure
+
+    //****************************************************************************
+    // $Module type: PROCEDURE
+    // $Module name: Select_Toggling
+    // $Author     : VINCENT
+    // Created     : 09/08/98 @ 09:35
+    //
+    // Description
+    //    This method was augmented to allow user to click on the checkbox or at
+    //    the text. Both will toggle the select_state.
+    //
+    // $Rev History
+    //    09/08/98 VINCENT Module header created
+    //    11/10/99 WVA typo corrected
+    //****************************************************************************
+
+    // 2002-08-30 ------------------------------------ Start Nils G. Svedmyr
+    // Procedure logic moved to class cSyncTableCheckboxGrid:
+
+    //   Procedure Select_Toggling Integer iItem Integer bState
+    //      Local Integer iColumns iCheckboxColumn
+
+    //      If iItem Eq Current Begin
+    //         Get Current_Item to iItem
+    //      End
+
+    //      Get piCheckboxColumn to iCheckboxColumn
+    //      If iCheckboxColumn Ge 0 Begin
+    //         Move (Low (Matrix_Size (Self))) to iColumns
+
+    //         If (Mod (iItem, iColumns)) Eq iCheckboxColumn Begin
+    //            Forward Send Select_Toggling iItem bState
+    //         End
+    //         Else Begin
+    //            Forward Send Select_Toggling (Integer (iItem / iColumns) * iColumns) bState
+    //         End
+    //      End
+    //   End_Procedure
+
+    // 2002-08-30 ------------------------------------ Stop Nils G. Svedmyr
+
+End_Class

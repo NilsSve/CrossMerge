@@ -1,0 +1,8 @@
+//AB/ OBJECTDEF
+Object oViewDataButton is a cViewDataButton
+    //AB-StoreStart
+    Procedure OnClick
+      Send DoViewData True 0
+    End_Procedure // OnClick
+    //AB-StoreEnd
+End_Object

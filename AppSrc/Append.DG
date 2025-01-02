@@ -1,0 +1,145 @@
+Use DataDict.pkg
+Use cDbFieldComboform.pkg
+Use cRDCDbModalPanel.pkg
+
+Use SncTable.dd
+
+Object oAppend_dg is a cRDCDbModalPanel
+    Set Label to "Append field dialog"
+    Set Location to 2 3
+    Set Size to 68 222
+    Set Icon to "AppendColumn.ico"
+    
+    Property String psMoveValueOut ""
+    Property Handle Main_DD 0
+
+    Procedure Set Server Handle hoDD
+        Set Main_DD to hoDD
+    End_Procedure
+
+    Object Snctable_DD is a SncTable_DataDictionary
+    End_Object
+
+    Set Main_DD to Snctable_DD
+    Set Server to Snctable_DD
+
+    Object oAppend_cf is a cDbFieldComboForm
+        Set Label to "Field/Column to Append:"
+        Set Size to 13 109
+        Set Location to 15 95
+        Set Status_Help to "List of fields/columns to append"
+        Set pbFrom to True
+
+        Function Next_Object_Id Boolean bState Returns Integer
+            Handle ho
+            Move (Self) to ho
+            Function_Return ho
+        End_Function
+
+        Procedure OnCloseUp
+            String sType sField sChar
+            Integer iLength iPrec iField iFile iType
+
+            Forward Send OnCloseUp
+            Move -1 to iType
+            Get Value Item 0    to sField
+            Get FileFieldNumber to iField
+            If (iField <> 0) Begin
+                Get piFile to iFile
+                If (not(iFile)) Begin
+                    Procedure_Return
+                End
+                Get_Attribute DF_FIELD_TYPE      of iFile iField  to iType
+                Get_Attribute DF_FIELD_LENGTH    of iFile iField  to iLength
+                Get_Attribute DF_FIELD_PRECISION of iFile iField  to iPrec
+                Get_Attribute DF_FIELD_NAME      of iFile iField  to sField
+                Move (Uppercase(Left(sField, 1)))                 to sChar
+                Move (sChar + Right(Lowercase(sField), (Length(sField) -1))) to sField
+                Get FieldType iType to sType
+            End
+        End_Procedure
+
+        Function FileFieldNumber Returns Integer
+            String sField
+            Integer iPos iField
+            Get Value to sField
+            Move (Pos("-", sField)) to iPos
+            If (iPos > 1) Begin
+                Move (Left(sField, (iPos -2))) to iField
+            End
+            Function_Return iField
+        End_Function
+
+        On_Key kCancel Send KeyAction to oCancel_bn
+    End_Object
+
+    Object oOK_bn is a Button
+        Set Label to "&OK"
+        Set Size to 14 50
+        Set Location to 47 107
+        Set Status_Help to "Append the selected field and close this panel"
+
+        Procedure OnClick
+            String sValue
+            Get Value of oAppend_cf Item 0 to sValue
+            If (sValue contains CS_None) Begin
+                Move "" to sValue
+            End
+            Delegate Set psMoveValueOut to sValue  // Panel property.
+            Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+    Object oCancel_bn is a Button
+        Set Label to "&Cancel"
+        Set Size to 14 50
+        Set Location to 47 159
+        Set Status_Help to "Cancel operation and close panel"
+        Set Bitmap to "Cancel16.bmp"
+        //    Set piTransparentColor to clFuchsia
+
+        Procedure OnClick
+            Delegate Set psMoveValueOut to "" // Panel property.
+            Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+    On_Key Key_Alt+Key_O  Send KeyAction to oOk_bn
+    On_Key Key_Ctrl+Key_S Send KeyAction to oOk_bn
+    On_Key Key_F2         Send KeyAction to oOk_bn
+    On_Key Key_Alt+Key_C  Send KeyAction to oCancel_bn
+    On_Key kCancel        Send KeyAction to oCancel_bn
+End_Object
+
+Function IsStartoAppend_dg Handle hoDD Integer iFile String sField Returns String
+    Handle ho hoAppend_cf
+    Integer iPos iField iType iLength iPrec
+    String sValue sType
+
+    Move "" to sValue
+    Move (oAppend_dg(Self))  to ho
+    Set Main_DD        of ho to hoDD
+    Set Label          of ho to ("Append field/column to" * String(sField))
+    Move (oAppend_cf(ho))    to hoAppend_cf
+    Send DoUpdateData  of hoAppend_cf iFile 0 (True)
+    Set Value          of hoAppend_cf Item 0 to "-None"
+    Send Popup         of ho
+    Get psMoveValueOut of ho to sValue
+
+    If (Not(sValue contains CS_None) and sValue <> "") Begin
+        Move (Pos("-", sValue)) to iPos
+        Move (Left(sValue, (iPos - 2)))                   to iField
+        Get_Attribute DF_FIELD_TYPE      of iFile iField  to iType
+        Get_Attribute DF_FIELD_LENGTH    of iFile iField  to iLength
+        Get_Attribute DF_FIELD_PRECISION of iFile iField  to iPrec
+        Get FieldType iType                               to sType
+        Move (String(sValue) * sType * "(" + String(iLength) + "," + String(iPrec) + ")") to sValue
+    End
+    Else Begin
+        Move "" to sValue
+    End
+
+    Function_Return sValue
+End_Function

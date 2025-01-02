@@ -1,0 +1,8 @@
+//AB/ OBJECTDEF
+Object
+    //AB-StoreStart
+    Procedure OnClick
+
+    End_Procedure // OnClick
+    //AB-StoreEnd
+End_Object

@@ -1,0 +1,113 @@
+//****************************************************************************
+// $Module type: CLASS
+// $Module name: cPathButton.pkg
+// $Author     : Nils G. Svedmyr
+// Created     : 2002-08-15 @ 12:24
+//
+// Description :
+//
+// $Rev History
+//    2002-08-15  Module header created
+//****************************************************************************
+Use SyncFuncs.pkg
+Use cSQLConnectionIniFile.inc
+
+//{ OverrideProperty=Bitmap InitialValue="FolderO16.bmp" }
+//{ OverrideProperty=piTransparentColor InitialValue=clWhite }
+//{ OverrideProperty=Label InitialValue="&Select File" }
+//{ OverrideProperty=Status_Help InitialValue="Click to activate the Open File Dialog and select a database table." }
+{ OverrideProperty=Bitmap_Style InitialValue=Bitmap_Actual }
+{ OverrideProperty=Bitmap_Style DesignTime=False }
+//{ OverrideProperty=Enabled_State InitialValue=False }
+//{ OverrideProperty=Default_State InitialValue=False }
+Class cPathButton is a Button
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        { InitialValue=True }
+        Property Boolean pbFrom True
+        Property Integer piDbType EN_DbTypeDataFlex
+        Property Handle phoDD (Main_DD(Self))
+        Set Enabled_State to False
+    End_Procedure
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+    End_Procedure
+
+    Procedure DoEnableDisable Integer iValue
+        Set piDbType to iValue
+        Set Enabled_State to (iValue = EN_DbTypeDataFlex or iValue = EN_DbTypePervasive)
+    End_Procedure
+
+    Procedure DoOpenFileDialog
+        Handle hoDD hoDialog hoPathObject hoDbObject hoServerObject hoDbType
+        String sValue sFile sPath sOldPath sText sFilter sOldVal
+        Integer iDbType iFile iField
+        Boolean bOpen bFrom
+
+        Get phoDD  to hoDD  
+        Get pbFrom to bFrom
+        If (bFrom = True) Begin
+            Get Field_Current_Value of hoDD Field SncTable.FromDbType    to iDbType
+            Get Field_Current_Value of hoDD Field SncTable.FromFilePath  to sOldPath
+            Get DDObjectId hoDD SncTable.File_Number "FromDbType"        to hoDbType
+            Get DDObjectId hoDD SncTable.File_Number "FromServer"        to hoServerObject
+            Get DDObjectId hoDD SncTable.File_Number "FromFilePath"      to hoPathObject
+            Get DDObjectId hoDD SncTable.File_Number "FromDataTable"     to hoDbObject
+        End
+        Else Begin
+            Get Field_Current_Value of hoDD Field SncTable.ToDbType      to iDbType
+            Get Field_Current_Value of hoDD Field SncTable.ToFilePath    to sOldPath
+            Get DDObjectId hoDD SncTable.File_Number "ToDbType"          to hoDbType
+            Get DDObjectId hoDD SncTable.File_Number "ToServer"          to hoServerObject
+            Get DDObjectId hoDD SncTable.File_Number "ToFilePath"        to hoPathObject
+            Get DDObjectId hoDD SncTable.File_Number "ToDataTable"       to hoDbObject
+        End
+        Get Data_File   of hoPathObject Item 0                           to iFile
+        Get Data_Field  of hoPathObject Item 0                           to iField
+        Get File_Field_Current_Value of hoDD iFile iField                to sOldVal
+        If (iDbType = EN_DbTypeDataFlex) Begin
+            Move "DataFlex Data Tables *.Dat|*.Dat"                      to sFilter
+            Move "Please Select a DataFlex Data Table"                   to sText
+        End
+        Else If (iDbType = EN_DbTypePervasive) Begin
+            Move "Pervasive.SQL Meta Data File (File.ddf)|File.ddf"      to sFilter
+            Move "Please Select a Pervasive Meta Data file (File.ddf)"   to sText
+        End
+
+        Get Create (Refclass(OpenDialog)) to hoDialog
+        Set Dialog_Caption of hoDialog to sText
+        Set Filter_String  of hoDialog to sFilter
+        If (Length(sOldVal) > 0) Begin
+            Set Initial_Folder of hoDialog to sOldVal
+        End
+
+        Get Show_Dialog of hoDialog to bOpen
+        Get File_Name   of hoDialog to sValue
+        Send Destroy    of hoDialog
+        If (bOpen = False) Begin
+            Procedure_Return
+        End
+
+        Get StripFile sValue to sPath   // Sysfuncs.pkg
+        Get StripPath sValue to sFile   // Sysfuncs.pkg
+        Set File_Field_Changed_Value of hoDD iFile iField to sPath
+
+        If (iDbType = EN_DbTypeDataFlex) Begin  // DataFlex
+            Get Data_File  of hoDbObject Item 0 to iFile
+            Get Data_Field of hoDbObject Item 0 to iField
+            Set File_Field_Changed_Value of hoDD iFile iField to sFile
+            Send Request_Entry_Update    of hoDD iFile True
+        End
+        Else If (iDbType = EN_DbTypePervasive) Begin
+            Get Data_File  of hoServerObject Item 0 to iFile
+            Get Data_Field of hoServerObject Item 0 to iField
+            Get File_Field_Current_Value     of hoDD iFile iField to sOldVal
+            If (Trim(sOldVal) <> Trim(sFile) Or Trim(sOldPath) <> Trim(sPath)) Begin
+                Set File_Field_Changed_Value of hoDD iFile iField to sFile
+                Send DoFindData of hoServerObject
+            End
+        End
+    End_Procedure
+
+End_Class

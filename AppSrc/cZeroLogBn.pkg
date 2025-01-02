@@ -1,0 +1,120 @@
+//****************************************************************************
+// $Module type: Class
+// $Module name: cZeroLogBn.pkg
+// $Author     : Nils Svedmyr
+// Created     : 2001-09-07 @ 17:52
+//
+// Description :
+//
+// $Rev History:
+//    2001-09-07  Module header created
+//****************************************************************************
+Use Working.pkg
+Use cRDCButton.pkg
+
+Open SncSys
+Open SncLog
+Register_Object SncLog_DD
+Register_Object oSncLog_grd
+Register_Function pbCMBuilderMode Returns Boolean
+
+Class cZeroLogBn is a cRDCButton 
+    Procedure Construct_Object
+        Forward Send Construct_Object 
+        Set pbAutoEnable to True
+    End_Procedure 
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+    End_Procedure
+
+    Procedure OnClick
+        Handle ho
+        Integer iRetval
+        Boolean bOk bOpen
+        String sFile
+
+        Get YesNo_Box "Are you sure you want to delate all records in the log?" to iRetval
+        If (iRetval = MBR_NO) Begin
+            Procedure_Return
+        End
+        If (Active_State(Self)) Begin
+            Send StartWorkingMessage "Deleting Log data..."
+        End
+        Send Cursor_Wait of Cursor_Control
+        Move (oSncLog_grd(Self)) to ho
+        
+        Move False to bOk
+        Close SncLog
+        Send Ignore_Error of Error_Info_Object DFERR_CANT_OPEN_DATA_FILE
+        Send Ignore_Error of Error_Info_Object DFERR_FILE_ACCESS_VIOLATION
+        Open SncLog Mode DF_EXCLUSIVE  
+        Get_Attribute DF_FILE_OPENED of SncLog.File_Number to bOpen
+        If (bOpen = False) Begin
+            Close SncLog
+            Open SncLog
+        End 
+        Else Begin
+            ZeroFile SncLog
+            Move True to bOk
+        End 
+        If (bOk = False) Begin
+            Send StopWorkingMessage
+            Send Cursor_Ready of Cursor_Control
+            
+            Get YesNo_Box ;
+            "Could not open the file/table in exclusive mode. It is open by another user or application on this machine. Do you want to delete it record by record? (This can take considerable time if there are many log records.)" to iRetval
+            If (iRetval = MBR_YES) Begin
+                If (Active_State(Self)) Begin
+                    Send StartWorkingMessage "Deleting Log data..."
+                End
+                Send Cursor_Wait of Cursor_Control
+                If (ho <> 0) Begin
+                    Set Dynamic_Update_State of ho to False
+                End
+                Clear SncLog
+                Repeat
+                    Find Gt SncLog.ID
+                    If (Found) Begin
+                        Delete SncLog
+                    End
+                Until (Not(Found))
+                
+                Move True to bOk
+                If (ho <> 0) Begin
+                    Set Dynamic_Update_State of ho to True
+                    Send Ignore_Error of Error_Info_Object DFERR_REC_NOT_FOUND
+                    Send Beginning_Of_Data of ho
+                    Send Trap_Error   of Error_Info_Object DFERR_REC_NOT_FOUND
+                End 
+            End 
+        End 
+        If (bOk = True) Begin
+            Reread SncSys
+                Move 0 to SncSys.SncLogID
+                SaveRecord SncSys
+            Unlock
+        End 
+        Send Trap_Error of Error_Info_Object DFERR_CANT_OPEN_DATA_FILE
+        Send Trap_Error of Error_Info_Object DFERR_FILE_ACCESS_VIOLATION
+        If (ho <> 0) Begin
+            Set Dynamic_Update_State of ho to True
+            Send Beginning_of_Data of ho
+        End 
+        Send StopWorkingMessage
+        Send Cursor_Ready of Cursor_Control
+    End_Procedure  
+    
+    Function IsEnabled Returns Boolean
+        Boolean bBuilderMode bAllowDelete
+        
+        Move True to bBuilderMode
+        Move True to bAllowDelete
+        Get pbCMBuilderMode of ghoApplication to bBuilderMode
+        If (bBuilderMode = False) Begin
+            Move SncSys.AllowDeleteLog to bAllowDelete 
+        End                      
+        Function_Return (bAllowDelete = True)
+    End_Function
+
+End_Class 

@@ -1,0 +1,13 @@
+//AB/ OBJECTDEF
+Object
+    //AB-StoreStart
+    //send DoProcess to this BPO to start the business process
+    //DoProcess is a predefined method in the BusinessProcess class
+    //    send DoProcess to BusinessProcess1
+
+    //place your processing code into Procedure OnProcess
+    //OnProcess is a predefined method in the BusinessProcess class
+    Procedure OnProcess
+    End_Procedure  // OnProcess
+    //AB-StoreEnd
+End_Object

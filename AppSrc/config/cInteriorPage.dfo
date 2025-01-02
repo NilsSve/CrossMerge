@@ -1,0 +1,17 @@
+//AB/ OBJECTDEF
+Object
+   //AB-StoreStart
+   //Function ConfirmPageChange Integer iDirection Returns Integer
+   //   Function_Return True
+   //End_Function // ConfirmPageChange
+
+   //Procedure OnEntering Integer iFrom Integer iDirection
+   //End_Procedure // OnEntering
+
+   //Procedure OnPageChange Integer iFrom Integer iTo Integer iDirection
+   //End_Procedure // OnPageChange
+
+   //Procedure OnLeaving Integer iTo Integer iDirection
+   //End_Procedure // OnLeaving
+   //AB-StoreEnd
+End_Object

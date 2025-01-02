@@ -1,0 +1,241 @@
+//****************************************************************************
+// $Module type: CLASS
+// $Module name: cParentFieldsTreeview.pkg
+// $Author     : Nils Svedmyr
+// Created     : 2001-08-16 @ 21:58
+//
+// Description :
+//
+// $Rev History
+//    2001-08-16  Module header created
+//****************************************************************************
+Use cRdsTreeView.pkg
+Use SyncFuncs.pkg
+Open SncTable
+
+Class cParentFieldsTreeview is a cRdsTreeView
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        Set pbFullRowSelect     to True
+        Set pbHotTracking       to False
+        Set pbShowTooltips      to True
+        Set pbSingleExpand      to False
+//        Set piBackColor         to clNone // Will be provided by Windows.
+//        Set piTextColor         to clNone // Will be provided by Windows.
+        Set TreeButtonsState    to False
+        Set TreeEditLabelsState to False
+        Set TreeLinesState      to True
+        Set TreeRetainSelState  to True
+        Set TreeRootLinesState  to True
+        Set TreeSortedState     to False
+        Set Oem_Translate_State to False
+
+        Property Handle phoChild 0 // Must be set in the object.
+        Property Integer piFile  0
+        Property Boolean pbFrom True
+
+        On_Key Key_Ctrl+Key_X   Send DoCopyItem
+        On_Key kEnter           Send DoCopyItem
+        On_Key kSpace           Send DoCopyItemSpace
+        On_Key Key_Insert       Send DoInsertItem
+        On_Key Key_F6           Send Switch
+        On_Key Key_Shift+Key_F6 Send Switch_Back
+        On_Key kSave_Record   Send Request_Save of (Main_DD(Self))
+        On_Key Key_Ctrl+Key_S Send Request_Save of (Main_DD(Self))
+    End_Procedure
+
+    Procedure DoCreateTree
+        Handle hItem
+        Integer iFields iFile iCount iType iStart iOpen
+        String sFieldName sSpace sDriver
+
+        Send DoDeleteAllData
+        Get piFile to iFile
+        If (iFile <> 0) Begin
+            Get_Attribute DF_FILE_OPENED of iFile to iOpen
+        End
+        If (not(iOpen)) Begin
+            Procedure_Return
+            //      If (pbFrom(Self)) Get Field_Current_Value of (Main_DD(Self)) Field SncTable.FromDataTable to sTable
+            //      Else              Get Field_Current_Value of (Main_DD(Self)) Field SncTable.ToDataTable   to sTable
+            //      Move (RTrim(sTable)) to sTable
+            //      Send Stop_Box ("The table" * sTable * "has been closed. Cannot create parent treeview")
+        End // If Not iOpen Begin
+        Set Dynamic_Update_State to False
+        Get_Attribute DF_FILE_NUMBER_FIELDS   of iFile to iFields
+        Get_Attribute DF_FILE_DRIVER          of iFile to sDriver
+        If (sDriver = DATAFLEX_ID or sDriver = DFBTRDRV_ID) ;
+            Move 0 to iStart
+        Else Begin
+            Move 1 to iStart
+        End
+
+        For iCount From iStart to iFields
+            Move "" to sSpace // We need to use spaces for field numbers since list is sorted.
+            Get_Attribute DF_FIELD_TYPE        of iFile iCount  to iType
+            If (iType <> DF_OVERLAP) Begin
+                If (iCount >=  0 and iCount < 10) Begin
+                    Move "  " to sSpace
+                End
+                Else If (iCount >= 10 and iCount < 100) Begin
+                    Move " "  to sSpace
+                End
+                Get FieldSpecs iFile iCount                       to sFieldName
+                Get AddTreeItem (sSpace + String(iCount) * "-" * sFieldName) 0 iCount 0 0 to hItem
+            End
+        Loop
+        If (phoChild(Self)) Begin
+            Set piFile of (phoChild(Self)) to iFile
+        End
+        Set Dynamic_Update_State to True
+        Send Paint
+    End_Procedure
+
+    Function PosSelectionField String sSelFields Integer iCount Returns Integer // Complex integer; Hi=Length, Low=Position.
+        Integer iRetval iPos iField iStart
+        Repeat
+            Move (Pos(' ', sSelFields)) to iPos
+            Move (Mid(sSelFields, (iPos - iStart -1), (iStart + 1))) to iField
+            If (Abs(iField) = iCount) Break
+            Move (Replace(' ', sSelFields, '|')) to sSelFields // Replace space with another character.
+            Move iPos to iStart
+        Until (Not(sSelFields contains ' '))
+        If (Abs(iField) = iCount) Begin
+            Move (((iPos - iStart -1) * 65536) + (iStart +1)) to iRetval
+        End
+        Function_Return iRetval
+    End_Function
+
+    Procedure OnItemDblClick Handle hItem
+        Send DoCopyToChildItem hItem
+    End_Procedure
+
+    Procedure DoCopyItem
+        Handle hItem
+        Get CurrentTreeItem to hItem
+        Send DoCopyToChildItem hItem
+    End_Procedure
+
+    Procedure DoCopyToChildItem Handle hItem
+        Handle ho
+        Integer iData
+        String  sLabel
+        If Not hItem Begin
+            Procedure_Return
+        End
+        Get phoChild to ho
+        If (not(ho)) Begin
+            Procedure_Return
+        End
+        Get ItemLabel hItem to sLabel
+        Get ItemData  hItem to iData
+        //    Send DoDeleteItem hItem
+        If ho Begin
+            Send DoAddItem of ho sLabel iData
+            Get NextSiblingItem hItem to hItem
+            If hItem Begin
+                Set CurrentTreeItem to hItem
+            End
+        End // If ho Begin
+    End_Procedure
+
+    // We need a special procedure for the space key,
+    // because Windows 'auto' highlights the next item:
+    // Note: This will _not_ auto move to the next item (can't get it to work properly)
+    Procedure DoCopyItemSpace
+        Handle ho
+        Integer iData
+        String  sLabel
+        Handle hItem
+        Get CurrentTreeItem to hItem
+        If Not hItem Begin
+            Procedure_Return
+        End
+        Get phoChild to ho
+        If Not ho Begin
+            Procedure_Return
+        End
+        Get ItemLabel hItem to sLabel
+        Get ItemData  hItem to iData
+        If ho Begin
+            Send DoAddItem of ho sLabel iData
+        End
+    End_Procedure
+
+    Procedure DoInsertItem
+        Handle ho hItem
+        Integer iData
+        String sLabel
+        Get phoChild to ho
+        If Not ho Begin
+            Procedure_Return
+        End
+        Get CurrentTreeItem to hItem
+        If Not hItem Begin
+            Get RootItem        to hItem
+            Set CurrentTreeItem to hItem
+        End // If Not hItem Begin
+        Get ItemLabel hItem to sLabel
+        Get ItemData  hItem to iData
+        //    Send DoDeleteItem hItem
+        If ho Begin
+            Send DoInsertItem of ho sLabel iData
+            Get NextSiblingItem hItem to hItem
+            If hItem Begin
+                Set CurrentTreeItem to hItem
+            End
+        End // If ho Begin
+    End_Procedure
+
+    Procedure Set RootItem Handle hItem
+        Send Windows_Message TVM_GETNEXTITEM TVGN_ROOT hItem
+    End_Procedure
+
+    Procedure DoAddBackItem String sLabel Integer iData
+        Handle hItem
+        If (sLabel contains "+") Begin
+            Send DoSplitLabel sLabel iData
+        End
+        Else Begin
+            Get AddTreeItem sLabel 0 iData 0 0 to hItem
+        End
+    End_Procedure
+
+    Procedure DoSplitLabel String sText Integer iData
+        Handle hItem
+        Integer iPos
+        String sLabel sSpace
+        Move (Trim(sText)) to sText
+        Repeat
+            Move (Pos("+", sText))             to iPos
+            Move (Left(sText, (iPos -2)))      to sLabel
+            Move (Pos("-", sText))             to iPos
+            Move (Left(sText, (iPos -2)))      to iData
+            Move "" to sSpace
+            If      (iData >   0 and iData < 10) Begin
+                Move "  " to sSpace
+            End
+            Else If (iData >= 10 and iData < 100) Begin
+                Move " "  to sSpace
+            End
+            Get AddTreeItem (sSpace + String(sLabel)) 0 iData 0 0 to hItem
+            If (sText contains "+") Begin
+                Move (Trim(Replace((sLabel * "+"), sText, "")))  to sText
+            End
+            Else Begin
+                Move (Trim(Replace(sLabel, sText, "")))          to sText
+            End
+        Until (Trim(sText) = "")
+    End_Procedure
+
+    Procedure DoDeleteAllData
+        Handle hRootItem
+        Get RootItem to hRootItem
+        While (hRootItem <> 0)
+            Send DoDeleteItem hRootItem
+            Get RootItem to hRootItem
+        Loop
+    End_Procedure
+
+End_Class

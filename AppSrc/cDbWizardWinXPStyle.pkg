@@ -1,0 +1,896 @@
+// **************************************************************************** //
+// **                                                                        ** //
+// ** Class   : cDbWizardWinXPStyle - Windows XP Style                       ** //
+// **                                                                        ** //
+// ** Purpose : This package defines the following classes:                  ** //
+// **           cDbWizard                                                    ** //
+// **           cDbWelcomePage                                               ** //
+// **           cDbInteriorPage                                              ** //
+// **           cDbCompletionPage                                            ** //
+// **                                                                        ** //
+// **           This package also defines the following private classes:     ** //
+// **           cWizardTextBox  cBackButton     cNextButton                  ** //
+// **           cCancelButton   cDbWizardPage   cDbExteriorPage              ** //
+// **                                                                        ** //
+// **                                                                        ** //
+// ** Author  : Emil Stojanov                                                ** //
+// **           Quantaris                                                    ** //
+// **                                                                        ** //
+// ** Date    : 16-10-2000                                                   ** //
+// **                                                                        ** //
+// ** Update  : March, 30 2013 NGS *** Major rewrite! ***                    ** //
+// **                                                                        ** //
+// ** Usage   : Select "New - Dialog/Lookup" from the Studio,                ** //
+// **           then select "DbWizard"                                       ** //
+// **                                                                        ** //
+// **************************************************************************** //
+Use Windows.Pkg   // Standard Windows package
+Use DfLine.Pkg    // LineControl class
+Use DfBitmap.Pkg  // BitmapContainer class
+Use DfClient.Pkg  // dbContainer3d class
+Use Data_Set.Pkg  // to support dataset's
+
+Register_Function piCurrentPage    Returns Integer
+Register_Function pbWelcomePage    Returns Integer
+Register_Function pbCompletionPage Returns Integer
+Register_Function piWelcomePage    Returns Integer
+Register_Function piCompletionPage Returns Integer
+
+Register_Procedure CancelWizard
+
+Define DS_3DLOOK     For |CI$0004
+Define DS_MODALFRAME For |CI$80   // Can be combined with WS_CAPTION
+Define DS_SETFONT    For |CI$40   // User specified font for Dlg controls
+
+Define Wizard_Forward_Navigate  For 2
+Define Wizard_Backward_Navigate For 1
+
+Define CS_Next   For ">> &Next"
+Define CS_Back   For "<< &Back"
+Define CS_Cancel For "Cancel"
+Define CS_Finish For "Finish"
+Define CS_CloseQuestion For "Are you sure you want to close the wizard?"
+
+Define CI_TopSectionHeight     For 34
+Define CI_BottomSectionHeight  For 34
+Define CI_WizardSideImageWidth For 124
+
+{ DesignerClass=cDTTextBox }
+{ OverrideProperty=Color InitialValue=clWhite }
+{ OverrideProperty=TextColor InitialValue=clWindowText }
+{ OverrideProperty=Justification_Mode InitialValue=JMode_Left }
+Class cWizardTextBox is a TextBox
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        Set Auto_Size_State to False
+        Set Justification_Mode to jMode_Left
+    End_Procedure
+
+    Procedure Set Label String sLabel
+        Set Value Item 0 to (Replaces ("\n", sLabel, Character(13)))
+    End_Procedure
+
+    Function Label Returns String
+        Function_Return (Replaces (Character(13), Value (Self, 0), "\n"))
+    End_Function
+End_Class
+
+Register_Function phoModalPanelWizardObject Returns Handle
+Register_Function phoWizardObject           Returns Handle
+
+{ DesignerClass=cDTButton }
+{ OverrideProperty=Location InitialValue=220,192 }
+{ OverrideProperty=Size InitialValue=14,50 }
+Class cBackButton is a Button
+    Procedure Construct_Object
+        Integer iSize
+        Handle ho hoParent
+        Forward Send Construct_Object
+
+        Set Size to 14 50
+        Get Size of (Parent(Self)) to iSize
+        Set Location to (Hi(iSize) - 25) (Low(iSize) - 170) // 237 195
+
+        Set Label to CS_Back
+        Set peAnchors to anBottomRight
+
+        Get phoModalPanelWizardObject to hoParent
+        Get phoWizardObject of hoParent to ho
+        Set phoBackButton of ho to Self
+    End_Procedure
+
+    Procedure OnClick
+        Handle ho hoParent
+        Get phoModalPanelWizardObject to hoParent
+        Get phoWizardObject of hoParent to ho
+        Send SwitchPage of ho Wizard_Backward_Navigate
+    End_Procedure
+
+End_Class
+
+{ DesignerClass=cDTButton }
+{ OverrideProperty=Location InitialValue=220,246 }
+{ OverrideProperty=Size InitialValue=14,50 }
+Class cNextButton is a Button
+    Procedure Construct_Object
+        Integer iSize
+        Handle ho hoParent
+        Forward Send Construct_Object
+
+        Set Size to 14 50
+        Get Size of (Parent(Self)) to iSize
+        Set Location to (Hi(iSize) - 25) (Low(iSize) - 115) // 237 248
+
+        Set Label to CS_Next
+        Set Default_State to True
+        Set peAnchors to anBottomRight
+
+        Get phoModalPanelWizardObject to hoParent
+        Get phoWizardObject of hoParent to ho
+        Set phoNextButton   of ho to Self
+    End_Procedure
+
+    Procedure OnClick
+        Handle ho hoParent
+        Integer iCurrentPage iCompletionPage
+
+        Get phoModalPanelWizardObject to hoParent
+        Get phoWizardObject of hoParent to ho
+        Get piCurrentPage    of ho to iCurrentPage
+        Get piCompletionPage of ho to iCompletionPage
+        If (iCurrentPage = iCompletionPage) Begin
+            Send FinishWizard of ho
+        End
+        Else Begin
+            Send SwitchPage of ho Wizard_Forward_Navigate
+        End
+    End_Procedure
+End_Class
+
+{ DesignerClass=cDTButton }
+{ OverrideProperty=Location InitialValue=220,300 }
+{ OverrideProperty=Size InitialValue=14,50 }
+Class cCancelButton is a Button
+    Procedure Construct_Object
+        Integer iSize
+        Handle ho hoParent
+        Forward Send Construct_Object
+
+        Set Label to CS_Cancel
+        Get Size of (Parent(Self)) to iSize
+        Set Location to (Hi(iSize) - 25) (Low(iSize) - 60) // 237 302
+        Set peAnchors to anBottomRight
+
+        Get phoModalPanelWizardObject to hoParent
+        Get phoWizardObject of hoParent to ho
+        Set phoCancelButton of ho to Self
+    End_Procedure
+
+    Procedure OnClick
+        Handle ho hoParent
+        Get phoModalPanelWizardObject to hoParent
+        Get phoWizardObject of hoParent to ho
+        Send CancelWizard     of ho
+    End_Procedure
+
+End_Class
+
+{ OverrideProperty=Size InitialValue=2,360 }
+{ OverrideProperty=Location InitialValue=213,0 }
+Class cWizardBottomLine is a LineControl
+    Procedure Construct_Object
+        Integer iSize
+        Forward Send Construct_Object
+
+        Get Size of (Parent(Self)) to iSize
+        Set Size to 2 (Low(iSize))
+        Set Location to (Hi(iSize) - CI_BottomSectionHeight) 0  // 228 0
+
+    End_Procedure
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+        Set peAnchors to anBottomLeftRight
+    End_Procedure
+
+End_Class
+
+{ OverrideProperty=Border_Style InitialValue=Border_None }
+Class cDbModalPanelWizard is a dbModalPanel
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        Property Handle phoModalPanelWizardObject
+        Set phoModalPanelWizardObject to Self
+
+        // Property gets set by the cDbWizard class and is
+        // a handle to that child object.
+        Property Handle phoWizardObject
+
+        Set Locate_Mode to CENTER_ON_PARENT
+        Set Auto_Clear_DEO_State to False
+        Set Border_Style to Border_Thick
+
+        On_Key kEnter Send ActivateNextButton
+    End_Procedure
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+        Set piMinSize to (Hi(Size(Self)) -50) (Low(Size(Self)))
+        Set piMaxSize to (Hi(Size(Self)) +50) (Low(Size(Self) + 300))
+        Send Page of (phoWizardObject(Self)) False
+    End_Procedure
+
+End_Class
+
+{ CompositeClass=cWizardPage }
+{ DesignerClass=cDTTabDialog }
+{ OverrideProperty=Size InitialValue=214,360 }
+{ OverrideProperty=Location InitialValue=0,0 }
+{ ComponentType=DGClass }
+Class cDbWizard is a dbContainer3d
+    Procedure Construct_Object
+        Handle hoParent
+        Integer iSize
+        Forward Send Construct_Object
+
+        Property String  psHeaderGraphic
+        Property Boolean pbAskBeforeClosing False
+
+        Property Integer piCurrentPage    -1
+        Property Integer piWelcomePage    -1
+        Property Integer piCompletionPage -1
+        { Visibility=Private }
+        Property String  Private.psLabel
+        { Visibility=Private }
+        Property Handle  phoWizardPages
+        Property Handle  phoBackButton
+        Property Handle  phoNextButton
+        Property Handle  phoCancelButton
+
+        // Handle to this object:
+        Property Handle  phoWizardPanel
+        Set phoWizardPanel to Self
+
+        Delegate Get phoModalPanelWizardObject to hoParent
+        // Handle to this object in outer most panel object:
+        Set phoWizardObject of hoParent to Self
+
+        Set Minimize_Icon to False
+        Set Maximize_Icon to False
+
+        Set Location  to 0 0
+        Get Size of hoParent to iSize
+        Set Size to (Hi(iSize) - CI_BottomSectionHeight -1) (Low(iSize))
+
+        Set Border_Style to Border_None
+        Set peAnchors to anAll
+
+        Object oWizardPages is an Array
+            // Arrays does normally not delegate messages.
+            Set Delegation_Mode to Delegate_to_Parent
+            Set phoWizardPages to Self
+        End_Object
+
+        //      Set Window_Style to WS_POPUPWINDOW False
+        //      Set Window_Style to WS_CLIPCHILDREN False
+        //      Set Window_Style to WS_CAPTION True
+        //      Set Window_Style to WS_POPUP True
+        //      Set Window_Style to DS_3DLOOK True
+        //      Set Window_Style to DS_SETFONT True
+        //      Set Window_Style to DS_MODALFRAME True
+
+        //      Set Extended_Window_Style to WS_EX_DLGMODALFRAME True
+        //      Set Extended_Window_Style to WS_EX_CONTROLPARENT True
+        On_Key kEnter            Send ActivateNextButton
+        On_Key Key_Alt+Key_N     Send ActivateNextButton
+        On_Key Key_Ctrl+Key_N    Send ActivateNextButton
+        On_Key Key_Ctrl+Key_Tab  Send ActivateNextButton
+        On_Key Key_Alt+Key_B     Send ActivateBackButton
+        On_Key Key_Ctrl+Key_B    Send ActivateBackButton
+        On_Key Key_Shift+Key_Tab Send ActivateBackButton
+        On_Key kClose_Panel      Send CancelWizard
+        On_Key kCancel           Send CancelWizard
+    End_Procedure
+
+    Procedure ActivateNextButton
+        Send KeyAction of (phoNextButton(Self))
+    End_Procedure
+
+    Procedure ActivateBackButton
+        Send KeyAction of (phoBackButton(Self))
+    End_Procedure
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+        // All of these needs to be done after the end construct object,
+        // else they will be painted over by other objects.
+        Set piMinSize to (Hi(Size(Self))) (Low(Size(Self)))
+    End_Procedure
+
+    Procedure Set psLabel String sLabel
+        Set private.psLabel to sLabel
+        Set Label to sLabel
+    End_Procedure
+
+    Function psLabel Returns String
+        String sLabel
+        Get private.psLabel to sLabel
+        Function_Return sLabel
+    End_Function
+
+    Function NumberOfPages Returns Integer
+        Integer iPageCount
+        Get Item_Count of (phoWizardPages(Self)) to iPageCount
+        Function_Return iPageCount
+    End_Function
+
+    Procedure Page Integer iPageObject
+        Integer iWelComePage
+        Handle hoWizardPages
+        Forward Send Page iPageObject
+        Set piCurrentPage to 0
+        Get phoWizardPages  to hoWizardPages
+        Send Delete_Data of hoWizardPages
+        Broadcast Send RegisterPage
+        Get piWelComePage to iWelComePage
+        Send SwitchToPage -1 iWelComePage Wizard_Forward_Navigate
+    End_Procedure
+
+    Procedure AddPage Integer hoObject
+        Integer iPageCount
+        Get NumberOfPages to iPageCount
+        If (pbWelcomePage(hoObject)) Begin
+            Set piWelcomePage to iPageCount
+        End
+        If (pbCompletionPage(hoObject)) Begin
+            Set piCompletionPage to iPageCount
+        End
+        Set Value of (phoWizardPages(Self)) Item iPageCount to hoObject
+    End_Procedure
+
+    Procedure SwitchToPage Integer iFrom Integer iTo Integer iDirection
+        Integer hoFrom hoTo hoWizardPages
+
+        Get phoWizardPages to hoWizardPages
+        Get Value of hoWizardPages Item iTo to hoTo
+        If (iFrom <> -1) Begin
+            Get Value of hoWizardPages Item iFrom to hoFrom
+            Send OnLeaving    of hoFrom iTo iDirection
+            Send OnPageChange of hoFrom iFrom iTo iDirection
+            Set Visible_State of hoFrom to False
+        End
+
+        Set piCurrentPage to iTo
+        Set Visible_State of hoTo to True
+
+        // Necessary to re-display the Welcome page upon second wizard activation.s
+        Send Page of hoTo
+
+        Set Enabled_State of (phoBackButton(Self)) to (not(pbWelcomePage(hoTo)))
+        If (pbCompletionPage(hoTo)) Begin
+            Set Label of (phoNextButton(Self)) to CS_Finish
+        End
+        Else Begin
+            Set Label of (phoNextButton(Self)) to CS_Next
+        End
+        Send OnEntering to hoTo iFrom iDirection
+    End_Procedure
+
+    Procedure SwitchPage Integer iDirection
+        Integer hoFrom hoTo iFrom iTo hoWizardPages
+        Boolean bOk
+
+        Get phoWizardPages to hoWizardPages
+
+        Get piCurrentPage to iFrom
+        Get Value of hoWizardPages Item iFrom to hoFrom
+        If (iDirection = Wizard_Backward_Navigate) Begin
+            Get piPreviousPage of hoFrom to iTo
+        End
+        Else Begin
+            Get piNextPage of hoFrom to iTo
+        End
+        If (iTo >= 0) Begin
+            Get Value of hoWizardPages Item iTo to hoTo
+            Get ConfirmPageChange of hoFrom iDirection to bOk
+            If (bOk = True) Begin
+                Send SwitchToPage iFrom iTo iDirection
+            End
+        End
+    End_Procedure
+
+    Procedure FinishWizard
+        Send Close_Panel
+    End_Procedure
+
+    Procedure CancelWizard
+        Integer iResult
+        Boolean bAskBeforeClosing
+
+        Get pbAskBeforeClosing to bAskBeforeClosing
+        If (bAskBeforeClosing = True) Begin
+            Get YesNo_Box CS_CloseQuestion (psLabel(Self)) to iResult
+            If (iResult = MBR_NO) Begin
+                Procedure_Return
+            End
+        End
+        Send Close_Panel
+    End_Procedure
+
+    Procedure OnEntering Integer iFrom Integer iDirection
+        If (Active_State(Self)) Begin
+            Send Activate to (phoNextButton(Self))
+        End
+    End_Procedure
+
+    Procedure OnPageChange Integer iFrom Integer iTo Integer iDirection
+    End_Procedure
+
+    Procedure OnLeaving Integer iTo Integer iDirection
+    End_Procedure
+
+End_Class
+
+{ DesignerClass=cDTTextBox }
+{ OverrideProperty=Color InitialValue=clWhite }
+{ OverrideProperty=TextColor InitialValue=clWindowText }
+{ OverrideProperty=Justification_Mode InitialValue=JMode_Left }
+{ OverrideProperty=Size InitialValue=10,250 }
+{ OverrideProperty=Location InitialValue=7,14 }
+{ OverrideProperty=FontWeight InitialValue=fw_Bold }
+{ Property=Label InitialValue="Title Text" }
+{ OverrideProperty=Border_style InitialValue=Border_Normal }
+Class cWizardTopTitle is a cWizardTextBox
+    Procedure Construct_Object
+        Integer iSize
+        Forward Send Construct_Object
+
+        Set Size to 10 150
+        Get Size of (phoWizardPanel(Self)) to iSize
+        Set Size to 10 (Low(iSize) - 100) //10 250
+        Set Location to 7 14
+
+        Set FontWeight to fw_Bold
+        Set Color to clWhite
+
+        Set phoWizardTopTitle of (Parent(Self)) to Self
+    End_Procedure
+End_Class
+
+{ DesignerClass=cDTTextBox }
+{ OverrideProperty=Color InitialValue=clWhite }
+{ OverrideProperty=TextColor InitialValue=clWindowText }
+{ OverrideProperty=Justification_Mode InitialValue=JMode_Left }
+{ OverrideProperty=Size InitialValue=20,250 }
+{ OverrideProperty=Location InitialValue=17,28 }
+{ Property=Label InitialValue="Title Description" }
+{ OverrideProperty=Border_style InitialValue=Border_Normal }
+Class cWizardTopDescription is a cWizardTextbox
+    Procedure Construct_Object
+        Integer iSize
+        Forward Send Construct_Object
+
+        Set Size to 20 180
+        Get Size of (phoWizardPanel(Self)) to iSize  // 262 362
+        Set Size to 20 (Low(iSize) - 100) //20 280
+        Set Location to 17 28
+
+        Set Color to clWhite
+
+        Set phoWizardTopDescription of (Parent(Self)) to Self
+    End_Procedure
+End_Class
+
+{ OverrideProperty=Color InitialValue=clWhite }
+{ OverrideProperty=TextColor InitialValue=clWindowText }
+{ DesignerClass=cDTContainer3d }
+{ OverrideProperty=Size InitialValue=36,40 }
+{ OverrideProperty=Location InitialValue=1,310 }
+{ OverrideProperty=Border_style InitialValue=Border_Normal }
+{ OverrideProperty=peAnchors InitialValue=anTopRight }
+Class cWizardTopRightBitmap is a BitmapContainer
+    Procedure Construct_Object
+        Integer iSize
+        Forward Send Construct_Object
+
+        Set Size to 36 40
+        Get Size of (phoWizardPanel(Self)) to iSize  // 262 362
+        Set Location to 1 (Low(iSize) - 44)  //1 318
+
+        Set Color to clWhite
+        Set Border_Style to Border_None
+        Set Focus_Mode to NonFocusable
+        Set Bitmap_Style to Bitmap_Center
+        Set peAnchors to anTopRight
+
+        Set phoWizardTopRightBitmap of (Parent(Self)) to Self
+        Set Bitmap to (psHeaderGraphic(phoWizardPanel(Self)))
+    End_Procedure
+End_Class
+
+{ DesignerClass=cDTContainer3d }
+{ OverrideProperty=Size InitialValue=37,500 }
+{ OverrideProperty=Color InitialValue=clWhite }
+Class cWizardTopContainer is a Container3d
+    Procedure Construct_Object
+        Integer iSize
+        Forward Send Construct_Object
+
+        Set Size to 37 500
+        Get Size of (phoWizardPanel(Self)) to iSize  // 262 362
+        Set Size to 37 (Low(iSize)) // 37 362
+
+        Set Color to clWhite
+        Set Border_Style to Border_None
+        Set peAnchors to anTopLeftRight
+
+        Set phoWizardTopContainer of (Parent(Self)) to Self
+    End_Procedure
+End_Class
+
+{ DesignerClass=cDTContainer3d }
+{ OverrideProperty=Color InitialValue=clWhite }
+{ OverrideProperty=Size InitialValue=160,124 }
+{ OverrideProperty=Location InitialValue=39,0 }
+{ OverrideProperty=Border_style InitialValue=Border_Normal }
+Class cWizardSideImage is a BitmapContainer
+    Procedure Construct_Object
+        Integer iSize
+        Handle ho hoParent
+        Forward Send Construct_Object
+
+        Get phoModalPanelWizardObject to hoParent
+        Get phoWizardObject of hoParent to ho
+        Get Size of ho to iSize
+
+        Set Size to (Hi(iSize)) CI_WizardSideImageWidth
+        Set Location to (CI_TopSectionHeight +5) 0
+
+        Set Border_Style to Border_None
+        Set Focus_Mode   to NonFocusable
+        Set Color to clWhite
+        Set peAnchors to anTopBottomLeft
+
+        Set phoWizardSideImage of (Parent(Self)) to Self
+    End_Procedure
+End_Class
+
+{ DesignerClass=cDTTextBox }
+{ OverrideProperty=Color InitialValue=clWhite }
+{ OverrideProperty=TextColor InitialValue=clWindowText }
+{ OverrideProperty=Justification_Mode InitialValue=JMode_Left }
+{ OverrideProperty=Size InitialValue=25,190 }
+{ OverrideProperty=Location InitialValue=170,159 }
+{ Property=Label InitialValue="Bottom Text" }
+{ OverrideProperty=Border_style InitialValue=Border_Normal }
+Class cWizardBottomText is a cWizardTextBox
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        // The size & location gets reset in the Page message below.
+        Set Size to 25 190
+        Set Location to 160 (CI_WizardSideImageWidth + 20)
+
+        Set peAnchors to anBottomRight
+        Set phoWizardBottomText of (Parent(Self)) to Self
+    End_Procedure
+
+    //    Procedure Page Integer iPageObject
+    //        Integer iContainerSize iSize iLocation
+    //        Handle hoWizardBottomText
+    //
+    //        Move Self to hoWizardBottomText
+    //        Get GuiSize of (Parent(Self)) to iContainerSize
+    //        Get GuiLocation of hoWizardBottomText to iLocation
+    //        Set GuiLocation of hoWizardBottomText to (Hi(iContainerSize) - 44) (Low(iLocation))
+    //
+    //        Forward Send Page iPageObject
+    //    End_Procedure
+
+End_Class
+
+{ OverrideProperty=Size InitialValue=2,360 }
+{ OverrideProperty=Location InitialValue=37,0 }
+Class cWizardTopSectionLine is a LineControl
+    Procedure Construct_Object
+        Integer iSize
+        Handle ho hoParent
+        Forward Send Construct_Object
+
+        Get phoModalPanelWizardObject to hoParent
+        Get phoWizardObject of hoParent to ho
+        Get Size of ho to iSize
+        Set Size to 2 (Low(iSize))
+        Set Location to (CI_TopSectionHeight +3) 0 // 37 0
+
+        Set peAnchors to anTopLeftRight
+    End_Procedure
+End_Class
+
+{ DesignerClass=cDTTabPage }
+{ OverrideProperty=Size InitialValue=186,362 }
+Class cDbWizardPage is a dbContainer3d
+    Procedure Construct_Object
+        Integer iSize
+        Forward Send Construct_Object
+
+        { InitialValue=False }
+        { DesignTime=False }
+        Property Integer pbWelcomePage Public False
+        { InitialValue=False }
+        { DesignTime=False }
+        Property Integer pbCompletionPage Public False
+        Property Integer Private.piPreviousPage Public -1
+        Property Integer Private.piNextPage Public -1
+
+        Get Size of (phoWizardPanel(Self)) to iSize  // 262 362
+        Set Size to (Hi(iSize)) (Low(iSize))         // 228 362
+
+        Set Border_Style to Border_None
+        Set Visible_State to False
+        Set Attach_Parent_State to True
+        Set peAnchors to anAll
+
+        On_Key kEnter Send ActivateNextButton
+    End_Procedure
+
+    { InitialValue=0 }
+    Procedure Set piPreviousPage Integer iPage
+        Set Private.piPreviousPage to iPage
+    End_Procedure
+
+    Function piPreviousPage Returns Integer
+        Integer iPreviousPage
+
+        If (pbWelcomePage (Self)) Begin
+            Move -1 to iPreviousPage
+        End
+        Else Begin
+            If (Private.piPreviousPage (Self) = -1) Begin
+                Move (piCurrentPage (Self) - 1) to iPreviousPage
+            End
+            Else Begin
+                Move (Private.piPreviousPage (Self)) to iPreviousPage
+            End
+        End
+
+        Function_Return iPreviousPage
+    End_Function
+
+    { InitialValue=0 }
+    Procedure Set piNextPage Integer iPage
+        Set Private.piNextPage to iPage
+    End_Procedure
+
+    Function piNextPage Returns Integer
+        Integer iNextPage
+
+        If (pbCompletionPage (Self)) Begin
+            Move -1 to iNextPage
+        End
+        Else Begin
+            If (Private.piNextPage (Self) = -1) Begin
+                Move (piCurrentPage (Self) + 1) to iNextPage
+            End
+            Else Begin
+                Move (Private.piNextPage (Self)) to iNextPage
+            End
+        End
+
+        Function_Return iNextPage
+    End_Function
+
+    Function ConfirmPageChange Integer iDirection Returns Boolean
+        Function_Return True
+    End_Function
+
+    Procedure RegisterPage
+        Integer hoSelf hoParent
+        Move Self to hoSelf
+        Move (Parent(hoSelf)) to hoParent
+        Send AddPage of hoParent hoSelf
+    End_Procedure
+
+End_Class
+
+{ DesignerClass=cDTTabPage }
+{ OverrideProperty=Size InitialValue=186,362 }
+Class cDbInteriorPage is a cDbWizardPage
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Property Handle phoWizardTopContainer
+        Property Handle phoWizardTopRightBitmap
+        Property Handle phoWizardTopTitle
+        Property Handle phoWizardTopDescription
+        Property Handle phoWizardSideImage
+        Property Handle phoWizardBottomText
+
+        // We use private properties here because of a timing issue.
+        // The psTitle & psSubTitle is set at the top of the object,
+        // _before_ the objects has been constructed. So at first we
+        // "save" the strings in private properties, and later sets
+        // them in the correct child objects in this object's end_construct_object.
+
+        { Visibility=Private }
+        Property String Private.psTitle
+        { Visibility=Private }
+        Property String Private.psSubTitle
+
+        //        Object oWizardTopContainer is a cWizardTopContainer
+        //            Set phoWizardTopContainer to Self
+        //
+        //            Object oWizardTopTitle is a cWizardTopTitle
+        //                Set phoWizardTopTitle to Self
+        //            End_Object
+        //
+        //            Object oWizardTopDescription is a cWizardTopDescription
+        //                Set phoWizardTopDescription to Self
+        //            End_Object
+        //
+        //            Object oWizardTopRightBitmap is a cWizardTopRightBitmap
+        //                Set phoWizardTopRightBitmap to Self
+        //            End_Object
+        //
+        //        End_Object
+        //
+        //        Object oWizardTopSectionLine is a cWizardTopSectionLine
+        //        End_Object
+
+        On_Key kEnter Send ActivateNextButton
+    End_Procedure
+
+    { MethodType=Property }
+    Procedure Set psTitle String sValue
+        Set Private.psTitle to sValue
+    End_Procedure
+
+    { MethodType=Property }
+    Function psTitle Returns String
+        String sValue
+        Handle ho
+        Get phoWizardTopTitle to ho
+        If (ho > 0) Begin
+            Get psTitle of ho to sValue
+        End
+        Function_Return sValue
+    End_Function
+
+    { MethodType=Property }
+    Procedure Set psSubTitle String sValue
+        Set Private.psSubTitle to sValue
+    End_Procedure
+
+    { MethodType=Property }
+    Function psSubTitle Returns String
+        String sValue
+        Handle ho
+        Get phoWizardTopDescription to ho
+        If (ho > 0) Begin
+            Get psSubTitle of ho to sValue
+        End
+        Function_Return sValue
+    End_Function
+
+    Procedure End_Construct_Object
+        String sValue
+        Handle ho
+        Forward Send End_Construct_Object
+
+        Get phoWizardTopTitle to ho
+        If (ho > 0) Begin
+            Get Private.psTitle to sValue
+            Set Label of ho to sValue
+        End
+
+        Get phoWizardTopDescription to ho
+        If (ho > 0) Begin
+            Get Private.psSubTitle to sValue
+            Set Label of ho to sValue
+        End
+    End_Procedure
+
+End_Class
+
+{ Visibility=Private }
+{ OverrideProperty=Size InitialValue=186,362 }
+Class cDbExteriorPage is a cDbInteriorPage
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        // We use private properties here because of a timing issue.
+        // The psTitle & psSubTitle is set at the top of the object,
+        // _before_ the objects has been constructed. So at first we
+        // "save" the strings in private properties, and later sets
+        // them in the correct child objects in this object's end_construct_object.
+
+        { Visibility=Private }
+        Property String Private.psSideImage
+        { Visibility=Private }
+        Property String Private.psBottomText
+
+        //        Object oWizardSideImage is a cWizardSideImage
+        //            Set phoWizardSideImage to Self
+        //        End_Object
+        //
+        //        Object oWizardBottomText is a cWizardBottomText
+        //            Set phoWizardBottomText to Self
+        //        End_Object
+
+        On_Key kEnter Send ActivateNextButton
+    End_Procedure
+
+    { MethodType=Property }
+    Procedure Set psSideImage String sValue
+        Set Private.psSideImage to sValue
+    End_Procedure
+
+    { MethodType=Property }
+    Function psSideImage Returns String
+        String sValue
+        Handle ho
+        Get phoWizardSideImage to ho
+        If (ho > 0) Begin
+            Get psSideImage of ho to sValue
+        End
+        Function_Return sValue
+    End_Function
+
+    { MethodType=Property }
+    Procedure Set psBottomText String sValue
+        Set Private.psBottomText to sValue
+    End_Procedure
+
+    { MethodType=Property }
+    Function psBottomText Returns String
+        String sValue
+        Handle ho
+        Get phoWizardBottomText to ho
+        If (ho > 0) Begin
+            Get psBottomText of ho to sValue
+        End
+        Function_Return sValue
+    End_Function
+
+    Procedure End_Construct_Object
+        String sValue
+        Handle ho
+        Forward Send End_Construct_Object
+
+        Get phoWizardSideImage to ho
+        If (ho > 0) Begin
+            Get Private.psSideImage to sValue
+            Set Bitmap of ho to sValue
+        End
+
+        Get phoWizardBottomText to ho
+        If (ho > 0) Begin
+            Get Private.psBottomText to sValue
+            Set Label of ho to sValue
+        End
+    End_Procedure
+
+End_Class
+
+{ DesignerClass=cDTTabPage }
+{ OverrideProperty=Size InitialValue=186,362 }
+Class cDbCompletionPage is a cDbExteriorPage
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        Set pbWelcomePage to False
+        Set pbCompletionPage to True
+        On_Key kEnter Send ActivateNextButton
+    End_Procedure
+End_Class
+
+{ DesignerClass=cDTTabPage }
+{ OverrideProperty=Size InitialValue=186,362 }
+Class cDbWelcomePage is a cDbExteriorPage
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set pbWelcomePage to True
+        Set pbCompletionPage to False
+        On_Key kEnter Send ActivateNextButton
+    End_Procedure
+End_Class

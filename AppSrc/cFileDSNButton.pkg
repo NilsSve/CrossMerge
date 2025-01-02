@@ -1,0 +1,97 @@
+//****************************************************************************
+// $Module type: CLASS
+// $Module name: cFileDSNButton.pkg
+// $Author     : Nils Svedmyr
+// Created     : 2002-10-28 @ 10:25
+//
+// Description :
+//
+// $Rev History
+//    2002-10-28  Module header created
+//****************************************************************************
+Use cRDCButton.pkg
+Use SyncFuncs.pkg
+
+//{ OverrideProperty=piTransparentColor InitialValue=clWhite }
+{ OverrideProperty=Bitmap_Style InitialValue=Bitmap_Actual }
+{ OverrideProperty=Bitmap_Style DesignTime=False }
+Class cFileDSNButton is a cRDCButton
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        { InitialValue=True }
+        Property Boolean pbFrom True
+        Property Handle phoDD (Main_DD(Self))
+        
+        Set Enabled_State to False
+        Set psImage to "ActionOpen.ico"
+    End_Procedure 
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+    End_Procedure 
+
+    Procedure OnClick
+        String  sFile sStartDir sPath
+        Boolean bSelected
+        Handle ho hoDD
+        Get_Foreign_Profile_String "ODBC" "ODBC.INI\ODBC File DSN" "DefaultDSNDir" to sStartDir
+
+        Object oDialog is An Opendialog
+            Set Dialog_Caption      to 'Select a file data source'
+            Set Filter_String       to "Data Sources (*.dsn)|*.dsn|All files (*.*)|*.*"
+            Set PathMustExist_State to True
+            Set FilemustExist_State to True
+            Set NoChangeDir_State   to True
+            Set HideReadOnly_State  to True
+            If (sStartDir <> "" ) Begin
+                Set Initial_Folder  to sStartDir
+            End
+            Move Self to ho
+        End_Object 
+
+        Get Show_Dialog of ho to bSelected
+        If (bSelected) Begin
+            Get File_Name of ho to sFile
+        End
+        Send Destroy of ho
+
+        Get phoDD to hoDD
+        If (bSelected and (Length(sFile) > 0)) Begin
+            If (Length(sFile) > 150) Begin
+                Send Info_Box "Sorry, the length of the path and file name for the Data Source Name has been exceeded. Max length is 150."
+                Procedure_Return
+            End 
+            Get StripFile sFile to sPath
+            Get StripPath sFile to sFile
+            If (pbFrom(Self)) Begin
+                Set Field_Changed_Value of hoDD Field SncTable.FromServer   to sFile
+                Set Field_Changed_Value of hoDD Field SncTable.FromFilePath to sPath
+            End 
+            Else Begin
+                Set Field_Changed_Value of hoDD Field SncTable.ToServer     to sFile
+                Set Field_Changed_Value of hoDD Field SncTable.ToFilePath   to sPath
+            End 
+        End 
+        Else Begin
+            If (pbFrom(Self)) Begin
+                Set Field_Changed_Value of hoDD Field SncTable.FromServer   to ""
+                Set Field_Changed_Value of hoDD Field SncTable.FromFilePath to ""
+            End 
+            Else Begin
+                Set Field_Changed_Value of hoDD Field SncTable.ToServer     to ""
+                Set Field_Changed_Value of hoDD Field SncTable.ToFilePath   to ""
+            End 
+        End 
+        If (pbFrom(Self)) Begin
+            Get DDObjectId hoDD SncTable.File_Number "FromServer" to ho
+        End
+        Else Begin
+            Get DDObjectId hoDD SncTable.File_Number "ToServer"   to ho
+        End
+        If (ho) Begin
+            Send DoFindData of ho // DoFillComboAndTellDataTableCombo of ho
+        End
+    End_Procedure 
+
+End_Class

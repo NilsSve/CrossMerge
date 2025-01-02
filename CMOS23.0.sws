@@ -1,0 +1,16 @@
+[Properties]
+Version=23.0
+[WorkspacePaths]
+ConfigFile=.\Programs\Config.ws
+[Conditionals]
+Is$WebApp=False
+[Libraries]
+Lib1=Libraries\DFAbout\DFAbout23.0.sws
+Lib2=Libraries\RDCToolsLib\RDCToolsLib23.0.sws
+Lib3=Libraries\vwin32fh\StudioLibrary\vWin32fh-Library-DF23.0.sws
+Lib4=Libraries\DigitalCert\DigitalCert23.0.sws
+Lib5=Libraries\DUF\DUF23.0.sws
+[Projects]
+Project0=CMEngine.src
+Project1=CMBuilder.src
+Project2=WriteDateTimeHeaderFile.src
