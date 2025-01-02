@@ -1,3 +1,6 @@
 [submodule "Libraries/DFAbout"]
 	path = Libraries/DFAbout
 	url = https://github.com/NilsSve/Library-DFAbout.git
+[submodule "Libraries/DigitalCert"]
+	path = Libraries/DigitalCert
+	url = https://github.com/NilsSve/Library-DigitalCert.git
