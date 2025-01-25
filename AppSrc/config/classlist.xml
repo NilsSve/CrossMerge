@@ -5,7 +5,7 @@
 	<libraries>
 		<library>
 			<libraryPath>Libraries\DFAbout\DFAbout24.0.sws</libraryPath>
-			<libraryTimeStamp>2024-12-29T20:38:54</libraryTimeStamp>
+			<libraryTimeStamp>2025-01-17T15:00:01</libraryTimeStamp>
 			<libraryID>Lib1</libraryID>
 		</library>
 		<library>
@@ -15,8 +15,13 @@
 		</library>
 		<library>
 			<libraryPath>Libraries\DUF\DUF24.0.sws</libraryPath>
-			<libraryTimeStamp>2024-12-29T15:24:10</libraryTimeStamp>
+			<libraryTimeStamp>2025-01-17T16:20:21</libraryTimeStamp>
 			<libraryID>Lib5</libraryID>
+		</library>
+		<library>
+			<libraryPath>Libraries\DigitalCert\DigitalCert24.0.sws</libraryPath>
+			<libraryTimeStamp>2025-01-17T15:00:53</libraryTimeStamp>
+			<libraryID>Lib4</libraryID>
 		</library>
 	</libraries>
 	<classes>
@@ -1152,83 +1157,6 @@
 			<package>cComSWXMap.pkg</package>
 			<groupName>ActiveX</groupName>
 			<libraryID>Lib1</libraryID>
-		</class>
-		<class>
-			<className>cSkinComboBoxCJMenuItem</className>
-			<image>ControlCJSkinFramework.ico</image>
-			<package>cSkinComboBoxCJMenuItem.pkg</package>
-			<groupName>Menus and Toolbars</groupName>
-			<libraryID>Lib1</libraryID>
-		</class>
-		<class>
-			<className>cDbUpdateHandler</className>
-			<image>ControlObject.ico</image>
-			<package>cDbUpdateHandler.pkg</package>
-			<groupName>Database Update Framework</groupName>
-			<libraryID>Lib1</libraryID>
-		</class>
-		<class>
-			<className>cDbUpdateVersion</className>
-			<image>ControlObject.ico</image>
-			<package>cDbUpdateVersion.pkg</package>
-			<groupName>Database Update Framework</groupName>
-			<libraryID>Lib1</libraryID>
-		</class>
-		<class>
-			<className>cSkinComboBoxCJMenuItem</className>
-			<image>ControlCJSkinFramework.ico</image>
-			<package>cSkinComboBoxCJMenuItem.pkg</package>
-			<groupName>Menus and Toolbars</groupName>
-			<libraryID>Lib5</libraryID>
-		</class>
-		<class>
-			<className>cDbUpdateHandler</className>
-			<image>ControlObject.ico</image>
-			<package>cDbUpdateHandler.pkg</package>
-			<groupName>Database Update Framework</groupName>
-			<libraryID>Lib5</libraryID>
-		</class>
-		<class>
-			<className>cDbUpdateVersion</className>
-			<image>ControlObject.ico</image>
-			<package>cDbUpdateVersion.pkg</package>
-			<groupName>Database Update Framework</groupName>
-			<libraryID>Lib5</libraryID>
-		</class>
-		<class>
-			<className>cButton</className>
-			<image>ControlButton.ico</image>
-			<package>cButton.pkg</package>
-			<groupName>Base Controls</groupName>
-			<libraryID>Lib5</libraryID>
-		</class>
-		<class>
-			<className>cHeaderGroup</className>
-			<image>ControlContainer3D.ico</image>
-			<package>cHeaderGroup.pkg</package>
-			<groupName>Base Containers</groupName>
-			<libraryID>Lib5</libraryID>
-		</class>
-		<class>
-			<className>cSuggestionForm</className>
-			<image>ControlForm.ico</image>
-			<package>cSuggestionForm.pkg</package>
-			<groupName>Base Controls</groupName>
-			<libraryID>Lib5</libraryID>
-		</class>
-		<class>
-			<className>cRDCHeaderGroup</className>
-			<image>ControlGroup.ico</image>
-			<package>cRDCHeaderGroup.pkg</package>
-			<groupName>Base Containers</groupName>
-			<libraryID>Lib5</libraryID>
-		</class>
-		<class>
-			<className>cMyApplication</className>
-			<image>ControlApplication.ico</image>
-			<package>cMyApplication.pkg</package>
-			<groupName>Database Update Framework</groupName>
-			<libraryID>Lib5</libraryID>
 		</class>
 		<class>
 			<className>cMapComponent</className>
