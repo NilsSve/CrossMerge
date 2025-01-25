@@ -1,12 +1,23 @@
-CrossMerge is a data synchronization tool that simplifies connecting different databases to update their data.
+# CrossMerge
 
-With CrossMerge you can virtually connect any software package that uses a database with another database within a couple of minutes. There's no need to make any modifications to the database structures. No programming is needed.
+CrossMerge is a powerful data synchronization tool designed to seamlessly connect and update different databases.
 
-Use the CrossMerge Builder to point and click to connect database table pairs (Source and Target), then run the CrossMerge Engine to update your data! The CrossMerge Engine can be scheduled to run at specific times with e.g. Windows Scheduled Tasks.
+## Features
 
-![Sample image of the CrossMergeBuilder.src program:](Bitmaps/CrossMergeBuilder.png)
+- **Easy Integration**: Connect virtually any software package that uses a database with another database in just a few minutes. No modifications to database structures or programming required.
+- **User-Friendly Interface**: Use the CrossMerge Builder to easily connect database table pairs (Source and Target) with a simple point-and-click interface.
+- **Automated Updates**: Run the CrossMerge Engine to update your data. Schedule it to run at specific times using tools like Windows Scheduled Tasks.
 
-These programs are an Open Source version and are free to use. However the free version doesn't come with any form of support. If you need support please contact us at support@rdctools.com and we'll get back with you. You can buy a full license WITH LIFETIME UPDATES AND SUPPORT for ONLY $395.
+![Sample image of the CrossMergeBuilder.src program](Bitmaps/CrossMergeBuilder.png)
 
-CrossMerge was compiled under DataFlex version 2024 and needs a DataFlex 2024 Client Engine license to run. Or, if you have a DataFlex Development license, you could compile with DataFlex 20.0 or later.
-Dataflex is a registered trademark of Data Access Corporation, Miami, Fl, USA. DataFlex is not a free software.
+## Licensing and Support
+
+These programs are available as an Open Source version and are free to use. However, the free version does not include support. For support, please contact us at [support@rdctools.com](mailto:support@rdctools.com). You can purchase a full license with lifetime updates and support for only $395.
+
+## Requirements
+
+CrossMerge was compiled under DataFlex version 2024 and requires a DataFlex 2024 Client Engine license to run. Alternatively, if you have a DataFlex Development license, you can compile it with DataFlex 20.0 or later.
+
+---
+
+DataFlex is a registered trademark of Data Access Corporation, Miami, FL, USA. DataFlex is not free software.
