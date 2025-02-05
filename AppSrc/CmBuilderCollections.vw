@@ -137,10 +137,8 @@ Object oRdcViewCollections is a cRDCDbView
         End_Object    
         
         Object oStart_bn is a cRDCButton
-//            Set Size to 14 48
             Set Location to 24 346
             Set Label to "&Start"
-//            Set FontWeight to fw_Bold
             Set psToolTip to "Start connecting selected data tables"
             Set psImage to "Runprogram.ico"
             Set Default_State to True

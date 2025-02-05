@@ -131,42 +131,42 @@ Object oPropertiesNew_dg is a cRDCDbModalPanel
 
     End_Object
 
-    Object oSkins_grp is a cRDCHeaderDbGroup
-        Set Size to 37 249
-        Set Location to 91 10
-        Set Label to "Application Skin"   
-        Set psImage to "VisualSettings.ico"
-
-        Object oUseSkin_cb is a cRDCCheckBox
-            Set Label to "Use skin for the application"
-            Set Size to 10 112
-            Set Location to 20 74
-            Property Boolean pbChangedState False
-    
-            Procedure OnChangeEvent
-                If (not(Active_State(Self))) Begin
-                    Procedure_Return
-                End                                  
-                Set pbChangedState to True
-                Set Enabled_State of oApply_bn to True  
-            End_Procedure
-    
-            Procedure DoWriteRegistryKey
-                Boolean bChecked
-                Get Checked_State to bChecked
-                Send WriteDWord of ghoApplication "Preferences" "UseSkin" bChecked
-            End_Procedure
-    
-            Procedure DoApplyRegistryKey
-                Boolean bState
-                Get ReadDword of ghoApplication "Preferences" "UseSkin" False to bState
-                Set Checked_State to bState
-            End_Procedure
-            Send DoApplyRegistryKey // Do on program startup.
-            
-        End_Object
-
-    End_Object
+//    Object oSkins_grp is a cRDCHeaderDbGroup
+//        Set Size to 37 249
+//        Set Location to 91 10
+//        Set Label to "Application Skin"   
+//        Set psImage to "VisualSettings.ico"
+//
+//        Object oUseSkin_cb is a cRDCCheckBox
+//            Set Label to "Use skin for the application"
+//            Set Size to 10 112
+//            Set Location to 20 74
+//            Property Boolean pbChangedState False
+//    
+//            Procedure OnChangeEvent
+//                If (not(Active_State(Self))) Begin
+//                    Procedure_Return
+//                End                                  
+//                Set pbChangedState to True
+//                Set Enabled_State of oApply_bn to True  
+//            End_Procedure
+//    
+//            Procedure DoWriteRegistryKey
+//                Boolean bChecked
+//                Get Checked_State to bChecked
+//                Send WriteDWord of ghoApplication "Preferences" "UseSkin" bChecked
+//            End_Procedure
+//    
+//            Procedure DoApplyRegistryKey
+//                Boolean bState
+//                Get ReadDword of ghoApplication "Preferences" "UseSkin" False to bState
+//                Set Checked_State to bState
+//            End_Procedure
+//            Send DoApplyRegistryKey // Do on program startup.
+//            
+//        End_Object
+//
+//    End_Object
 
     Object oDebug_grp is a cRDCHeaderDbGroup
         Set Size to 37 249
@@ -219,10 +219,10 @@ Object oPropertiesNew_dg is a cRDCDbModalPanel
         Procedure OnClick
             Handle ho       
             Boolean bChangedState
-            Get pbChangedState of oUseSkin_cb to bChangedState
-            If (bChangedState = True) Begin
-                Send Info_Box "You need to restart the application to see a skin change."
-            End
+//            Get pbChangedState of oUseSkin_cb to bChangedState
+//            If (bChangedState = True) Begin
+//                Send Info_Box "You need to restart the application to see a skin change."
+//            End
             Move (Parent(Self)) to ho
             Broadcast Recursive Send DoWriteRegistryKey of ho
             Send Request_Save   of SncSys_DD

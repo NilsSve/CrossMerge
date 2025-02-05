@@ -39,23 +39,11 @@ Object oConnectViewLog is a cRDCDbView
         Object oSncLog_grd is a cRDCDbCJGrid
             Set Size to 148 446
             Set Location to 30 12
-//            Set peAnchors to anAll
             Set pbAllowEdit to False
-//            Set pbAllowDeleteRow to False
-//            Set pbAllowInsertRow to False
-//            Set pbAutoAppend to False
             Set pbEditOnTyping to False
-//            Set pbHeaderReorders to True
-//            Set pbHeaderTogglesDirection to True
             Set pbReadOnly to True
-//            Set pbRestoreLayout to True   
-//            Set psLayoutSection to (Name(Self) + "_grd")
             Set pbReverseOrdering to True
             Set peHorizontalGridStyle to xtpGridNoLines
-//            Set pbUseAlternateRowBackgroundColor to True
-//            Set pbSelectionEnable to True
-//            Set piSelectedRowBackColor to clGreenGreyLight
-//            Set piHighlightBackColor   to clGreenGreyLight
 
             Object oCJGridColumnRowIndicator is a cCJGridColumnRowIndicator
                 Set piWidth to 11

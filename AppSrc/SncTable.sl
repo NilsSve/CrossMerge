@@ -30,19 +30,6 @@ Cd_Popup_Object SncTable_sl is a cRDCDbModalPanel
         Set Location to 5 5
         Set Ordering to 1
         Set pbAutoServer to True
-//        Set psLayoutSection to "SncTable_sl_oSelList"
-//        Set pbUseAlternateRowBackgroundColor to True
-//        Set peAnchors to anAll
-        
-//        Procedure OnCreateGridControl
-//            String sColor
-//            Get ReadString of ghoApplication CS_Settings CS_GridRowBackgroundColor clGreenGreyLight to sColor
-//            If (sColor = "clBlueGreyLight") Begin
-//                Move "clGreenGreyLight" to sColor
-//            End
-//            Set piSelectedRowBackColor to sColor
-//            Set piHighlightBackColor   to sColor
-//        End_Procedure
 
         Object oSncTable_ID is a cRDCDbCJGridColumn
             Entry_Item SncTable.ID

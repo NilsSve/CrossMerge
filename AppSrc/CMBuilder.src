@@ -130,33 +130,33 @@ End_Object
 Send Ignore_Error of Error_Object_Id DFERR_CANT_LOAD_DLL
 
 Use CMStatPnl.pkg
-Use cToolTipController.pkg
-Object oToolTipController is a cToolTipController
-    Move Self to ghoToolTipController
-    Set piIcon to TTI_INFO
-    Set psTitle to "Info"
-    Set piMaxWidth to 250
-    Set piDurationPopup to 14000    // 14 seconds, needed for long tooltips.
-    Set pbUsePrefix to True
+Use cRDCTooltipController.pkg
+Object oToolTipController is a cRDCTooltipController
+//    Move Self to ghoToolTipController
+//    Set piIcon to TTI_INFO
+//    Set psTitle to "Info"
+//    Set piMaxWidth to 250
+//    Set piDurationPopup to 14000    // 14 seconds, needed for long tooltips.
+//    Set pbUsePrefix to True
 End_Object
 
-Use cCJSkinFramework.pkg
-Object oCJSkinFramework is a cCJSkinFramework
-    Set psSkinFile to "iTunesB.cjstyles"
-    Set psSkinIni to "Square Buttons Light.ini"
-//    Set psSkinFile to "Windows10.cjstyles"
-//    Set psSkinIni to "Normal Microsoft Office Publisher.ini"
-    
-    Procedure ApplySkin
-        Boolean bUseSkin                                                      
-        Get ReadDword of ghoApplication "Preferences" "UseSkin" "0" to bUseSkin
-        If (bUseSkin = False) Begin
-            Procedure_Return
-        End
-        Forward Send ApplySkin
-    End_Procedure
-        
-End_Object
+//Use cCJSkinFramework.pkg
+//Object oCJSkinFramework is a cCJSkinFramework
+//    Set psSkinFile to "iTunesB.cjstyles"
+//    Set psSkinIni to "Square Buttons Light.ini"
+////    Set psSkinFile to "Windows10.cjstyles"
+////    Set psSkinIni to "Normal Microsoft Office Publisher.ini"
+//    
+//    Procedure ApplySkin
+//        Boolean bUseSkin                                                      
+//        Get ReadDword of ghoApplication "Preferences" "UseSkin" "0" to bUseSkin
+//        If (bUseSkin = False) Begin
+//            Procedure_Return
+//        End
+//        Forward Send ApplySkin
+//    End_Procedure
+//        
+//End_Object
 
 Use oEditContextMenu.pkg
 Use oDEOEditContextMenu17.pkg
@@ -630,7 +630,9 @@ Object oMain is a Panel
                 // We need to destroy the skin framework here,
                 // else the program will GPF if exited from the 
                 // oRdcViewCollections view. Weird, but this fixes it.
-                Send Destroy of ghoSkinFramework
+                If (ghoSkinFramework <> 0) Begin
+                    Send Destroy of ghoSkinFramework
+                End
             End
             Function_Return bStay
         End_Function
