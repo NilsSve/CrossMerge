@@ -18,7 +18,7 @@
 // in the help folder for more details.
 //
 //****************************************************************************
-Use cCJGrid.pkg
+Use cRDCCJGrid.pkg
 Use cCJGridColumn.pkg
 Use cCJGridColumnRowIndicator.pkg
 Use cCJCommandBarSystem.pkg
@@ -27,16 +27,16 @@ Use vWin32fh.pkg
 
 Declare_Datafile SncSys
 
-#IFNDEF clGreenGrey
-    Define clGreenGrey      for (RGB(64, 84, 93))
-    Define clGreenGreyLight for (RGB(7, 117, 104))
-#ENDIF
-#IFNDEF CS_Settings
-    Define CS_Settings for "Settings"
-#ENDIF
-#IFNDEF CS_GridRowBackgroundColor
-    Define CS_GridRowBackgroundColor for "GridRowBackgroundColor"
-#ENDIF
+//#IFNDEF clGreenGrey
+//    Define clGreenGrey      for (RGB(64, 84, 93))
+//    Define clGreenGreyLight for (RGB(7, 117, 104))
+//#ENDIF
+//#IFNDEF CS_Settings
+//    Define CS_Settings for "Settings"
+//#ENDIF
+//#IFNDEF CS_GridRowBackgroundColor
+//    Define CS_GridRowBackgroundColor for "GridRowBackgroundColor"
+//#ENDIF
 
 #IFNDEF _struct_tsGridContent
 Struct tsGridContent 
@@ -221,9 +221,8 @@ Class cCJSyncTableCheckBoxColumn is a cCJGridColumn
     End_Procedure             
     
 End_Class
-Use cRDCCJGrid.pkg
 
-Class cCJSyncTableCheckBoxGrid is a cRDCCJGrid // cCJGrid
+Class cCJSyncTableCheckBoxGrid is a cRDCCJGrid
     
     Procedure Construct_Object
         Forward Send Construct_Object
@@ -239,40 +238,16 @@ Class cCJSyncTableCheckBoxGrid is a cRDCCJGrid // cCJGrid
         
         Property Boolean pbShowAddFolderMenuItem False
         Property Boolean pbShowRemoveFolderMenuItem False
-        Property Boolean pbEnableMoveKeys False
 
         Property Handle phoDD 0
         Property Boolean pbAllowAutoDelete SncSys.AllowAutoDelete
         Property Boolean pbAllowTblChange  SncSys.AllowTblChange
         Property Boolean pbSynchSetup False
 
-//        Set pbRestoreLayout to True
-//        Set psLayoutSection to (Name(Self) + "_grid")
-//        Set psNoItemsText to "No data found..."
-        Set pbHeaderReorders to True
         Set pbHeaderPrompts to False
-        Set pbHeaderTogglesDirection to True
-        Set pbSelectionEnable to True
-        Set pbAllowInsertRow to False
-        Set pbAllowAppendRow to False
-        Set pbShowRowFocus to True
-        Set pbShowFooter to True
         Set pbMultipleSelection to True
-        Set pbHotTracking to True
         Set pbEditOnClick to True
         Set Status_Help to "Select with the spacebar"
-//        Set pbUseAlternateRowBackgroundColor to True
-//        Set peAnchors to anAll
-//        Set peVisualTheme to xtpReportThemeVisualStudio2012Light
-
-        #IF (!@ > 180)
-            #IF (!@ < 230)
-//                Set peVisualTheme to xtpReportThemeExplorer
-                Set peVisualTheme to xtpReportThemeOffice2016 
-            #ELSE
-                Set peVisualTheme to xtpGridThemeOffice2016 
-            #ENDIF
-        #ENDIF
 
 
         On_Key Key_Space      Send ToggleCurrentItem
@@ -288,13 +263,6 @@ Class cCJSyncTableCheckBoxGrid is a cRDCCJGrid // cCJGrid
     Procedure End_Construct_Object
         String sColor
         Handle hoContextMenu
-
-//        Get ReadString of ghoApplication CS_Settings CS_GridRowBackgroundColor clGreenGreyLight to sColor
-//        If (sColor = "clBlueGreyLight") Begin
-//            Move "clGreenGreyLight" to sColor
-//        End
-//        Set piSelectedRowBackColor to sColor
-//        Set piHighlightBackColor   to sColor
 
         Get Create (RefClass(cCJSyncContext_mnu)) to hoContextMenu
         Set phoContextMenu to hoContextMenu
@@ -344,13 +312,13 @@ Class cCJSyncTableCheckBoxGrid is a cRDCCJGrid // cCJGrid
         End
     End_Procedure
 
-    Procedure CancelIfPopupObject
-        Boolean bIsInPopupObject
-        Delegate Get Popup_State to bIsInPopupObject
-        If (bIsInPopupObject = True) Begin
-            Send Close_Panel
-        End
-    End_Procedure
+//    Procedure CancelIfPopupObject
+//        Boolean bIsInPopupObject
+//        Delegate Get Popup_State to bIsInPopupObject
+//        If (bIsInPopupObject = True) Begin
+//            Send Close_Panel
+//        End
+//    End_Procedure
 
     Procedure OnCreateGridControl
         Handle hoObject
@@ -405,13 +373,13 @@ Class cCJSyncTableCheckBoxGrid is a cRDCCJGrid // cCJGrid
         Send MoveToFirstRow
     End_Procedure
 
-    Procedure BrowseForFolder
-        String sFolderName
-        Get vSHBrowseForFolder "Select Folder to Add" to sFolderName
-        If (sFolderName <> "") Begin
-            Send AddItem sFolderName
-        End
-    End_Procedure
+//    Procedure BrowseForFolder
+//        String sFolderName
+//        Get vSHBrowseForFolder "Select Folder to Add" to sFolderName
+//        If (sFolderName <> "") Begin
+//            Send AddItem sFolderName
+//        End
+//    End_Procedure
 
     // We don't want columns to be editable. But setting
     // pbEditable = False or pbReadOnly makes it very hard to read,
@@ -677,7 +645,8 @@ Class cCJSyncTableCheckBoxGrid is a cRDCCJGrid // cCJGrid
     End_Procedure
 
     // Automatically load data into the grid when activating.
-    Procedure Activating
+    Procedure Activating   
+        Forward Send Activating
         Send Cursor_Wait of Cursor_Control
         Send LoadData
         Send Cursor_Ready of Cursor_Control

@@ -1,7 +1,9 @@
 ﻿Use Dfclient.pkg
 Use cRDCHeaderDbGroup.pkg
 Use cRDCButton.pkg
-Use cRDCComboForm.pkg
+Use cRDCComboForm.pkg   
+Use cRDCDbView.pkg
+Use cRDCButton.pkg
 Use cCJGridColumnRowIndicator.pkg
 Use cCJSyncTableCheckBoxGrid.pkg
 Use cSynchronize.pkg
@@ -12,7 +14,7 @@ Use SncSchem.dd
 Use cSncSchemRow.dd
 
 Activate_View Activate_oRdcViewCollections for oRdcViewCollections
-Object oRdcViewCollections is a dbView
+Object oRdcViewCollections is a cRDCDbView
     Set Location to 1 0
     Set Size to 236 431
     Set Label to "CrossMerge Engine Collections" 
@@ -103,7 +105,7 @@ Object oRdcViewCollections is a dbView
     
         End_Object   
         
-        Object oSetDefaultCollection_bn is a Button
+        Object oSetDefaultCollection_bn is a cRDCButton
             Set Label to "Set as Default"
             Set psToolTip to "Set the selected Collection Name as the default for the CrossMerge Engine program."
             Set Size to 14 63

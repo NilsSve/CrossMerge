@@ -1,24 +1,23 @@
-//****************************************************************************
+﻿//****************************************************************************
 // $Module type: Modal Dialog
 // $Module name: YesNoCancel.dg
 // $Author     : Nils Svedmyr, RDC Tools International, <mailto:support@rdctools.com>
 // Web-site    : http://www.rdctools.com
 // Created     : 2020-01-02 @ 09:33 (Military date format: YY-MM-DD)
 //
-// Purpose     : To have a YesNoCancel dialog with a more user interface,
+// Purpose     : To have a YesNoCancel dialog with a better user interface,
 //               than the standard DF box.
 // Icons       : DFSWarning.ico, DFSSave.ico, DFSTrash.ico, DFSUndo.ico
 
 Use Windows.pkg
-Use cCommandLinkButton.pkg
+Use cCommandLinkButton.pkg 
+Use cRDCModalPanel.pkg
 // Language constant declarations
 // They have all been placed in this central spot to make translations to various languages more convenient.
 
-Object oYesNoCancel_dg is a ModalPanel
+Object oYesNoCancel_dg is a cRDCModalPanel
     Set Size to 134 172
     Set Label to "Unsaved Changes"
-//    Set Color to clWhite
-//    Set Border_Style to Border_Normal
     Set Locate_Mode to Center_On_Parent
 
     Property String psCaption
@@ -31,7 +30,6 @@ Object oYesNoCancel_dg is a ModalPanel
         Set Size to 21 146
         Set Location to 8 21
         Set Label to "The file has unsaved changes. What would you like to do?"
-//        Set Color to clWhite
         Set Justification_Mode to JMode_Left
     End_Object
 

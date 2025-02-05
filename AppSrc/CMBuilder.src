@@ -1,4 +1,4 @@
-﻿// COPYRIGHT (c) 2001-2020 RDC Tools International
+﻿// COPYRIGHT (c) 2001-2025 RDC Tools International
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License.
@@ -572,7 +572,7 @@ Object oMain is a Panel
     End_Object
 
     Object oClientArea is a ClientArea
-        Use Dd_debug.dg
+//        Use Dd_debug.dg
         
         Use xxSoftwareKey.pkg     // Modified Software key plus software protection package.
         Use Working.pkg           // RDC "Working..." panel object
@@ -593,7 +593,7 @@ Object oMain is a Panel
         
         Use StdAbout.pkg
         Procedure Activate_About
-            Send DoAbout "" "" ("Copyright 2001-2020" * psCompany(ghoApplication)) "Created By: Nils Svedmyr" "CmBuilder.bmp" "Website: http://www.rdctools.com" "E-mail: mailto:support@rdctools.com" "This is a FREE PROGRAM WITH NO SUPPORT. Send an email to the address above TO BUY A LICENSE WITH LIFETIME SUPPORT AND UPDATES for ONLY $395." "'CrossMerge', 'CrossMerge Builder' and 'CrossMerge Engine' are trademarks of RDC Tools International." ("This tool was created with DataFlex" * String(C_DFVersion) * "from Data Access Worldwide. Please visit http://www.dataaccess.com for a free personal copy of DataFlex.")
+            Send DoAbout "" "" ("Copyright 2001-2025" * psCompany(ghoApplication)) "Created By: Nils Svedmyr" "CmBuilder.bmp" "Website: http://www.rdctools.com" "E-mail: mailto:support@rdctools.com" "This is a FREE PROGRAM WITH NO SUPPORT. Send an email to the address above TO BUY A LICENSE WITH LIFETIME SUPPORT AND UPDATES for ONLY $395." "'CrossMerge', 'CrossMerge Builder' and 'CrossMerge Engine' are trademarks of RDC Tools International." ("This tool was created with DataFlex" * String(C_DFVersion) * "from Data Access Worldwide. Please visit http://www.dataaccess.com for a free personal copy of DataFlex.")
         End_Procedure
 
         // We do not allow closing of a view - it just doesn't make

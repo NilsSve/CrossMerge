@@ -1,4 +1,4 @@
-Use cRDCModalPanel.pkg
+﻿Use cRDCModalPanel.pkg
 Use cDynamicReadOnlyGrid.pkg
 Use cRDCForm.pkg
 Use cRDCButton.pkg
@@ -25,9 +25,7 @@ Object oViewAllData is a cRDCModalPanel
         Set Location to 7 6
         Set Highlight_Row_state to True
         Set peAnchors to anAll
-
         Set Line_Width to 1 0
-
         Set Form_Width   Item 0 to 0
         Set Header_Label Item 0 to "0"
     End_Object

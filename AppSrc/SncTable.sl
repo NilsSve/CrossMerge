@@ -1,9 +1,10 @@
-// SncTable.sl
+﻿// SncTable.sl
 // Select a Database Table Setup Record
 
 Use cRDCDbModalPanel.pkg
-Use cDbCJGridPromptList.pkg
-Use cDbCJGridColumn.pkg
+Use cRDCDbCJGridPromptList.pkg
+Use cRDCDbCJGridColumn.pkg
+Use cRDCButton.pkg
 Use cCJSyncTableCheckBoxGrid.pkg
 
 Use SNCTABLE.DD
@@ -24,45 +25,44 @@ Cd_Popup_Object SncTable_sl is a cRDCDbModalPanel
     Set Main_DD To oSncTable_DD
     Set Server  To oSncTable_DD
 
-    Object oSelList is a cDbCJGridPromptList
+    Object oSelList is a cRDCDbCJGridPromptList
         Set Size to 152 527
         Set Location to 5 5
-        Set peAnchors to anAll
-        Set psLayoutSection to "SncTable_sl_oSelList"
         Set Ordering to 1
         Set pbAutoServer to True
-        Set pbUseAlternateRowBackgroundColor to True
+//        Set psLayoutSection to "SncTable_sl_oSelList"
+//        Set pbUseAlternateRowBackgroundColor to True
+//        Set peAnchors to anAll
         
-        Procedure OnCreateGridControl
-            String sColor
-            Get ReadString of ghoApplication CS_Settings CS_GridRowBackgroundColor clGreenGreyLight to sColor
-            If (sColor = "clBlueGreyLight") Begin
-                Move "clGreenGreyLight" to sColor
-            End
-            Set piSelectedRowBackColor to sColor
-            Set piHighlightBackColor   to sColor
-        End_Procedure
+//        Procedure OnCreateGridControl
+//            String sColor
+//            Get ReadString of ghoApplication CS_Settings CS_GridRowBackgroundColor clGreenGreyLight to sColor
+//            If (sColor = "clBlueGreyLight") Begin
+//                Move "clGreenGreyLight" to sColor
+//            End
+//            Set piSelectedRowBackColor to sColor
+//            Set piHighlightBackColor   to sColor
+//        End_Procedure
 
-
-        Object oSncTable_ID is a cDbCJGridColumn
+        Object oSncTable_ID is a cRDCDbCJGridColumn
             Entry_Item SncTable.ID
             Set piWidth to 69
             Set psCaption to "ID"
         End_Object 
 
-        Object oSncTable_SortField is a cDbCJGridColumn
+        Object oSncTable_SortField is a cRDCDbCJGridColumn
             Entry_Item SncTable.SortField
             Set piWidth to 219
             Set psCaption to "Name (Sort Name)"
         End_Object 
 
-        Object oSncTable_Text is a cDbCJGridColumn
+        Object oSncTable_Text is a cRDCDbCJGridColumn
             Entry_Item SncTable.Text
             Set piWidth to 406
             Set psCaption to "Description"
         End_Object 
 
-        Object oSncTable_ToOwner is a cDbCJGridColumn
+        Object oSncTable_ToOwner is a cRDCDbCJGridColumn
             Entry_Item SncTable.ToOwner
             Set piWidth to 133
             Set psCaption to "Synchronization Type"
@@ -83,7 +83,7 @@ Cd_Popup_Object SncTable_sl is a cRDCDbModalPanel
 
         End_Object 
 
-        Object oSncTable_Hide is a cDbCJGridColumn
+        Object oSncTable_Hide is a cRDCDbCJGridColumn
             Entry_Item SncTable.Hide
             Set piWidth to 52
             Set psCaption to "Hidden"
@@ -92,7 +92,7 @@ Cd_Popup_Object SncTable_sl is a cRDCDbModalPanel
 
     End_Object 
 
-    Object oOk_bn is a Button
+    Object oOk_bn is a cRDCButton
         Set Label to "&Ok"
         Set Location to 162 374
         Set peAnchors to anBottomRight
@@ -103,7 +103,7 @@ Cd_Popup_Object SncTable_sl is a cRDCDbModalPanel
 
     End_Object 
 
-    Object oCancel_bn is a Button
+    Object oCancel_bn is a cRDCButton
         Set Label to "&Cancel"
         Set Location to 162 428
         Set peAnchors to anBottomRight
@@ -114,7 +114,7 @@ Cd_Popup_Object SncTable_sl is a cRDCDbModalPanel
 
     End_Object 
 
-    Object oSearch_bn is a Button
+    Object oSearch_bn is a cRDCButton
         Set Label to "&Search..."
         Set Location to 162 482
         Set peAnchors to anBottomRight

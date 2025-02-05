@@ -1,4 +1,4 @@
-Use DfLine.Pkg
+﻿Use DfLine.Pkg
 Use cControlPanel.pkg
 Use cRDCDbModalPanel.pkg
 Use cRDCHeaderDbGroup.pkg
@@ -208,7 +208,7 @@ Object oPropertiesNew_dg is a cRDCDbModalPanel
 
     End_Object
 
-    Object oApply_bn is a Button
+    Object oApply_bn is a cRDCButton
         Set Label to "&Apply"
         Set Size to 14 50
         Set Location to 230 155
@@ -230,7 +230,7 @@ Object oPropertiesNew_dg is a cRDCDbModalPanel
         End_Procedure
     End_Object
 
-    Object oClose_bn is a Button
+    Object oClose_bn is a cRDCButton
         Set Label to "&Close"
         Set Size to 14 50
         Set Location to 230 209
@@ -248,7 +248,7 @@ Object oPropertiesNew_dg is a cRDCDbModalPanel
         Set Label to "Reindex"   
         Set psImage to "TableIndex.ico"
 
-        Object oReindex_btn is a Button
+        Object oReindex_btn is a cRDCButton
             Set Size to 14 98
             Set Location to 13 74
             Set Label to "Reindex internal database"

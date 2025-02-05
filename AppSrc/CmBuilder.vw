@@ -1,5 +1,12 @@
-﻿Use cControlPanel.pkg
-Use Dftable.pkg
+﻿Use cRDCDbView.pkg
+Use cCommandLinkButton.pkg
+Use cCJGridColumnRowIndicator.pkg
+
+Use cControlPanel.pkg
+Use cRDCDbCJGrid.pkg
+Use cRDCCJGrid.pkg
+Use cRDCDbCJGridColumn.pkg
+Use cCJGridColumn.pkg
 Use cDbTextEdit.pkg
 Use cRDCDbForm.pkg
 Use cRDCDbGroup.pkg
@@ -43,16 +50,9 @@ Use SncSchem.dd
 Use SncLog.dd
 Use SncTHea.dd
 Use SncTRow.dd
-Use cCJGrid.pkg
-Use cCJGridColumn.pkg
-Use cDbCJGrid.pkg
-Use cCJGridColumnRowIndicator.pkg
-Use cdbCJGridColumn.pkg
-Use Windows.pkg
-Use cCommandLinkButton.pkg
 
 Activate_View Activate_oRdcView For oRdcView
-Object oRdcView is a dbView
+Object oRdcView is a cRDCDbView
     Set Location to 19 1
     Set Size to 371 525
     Set Label to "Data Table Connection"
@@ -242,8 +242,6 @@ Object oRdcView is a dbView
             Set Size to 14 100
             Set piMinSize to 13 82
             Set Location to 30 188
-            Set Label_Col_Offset to 2
-            Set Label_Justification_Mode to jMode_Right
             Set peAnchors to anTopLeftRight
         End_Object
 
@@ -253,8 +251,6 @@ Object oRdcView is a dbView
             Set Size to 14 209
             Set piMinSize to 13 191
             Set Location to 47 79
-            Set Label_Col_Offset to 2
-            Set Label_Justification_Mode to jMode_Right
             Set peAnchors to anTopLeftRight
     
             Procedure OnExitObject
@@ -289,8 +285,6 @@ Object oRdcView is a dbView
             Set Label to "Id (Auto generated)"
             Set Size to 14 44
             Set Location to 30 79
-            Set Label_Col_Offset to 2
-            Set Label_Justification_Mode to jMode_Right
             Set Prompt_Button_Mode to pb_PromptOn
         End_Object
 
@@ -443,10 +437,10 @@ Object oRdcView is a dbView
                     Set Size to 14 52
                     Set Location to 82 300
                     Set Status_Help to "Current number of physical records for the selected database table. For other formats then DataFlex and Pervasive you need to press the Refresh button to the right."
-                    Set Label_Justification_Mode to JMode_Top
                     Set Form_DataType to Mask_Numeric_Window
                     Set Form_Mask Item 0 to "#,###########"
                     Set Enabled_State to False
+                    Set Label_Justification_Mode to JMode_Top
                     Set Label_Row_Offset to 1
                     Set Label_Col_Offset to 0
                 End_Object
@@ -456,7 +450,6 @@ Object oRdcView is a dbView
                     Set Location to 82 356
                     Set Status_Help to "Refresh number of records. (Alt+R)"
                     Set psToolTip to (Status_Help(Self))
-                    //                    Set Label to "Refresh"          
                     Set psImage to "Refresh.ico"
                     Set pbAutoEnable to True
 
@@ -527,13 +520,13 @@ Object oRdcView is a dbView
                         
                 End_Object
 
-                //                Object oSnctable_ToDdriver is a cDbComboformDriver
-                //                    Entry_Item SncTable.ToDriver
-                //                    Set Label to "Driver ID"
-                //                    Set Size to 14 150
-                //                    Set Location to 43 78
-                //                    Set pbFrom to False
-                //                End_Object
+//                Object oSnctable_ToDdriver is a cDbComboformDriver
+//                    Entry_Item SncTable.ToDriver
+//                    Set Label to "Driver ID"
+//                    Set Size to 14 150
+//                    Set Location to 43 78
+//                    Set pbFrom to False
+//                End_Object
 
                 Object oEditToDatabase_btn is a cRDCButton
                     Set Size to 14 60
@@ -642,11 +635,11 @@ Object oRdcView is a dbView
                     Set Size to 14 51
                     Set Location to 82 300
                     Set Status_Help to "Current number of physical records for the selected database table. For other formats then DataFlex and Pervasive you need to press the Refresh button to the right."
-                    Set Label_Col_Offset to 0
-                    Set Label_Justification_Mode to JMode_Top
                     Set Form_DataType to Mask_Numeric_Window
                     Set Form_Mask     Item 0 to "#,###########"
                     Set Enabled_State to False
+                    Set Label_Justification_Mode to JMode_Top
+                    Set Label_Col_Offset to 0
                     Set Label_Row_Offset to 1
                 End_Object
 
@@ -720,7 +713,7 @@ Object oRdcView is a dbView
             Set Tab_ToolTip_Value to "Field selection method and fields to include for the two tables"
             Set piImageIndex to 1
 
-            Object oSncTable_SynchType is a dbComboForm // cRDCDbComboForm
+            Object oSncTable_SynchType is a dbComboForm // cRDCDbComboForm (Problem!)
                 Entry_Item SncTable.SynchType
                 Set Label to "Field Selection Type"
                 Set Size to 14 150
@@ -737,8 +730,8 @@ Object oRdcView is a dbView
                 Set Label to "Source Table:"
                 Set Size to 14 111
                 Set Location to 15 164
-                Set Label_Col_Offset to 0
                 Set Label_Justification_Mode to JMode_Top
+                Set Label_Col_Offset to 0
                 Set Label_Row_Offset to 1
                 Set Enabled_State to False
             End_Object
@@ -761,8 +754,8 @@ Object oRdcView is a dbView
                 Set Label to "Target Table:"
                 Set Size to 14 111
                 Set Location to 15 336
-                Set Label_Col_Offset to 0
                 Set Label_Justification_Mode to JMode_Top
+                Set Label_Col_Offset to 0
                 Set Label_Row_Offset to 1
                 Set Enabled_State to False
             End_Object
@@ -802,25 +795,25 @@ Object oRdcView is a dbView
                     Set peAnchors to anTopRight
                 End_Object
 
-                Object oFieldNames_grd is a cCJGrid
+                Object oFieldNames_grd is a cRDCCJGrid
                     Set Size to 157 478
                     Set Location to 62 10
-                    Set pbRestoreLayout to True
-                    Set psLayoutSection to (Name(Self) + "_grid")
-                    Set psNoItemsText to "No data found..."
-                    Set pbHeaderReorders to True
+//                    Set pbRestoreLayout to True
+//                    Set psLayoutSection to (Name(Self) + "_grid")
+//                    Set psNoItemsText to "No data found..."
+//                    Set pbHeaderReorders to True
                     Set pbHeaderPrompts to False
-                    Set pbHeaderTogglesDirection to True
-                    Set pbSelectionEnable to True
+//                    Set pbHeaderTogglesDirection to True
+//                    Set pbSelectionEnable to True
                     Set pbReadOnly to True
-                    Set pbShowRowFocus to True
-                    Set pbHotTracking to True
-                    Set piLayoutBuild to 1
-                    Set pbUseAlternateRowBackgroundColor to True
-                    Set piSelectedRowBackColor to clGreenGreyLight
-                    Set piHighlightBackColor   to clGreenGreyLight
-                    Set peAnchors to anAll
-                    Set pbShowFooter to True
+//                    Set pbShowRowFocus to True
+//                    Set pbHotTracking to True
+                    Set piLayoutBuild to 2
+//                    Set pbUseAlternateRowBackgroundColor to True
+//                    Set piSelectedRowBackColor to clGreenGreyLight
+//                    Set piHighlightBackColor   to clGreenGreyLight
+//                    Set peAnchors to anAll
+//                    Set pbShowFooter to True
 
                     Object oSourceFieldNumber_col is a cCJGridColumn
                         Set piWidth to 89
@@ -1157,8 +1150,8 @@ Object oRdcView is a dbView
                     Set Size to 14 150
                     Set Location to 38 10
                     Set pbFrom to True
-                    Set Label_Col_Offset to 0
                     Set Label_Justification_Mode to JMode_Top
+                    Set Label_Col_Offset to 0
                     Set Label_Row_Offset to 1
                 End_Object
 
@@ -1168,8 +1161,8 @@ Object oRdcView is a dbView
                     Set Size to 14 150
                     Set Location to 38 166
                     Set pbFrom to True
-                    Set Label_Col_Offset to 0
                     Set Label_Justification_Mode to JMode_Top
+                    Set Label_Col_Offset to 0
                     Set Label_Row_Offset to 1
                 End_Object
 
@@ -1179,8 +1172,8 @@ Object oRdcView is a dbView
                     Set Size to 14 150
                     Set Location to 38 321
                     Set pbFrom to False
-                    Set Label_Col_Offset to 0
                     Set Label_Justification_Mode to JMode_Top
+                    Set Label_Col_Offset to 0
                     Set Label_Row_Offset to 1
                 End_Object
 
@@ -1378,11 +1371,11 @@ Object oRdcView is a dbView
                     End
                 End_Procedure
 
-                //                Procedure Set Enabled_State Boolean bState
-                //                    Forward Set Enabled_State to bState
-                //                    Send Enable_Window of (Label_Object(oSelFromCount_fm(Self))) bState
-                //                    Set Enabled_State  of oAppend_bn to bState
-                //                End_Procedure
+//                Procedure Set Enabled_State Boolean bState
+//                    Forward Set Enabled_State to bState
+//                    Send Enable_Window of (Label_Object(oSelFromCount_fm(Self))) bState
+//                    Set Enabled_State  of oAppend_bn to bState
+//                End_Procedure
 
             End_Object
 
@@ -1508,7 +1501,7 @@ Object oRdcView is a dbView
                 Set Size to 146 534
                 Set Location to 293 14
                 Set Label to "Source Database Table Index (Only available when 'Auto delete old records' is checked. See below)"
-                Set Visible_State to False
+                Set Visible_State to False // N.B!
 
                 Object oSnctable_FromdataTable_Index is a cRDCDbForm
                     Entry_Item Snctable.Fromdatatable
@@ -2252,10 +2245,10 @@ Object oRdcView is a dbView
                     Set Size to 14 44
                     Set Location to 38 167
                     Set Status_Help to "The selected field/column type"
-                    Set Label_Col_Offset to 0
                     Set Label_Justification_Mode to JMode_Top
-                    Set Enabled_State to False
+                    Set Label_Col_Offset to 0
                     Set Label_Row_Offset to 1
+                    Set Enabled_State to False
 
                     Procedure Set Enabled_State Boolean bState
                         Forward Set Enabled_State to False
@@ -2267,35 +2260,35 @@ Object oRdcView is a dbView
                     Set Size to 14 33
                     Set Location to 38 218
                     Set Status_Help to "The selected field/column length and precision"
-                    Set Label_Col_Offset to 0
                     Set Label_Justification_Mode to JMode_Top
-                    Set Enabled_State to False
+                    Set Label_Col_Offset to 0
                     Set Label_Row_Offset to 1
+                    Set Enabled_State to False
 
                     Procedure Set Enabled_State Boolean bState
                         Forward Set Enabled_State to False
                     End_Procedure
                 End_Object
 
-                Object oConstraints_lst is a cCJGrid
+                Object oConstraints_lst is a cRDCCJGrid
                     Set Size to 157 399
                     Set Location to 62 10
                     Set peAnchors to anTopBottom
-                    Set pbUseAlternateRowBackgroundColor to True
-                    Set psNoItemsText to "No data found..."
-                    Set pbShowRowFocus to True
+//                    Set pbUseAlternateRowBackgroundColor to True
+//                    Set psNoItemsText to "No data found..."
+//                    Set pbShowRowFocus to True
                     Set pbAllowEdit to False
-                    Set pbAutoAppend to False
-                    Set pbAllowAppendRow to False
-                    Set pbAllowInsertRow to False
+//                    Set pbAutoAppend to False
+//                    Set pbAllowAppendRow to False
+//                    Set pbAllowInsertRow to False
                     Set pbAllowColumnRemove to False
                     Set pbAllowColumnReorder to False
                     Set pbAllowColumnResize to False
                     Set pbEditOnTyping to False
-                    Set pbSelectionEnable to True
-                    Set piSelectedRowBackColor to clGreenGreyLight
-                    Set piHighlightBackColor   to clGreenGreyLight
-                    Set pbShowFooter to True
+//                    Set pbSelectionEnable to True
+//                    Set piSelectedRowBackColor to clGreenGreyLight
+//                    Set piHighlightBackColor   to clGreenGreyLight
+//                    Set pbShowFooter to True
 
                     Object oConstraint_col is a cCJGridColumn
                         Set piWidth to 620
@@ -2565,10 +2558,10 @@ Object oRdcView is a dbView
                 Set Label to "Source Table Name"
                 Set Size to 14 150
                 Set Location to 15 8
-                Set Label_Col_Offset to 0
                 Set Label_Justification_Mode to JMode_Top
-                Set Enabled_State to False
+                Set Label_Col_Offset to 0
                 Set Label_Row_Offset to 1
+                Set Enabled_State to False
 
                 Procedure DoUpdateData Integer iFromFile Integer iToFile Boolean bFrom
                     Set Enabled_State of (Label_Object(Self)) to (iFromFile and iToFile)
@@ -2836,26 +2829,26 @@ Object oRdcView is a dbView
 
                 End_Object
 
-                Object oValues_grd is a cCJGrid
+                Object oValues_grd is a cRDCCJGrid
                     Set Size to 157 397
                     Set Location to 62 87
-                    Set pbRestoreLayout to True
-                    Set psLayoutSection to (Name(Self) + "_grid")
-                    Set psNoItemsText to "No data found..."
-                    Set pbAllowInsertRow to False
-                    Set pbAllowAppendRow to False
+//                    Set pbRestoreLayout to True
+//                    Set psLayoutSection to (Name(Self) + "_grid")
+//                    Set psNoItemsText to "No data found..."
+//                    Set pbAllowInsertRow to False
+//                    Set pbAllowAppendRow to False
                     Set pbHeaderPrompts to False
-                    Set pbHeaderReorders to True
-                    Set pbHeaderTogglesDirection to True
-                    Set pbSelectionEnable to True
-                    Set pbShowRowFocus to True
-                    Set pbHotTracking to True
-                    Set piLayoutBuild to 1
-                    Set pbUseAlternateRowBackgroundColor to True
-                    Set piSelectedRowBackColor to clGreenGreyLight
-                    Set piHighlightBackColor   to clGreenGreyLight
-                    Set peAnchors to anAll
-                    Set pbShowFooter to True
+//                    Set pbHeaderReorders to True
+//                    Set pbHeaderTogglesDirection to True
+//                    Set pbSelectionEnable to True
+//                    Set pbShowRowFocus to True
+//                    Set pbHotTracking to True
+//                    Set pbUseAlternateRowBackgroundColor to True
+//                    Set piSelectedRowBackColor to clGreenGreyLight
+//                    Set piHighlightBackColor   to clGreenGreyLight
+//                    Set peAnchors to anAll
+//                    Set pbShowFooter to True
+                    Set piLayoutBuild to 2
 
                     Object oUseDefaultValue_Col is a cCJGridColumn
                         Set piWidth to 126
@@ -3235,10 +3228,10 @@ Object oRdcView is a dbView
                 Set Label to "Target Table Name"
                 Set Size to 14 150
                 Set Location to 15 8
-                Set Label_Col_Offset to 0
                 Set Label_Justification_Mode to JMode_Top
-                Set Enabled_State to False
+                Set Label_Col_Offset to 0
                 Set Label_Row_Offset to 1
+                Set Enabled_State to False
 
                 Procedure DoUpdateData Integer iFromFile Integer iToFile Boolean bFrom
                     Set Enabled_State of (Label_Object(Self)) to (iFromFile and iToFile)
@@ -3361,10 +3354,10 @@ Object oRdcView is a dbView
                 Set Label to "Source Table Name"
                 Set Size to 14 150
                 Set Location to 15 8
-                Set Label_Col_Offset to 0
                 Set Label_Justification_Mode to JMode_Top
-                Set Enabled_State to False
+                Set Label_Col_Offset to 0
                 Set Label_Row_Offset to 1
+                Set Enabled_State to False
 
                 Procedure DoUpdateData Integer iFromFile Integer iToFile Boolean bFrom
                     Set Enabled_State of (Label_Object(Self)) to (iFromFile and iToFile)
@@ -3395,10 +3388,10 @@ Object oRdcView is a dbView
                 Set Label to "Target Table Name"
                 Set Size to 14 150
                 Set Location to 15 217
-                Set Label_Col_Offset to 0
                 Set Label_Justification_Mode to JMode_Top
-                Set Enabled_State to False
+                Set Label_Col_Offset to 0
                 Set Label_Row_Offset to 1
+                Set Enabled_State to False
 
                 Procedure DoUpdateData Integer iFromFile Integer iToFile Boolean bFrom
                     Set Enabled_State of (Label_Object(Self)) to (iFromFile and iToFile)
@@ -3464,29 +3457,29 @@ Object oRdcView is a dbView
                     Set peAnchors to anTopRight
                 End_Object
 
-                Object oSncTRow_Grid is a cDbCJGrid
+                Object oSncTRow_Grid is a cRDCDbCJGrid
                     Set Server to oSnctrow_DD
                     Set Size to 157 362
                     Set Location to 62 10
-                    Set pbRestoreLayout to True
-                    Set psLayoutSection to (Name(Self) + "_grid")
-                    Set psNoItemsText to "No data found..."
+//                    Set pbRestoreLayout to True
+//                    Set psLayoutSection to (Name(Self) + "_grid")
+//                    Set psNoItemsText to "No data found..."
                     Set pbHeaderReorders to False
                     Set pbHeaderPrompts to False
                     Set pbHeaderTogglesDirection to False
-                    Set pbSelectionEnable to True
-                    Set pbAllowInsertRow to False
+//                    Set pbSelectionEnable to True
+//                    Set pbAllowInsertRow to False
                     Set pbAllowAppendRow to True
-                    Set pbShowRowFocus to True
-                    Set pbShowFooter to True
+//                    Set pbShowRowFocus to True
+//                    Set pbShowFooter to True
                     Set pbMultipleSelection to False
-                    Set pbHotTracking to True
+//                    Set pbHotTracking to True
                     Set pbEditOnClick to True
+//                    Set pbUseAlternateRowBackgroundColor to True
+//                    Set piSelectedRowBackColor to clGreenGreyLight
+//                    Set piHighlightBackColor   to clGreenGreyLight
+//                    Set peAnchors to anAll    
                     Set piLayoutBuild to 1
-                    Set pbUseAlternateRowBackgroundColor to True
-                    Set piSelectedRowBackColor to clGreenGreyLight
-                    Set piHighlightBackColor   to clGreenGreyLight
-                    Set peAnchors to anAll    
 
                     Procedure OnEntering
                         Set pbNeedPostEntering to True
@@ -3524,26 +3517,26 @@ Object oRdcView is a dbView
                         Function_Return False
                     End_Function
                     
-                    Object oSncTRow_ID is a cDbCJGridColumn
+                    Object oSncTRow_ID is a cRDCDbCJGridColumn
                         Entry_Item SncTRow.ID
                         Set piWidth to 53
                         Set psCaption to "ID"
                         Set pbEditable to False
                     End_Object
 
-                    Object oSncTRow_FromValue is a cDbCJGridColumn
+                    Object oSncTRow_FromValue is a cRDCDbCJGridColumn
                         Entry_Item SncTRow.FromValue
                         Set piWidth to 263
                         Set psCaption to "If Source Field Value Equals:"
                     End_Object
 
-                    Object oSncTRow_ToValue is a cDbCJGridColumn
+                    Object oSncTRow_ToValue is a cRDCDbCJGridColumn
                         Entry_Item SncTRow.ToValue
                         Set piWidth to 274
                         Set psCaption to "Update Target Field with:"
                     End_Object
 
-                    Object oSncTRow_IgnoreCase is a cDbCJGridColumn
+                    Object oSncTRow_IgnoreCase is a cRDCDbCJGridColumn
                         Entry_Item SncTRow.IgnoreCase
                         Set piWidth to 75
                         Set psCaption to "Ignore Case"
@@ -3927,8 +3920,8 @@ Object oRdcView is a dbView
                     Set Size to 14 150
                     Set Location to 38 258
                     Set Status_Help to "Enter a value to set the selected field/column to."
-                    Set Label_Col_Offset to 0
                     Set Label_Justification_Mode to JMode_Top
+                    Set Label_Col_Offset to 0
                     Set Label_Row_Offset to 1
 
                     Procedure OnChange
@@ -3954,10 +3947,10 @@ Object oRdcView is a dbView
                     Set Size to 14 44
                     Set Location to 38 167
                     Set Status_Help to "The selected field/column type"
-                    Set Label_Col_Offset to 0
                     Set Label_Justification_Mode to JMode_Top
-                    Set Enabled_State to False
+                    Set Label_Col_Offset to 0
                     Set Label_Row_Offset to 1
+                    Set Enabled_State to False
 
                     Procedure Set Enabled_State Boolean bState
                         Forward Set Enabled_State to False
@@ -3969,37 +3962,37 @@ Object oRdcView is a dbView
                     Set Size to 14 33
                     Set Location to 38 218
                     Set Status_Help to "The selected field/column length and precision"
-                    Set Label_Col_Offset to 0
                     Set Label_Justification_Mode to JMode_Top
-                    Set Enabled_State to False
+                    Set Label_Col_Offset to 0
                     Set Label_Row_Offset to 1
+                    Set Enabled_State to False
 
                     Procedure Set Enabled_State Boolean bState
                         Forward Set Enabled_State to False
                     End_Procedure
                 End_Object
 
-                Object oFlags_lst is a cCJGrid
+                Object oFlags_lst is a cRDCCJGrid
                     Set Size to 157 399
                     Set Location to 62 10
-                    Set psNoItemsText to "No data found..."
-                    Set pbRestoreLayout to True
-                    Set psLayoutSection to (Name(Self) + "_grid")
-                    Set pbShowRowFocus to True
+//                    Set psNoItemsText to "No data found..."
+//                    Set pbRestoreLayout to True
+//                    Set psLayoutSection to (Name(Self) + "_grid")
+//                    Set pbShowRowFocus to True
                     Set pbAllowEdit to False
-                    Set pbAutoAppend to False
-                    Set pbAllowAppendRow to False
-                    Set pbAllowInsertRow to False
+//                    Set pbAutoAppend to False
+//                    Set pbAllowAppendRow to False
+//                    Set pbAllowInsertRow to False
                     Set pbAllowColumnRemove to False
                     Set pbAllowColumnReorder to False
                     Set pbAllowColumnResize to False
                     Set pbEditOnTyping to False
-                    Set pbSelectionEnable to True
-                    Set pbUseAlternateRowBackgroundColor to True
-                    Set piSelectedRowBackColor to clGreenGreyLight
-                    Set piHighlightBackColor   to clGreenGreyLight
-                    Set pbShowFooter to True
-                    Set peAnchors to anTopBottom
+//                    Set pbSelectionEnable to True
+//                    Set pbUseAlternateRowBackgroundColor to True
+//                    Set piSelectedRowBackColor to clGreenGreyLight
+//                    Set piHighlightBackColor   to clGreenGreyLight
+//                    Set pbShowFooter to True
+//                    Set peAnchors to anTopBottom
 
                     Object oFlags_col is a cCJGridColumn
                         Set piWidth to 620
@@ -4271,6 +4264,7 @@ Object oRdcView is a dbView
                     End_Procedure
 
                 End_Object
+                
                 Object oSelectMark_bn is a cRDCButton
                     Set Label to "Add"
                     Set Location to 38 415
@@ -4514,6 +4508,7 @@ Object oRdcView is a dbView
                 Set Label_Col_Offset to 0
                 Set Label_Row_Offset to 1
             End_Object
+            
             Object oSnctable_Createdby is a cRDCDbForm
                 Entry_Item SncTable.Createdby
                 Set Label to "By"
@@ -4524,6 +4519,7 @@ Object oRdcView is a dbView
                 Set Label_Justification_Mode to JMode_Top
                 Set Label_Row_Offset to 1
             End_Object
+            
             Object oSnctable_Lastedited is a cRDCDbForm
                 Entry_Item SncTable.Lastedited
                 Set Label to "Last Edited"
@@ -4534,6 +4530,7 @@ Object oRdcView is a dbView
                 Set Label_Justification_Mode to JMode_Top
                 Set Label_Row_Offset to 1
             End_Object
+            
             Object oSnctable_Editedby is a cRDCDbForm
                 Entry_Item Snctable.Editedby
                 Set Label to "By"
@@ -4600,7 +4597,7 @@ Object oRdcView is a dbView
     End_Procedure
 
     Procedure DoHelp
-        //        Send DoShowMapID of ghoHtmlHelp GeneralHelpId
+        // Send DoShowMapID of ghoHtmlHelp GeneralHelpId
     End_Procedure
 
     Function Item_Count Returns Integer

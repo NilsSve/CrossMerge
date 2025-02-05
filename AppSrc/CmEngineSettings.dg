@@ -5,6 +5,7 @@ Use cRDCDbForm.pkg
 Use cRDCForm.pkg
 Use cRDCButton.pkg   
 Use cRDCHeaderDbGroup.pkg
+Use cRDCDbCheckbox.pkg
 
 Use SncSys.dd
 Use SncTable.dd
@@ -30,7 +31,7 @@ Object oCmEngineSettings_dg is a cRDCDbModalPanel
                 // This will be received by the cDbComboformFormat and cDbComboformServer classes.
                 // and cDbComboformServer sends a message to cDbComboformDataTable to open
                 // the tables and then update other DEO's:
-//                Broadcast Recursive Send DoFindData of (Parent(Self))
+                // Broadcast Recursive Send DoFindData of (Parent(Self))
             End
         End_Procedure
 
@@ -85,7 +86,7 @@ Object oCmEngineSettings_dg is a cRDCDbModalPanel
             If iOpen Begin
                 Close iFile
             End
-//            Broadcast Recursive Send DoCheckClear of (Parent(Self))
+            // Broadcast Recursive Send DoCheckClear of (Parent(Self))
             // Must be after Recursive Send DoCheckClear...
             Set Changed_State to False
         End_Procedure
@@ -212,7 +213,6 @@ Object oCmEngineSettings_dg is a cRDCDbModalPanel
 
             Set peAnchors to anTopLeftRight
 
-            // Combo_Fill_List is called when the list needs filling
             Procedure Combo_Fill_List
                 Handle hoDD
                 Move (SncSchem_DD(Self)) to hoDD
@@ -268,7 +268,7 @@ Object oCmEngineSettings_dg is a cRDCDbModalPanel
 //            End_Procedure
 //        End_Object
 
-        Object oSncsys_Allowtblchange is a DbCheckBox
+        Object oSncsys_Allowtblchange is a cRDCDbCheckBox
             Entry_Item Sncsys.Allowtblchange
             Set Server to Sncsys_DD
             Set Label to "Allow user to change selections of Database Table items"
@@ -285,7 +285,7 @@ Object oCmEngineSettings_dg is a cRDCDbModalPanel
 //            Set Visible_State to False
 //        End_Object
 
-        Object oSncsys_Allowcancelsent is a DbCheckBox
+        Object oSncsys_Allowcancelsent is a cRDCDbCheckBox
             Entry_Item Sncsys.Allowcancelsent
             Set Server to Sncsys_DD
             Set Label to "Allow to cancel running of the CrossMerge Engine"
@@ -302,7 +302,7 @@ Object oCmEngineSettings_dg is a cRDCDbModalPanel
             End_Procedure
         End_Object
 
-        Object oSncsys_Allowdeletelog is a DbCheckBox
+        Object oSncsys_Allowdeletelog is a cRDCDbCheckBox
             Entry_Item SncSys.AllowDeleteLog
             Set Server to Sncsys_DD
             Set Label to "Allow delete of the connection log"
@@ -310,7 +310,7 @@ Object oCmEngineSettings_dg is a cRDCDbModalPanel
             Set Location to 73 78
         End_Object
 
-        Object oSncsys_Show_Info is a DbCheckBox
+        Object oSncsys_Show_Info is a cRDCDbCheckBox
             Entry_Item Sncsys.Show_info
             Set Server to Sncsys_DD
             Set Label to "Display status panel with info while CrossMerge Engine is running"
@@ -327,7 +327,7 @@ Object oCmEngineSettings_dg is a cRDCDbModalPanel
             End_Procedure
         End_Object
 
-        Object oSncsys_Runminimized is a DbCheckBox
+        Object oSncsys_Runminimized is a cRDCDbCheckBox
             Entry_Item Sncsys.Runminimized
             Set Server to Sncsys_DD
             Set Label to "Run Program Minimized when scheduled to Autorun"
@@ -384,7 +384,7 @@ Object oCmEngineSettings_dg is a cRDCDbModalPanel
 
     End_Object
 
-    Object oOK_btn is a Button
+    Object oOK_btn is a cRDCButton
         Set Label    to "&OK"
         Set Location to 215 239
         Set peAnchors to anBottomRight
@@ -404,7 +404,7 @@ Object oCmEngineSettings_dg is a cRDCDbModalPanel
 
     End_Object
 
-    Object oCancel_btn is a Button
+    Object oCancel_btn is a cRDCButton
         Set Size to 14 50
         Set Label    to "&Cancel"
         Set Location to 215 294

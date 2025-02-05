@@ -1,6 +1,7 @@
-Use Dfclient.pkg
-Use cDbCJGrid.pkg
-Use cdbCJGridColumn.pkg
+﻿Use cRDCDbView.pkg
+Use cDbCJGrid.pkg 
+Use cRDCDbCJGrid.pkg
+Use cRDCDbCJGridColumn.pkg
 Use cCJGridColumnRowIndicator.pkg
 Use cDbTextEdit.pkg
 Use cRDCHeaderDbGroup.pkg
@@ -12,7 +13,7 @@ Use cZeroLogBn.pkg
 Use SncLog.dd
 
 Activate_View Activate_oConnectViewLog For oConnectViewLog
-Object oConnectViewLog is a DbView
+Object oConnectViewLog is a cRDCDbView
     Set Label to "View Log"
     Set Size to 346 495
     Set piMinSize to 256 495
@@ -35,42 +36,42 @@ Object oConnectViewLog is a DbView
         Set psImage to "Report.ico"
         Set peAnchors to anAll
 
-        Object oSncLog_grd is a cDbCJGrid
+        Object oSncLog_grd is a cRDCDbCJGrid
             Set Size to 148 446
             Set Location to 30 12
-            Set peAnchors to anAll
+//            Set peAnchors to anAll
             Set pbAllowEdit to False
-            Set pbAllowDeleteRow to False
-            Set pbAllowInsertRow to False
-            Set pbAutoAppend to False
+//            Set pbAllowDeleteRow to False
+//            Set pbAllowInsertRow to False
+//            Set pbAutoAppend to False
             Set pbEditOnTyping to False
-            Set pbHeaderReorders to True
-            Set pbHeaderTogglesDirection to True
+//            Set pbHeaderReorders to True
+//            Set pbHeaderTogglesDirection to True
             Set pbReadOnly to True
-            Set pbRestoreLayout to True   
-            Set psLayoutSection to (Name(Self) + "_grd")
+//            Set pbRestoreLayout to True   
+//            Set psLayoutSection to (Name(Self) + "_grd")
             Set pbReverseOrdering to True
             Set peHorizontalGridStyle to xtpGridNoLines
-            Set pbUseAlternateRowBackgroundColor to True
-//            Set peVisualTheme to xtpReportThemeVisualStudio2012Light
-            Set pbSelectionEnable to True
-            Set piSelectedRowBackColor to clGreenGreyLight
-            Set piHighlightBackColor   to clGreenGreyLight
+//            Set pbUseAlternateRowBackgroundColor to True
+//            Set pbSelectionEnable to True
+//            Set piSelectedRowBackColor to clGreenGreyLight
+//            Set piHighlightBackColor   to clGreenGreyLight
 
             Object oCJGridColumnRowIndicator is a cCJGridColumnRowIndicator
                 Set piWidth to 11
             End_Object
 
-            Object oSncLog_RecID is a cDbCJGridColumn
+            Object oSncLog_RecID is a cRDCDbCJGridColumn
                 Entry_Item SncLog.ID
                 Set piWidth to 56
                 Set psCaption to "Log ID"
             End_Object
 
-            Object oSncLog_StatusText is a cDbCJGridColumn
+            Object oSncLog_StatusText is a cRDCDbCJGridColumn
                 Entry_Item SncLog.StatusText
                 Set piWidth to 144
                 Set psCaption to "Status Text"
+                Set pbMultiLine to True
 
                 Procedure OnSetDisplayMetrics Handle hoGridItemMetrics Integer iRow String  ByRef sValue
                     Forward Send OnSetDisplayMetrics hoGridItemMetrics iRow (&sValue)
@@ -80,25 +81,25 @@ Object oConnectViewLog is a DbView
                 End_Procedure
             End_Object
 
-            Object oSncLog_SortName is a cDbCJGridColumn
+            Object oSncLog_SortName is a cRDCDbCJGridColumn
                 Entry_Item SncLog.SncTableSortField
                 Set piWidth to 143
                 Set psCaption to "Name (Sort Field)"
             End_Object
 
-            Object oSncLog_TableName is a cDbCJGridColumn
+            Object oSncLog_TableName is a cRDCDbCJGridColumn
                 Entry_Item SncLog.TableName
                 Set piWidth to 279
                 Set psCaption to "Description"
             End_Object
 
-            Object oSncLog_DateTimeCreated is a cDbCJGridColumn
+            Object oSncLog_DateTimeCreated is a cRDCDbCJGridColumn
                 Entry_Item SncLog.DateTimeCreated
                 Set piWidth to 76
                 Set psCaption to "Date and Time"
             End_Object
 
-            Object oSncLog_NetworkUserName is a cDbCJGridColumn
+            Object oSncLog_NetworkUserName is a cRDCDbCJGridColumn
                 Entry_Item SncLog.NetworkUserName
                 Set piWidth to 71
                 Set psCaption to "User Name"
@@ -265,7 +266,7 @@ Object oConnectViewLog is a DbView
     End_Object     
     
     Procedure Popup
-        Set Locate_Mode to Center_On_Parent
+        Set Locate_Mode to Center_On_Parent  
         Forward Send Popup
     End_Procedure
     

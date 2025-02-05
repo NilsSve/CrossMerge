@@ -1,4 +1,4 @@
-Use DataDict.pkg
+﻿Use DataDict.pkg
 Use cDbFieldComboform.pkg
 Use cRDCDbModalPanel.pkg
 
@@ -73,7 +73,7 @@ Object oAppend_dg is a cRDCDbModalPanel
         On_Key kCancel Send KeyAction to oCancel_bn
     End_Object
 
-    Object oOK_bn is a Button
+    Object oOK_bn is a cRDCButton
         Set Label to "&OK"
         Set Size to 14 50
         Set Location to 47 107
@@ -91,7 +91,7 @@ Object oAppend_dg is a cRDCDbModalPanel
 
     End_Object
 
-    Object oCancel_bn is a Button
+    Object oCancel_bn is a cRDCButton
         Set Label to "&Cancel"
         Set Size to 14 50
         Set Location to 47 159
