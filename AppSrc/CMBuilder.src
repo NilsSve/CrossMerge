@@ -509,14 +509,25 @@ Object oMain is a Panel
             End_Object
 
             Object oKoFi_MenuItem is a cCJMenuItem
-                Set psCaption to "Ko-fi"
-                Set psToolTip to "Bye me a coffee, to support me"
-                Set psDescription to "Bye me a coffee"
+                Set psToolTip to "Coffee time!"
+                Set psDescription to "Bye me a coffee, to support me"
                 Set psImage to "Ko-fi.ico"
                 Set pbControlBeginGroup to True
                 Procedure OnExecute Variant vCommandBarControl
                     Runprogram Shell Background "https://ko-fi.com/nilss"
                 End_Procedure
+            End_Object
+
+            Object oSuggestion_MenuItem is a cCJMenuItem
+                Set psTooltip to "Suggest"
+                Set psDescription to "Suggest a feature, or report a bug..."
+                Set psImage to "Suggestion.ico"
+                Set pbControlBeginGroup to True
+
+                Procedure OnExecute Variant vCommandBarControl
+                    Runprogram Shell Background "https://github.com/NilsSve/CrossMerge/issues/1"
+                End_Procedure
+
             End_Object
 
             Object oHelpMenuItem is a cCJHelpMenuItem
@@ -638,6 +649,11 @@ Object oMain is a Panel
         End_Function
 
     End_Object
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+        Set Icon to "CmBuilder.ico"
+    End_Procedure
 
     On_Key Key_Ctrl+Key_Tab           Send Switch_Next_View
     On_Key Key_Ctrl+Key_Shift+Key_Tab Send Switch_Prior_View

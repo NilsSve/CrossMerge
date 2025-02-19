@@ -14,4 +14,3 @@ Lib5=Libraries\DUF\DUF24.0.sws
 [Projects]
 Project0=CMEngine.src
 Project1=CMBuilder.src
-Project2=WriteDateTimeHeaderFile.src
