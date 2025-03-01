@@ -33,7 +33,7 @@ Use File_Dlg.pkg
 Use vWin32fh.pkg
 Use DfAbout.pkg
 Use Working.pkg
-Use cDbUpdateFunctionLibrary.inc
+Use cDbUpdateFunctionLibrary.h.pkg
 Use cSQLConnectionHandler.pkg
 
 Define CS_None for "<None>"

@@ -356,24 +356,24 @@ Object oCmEngineSettings_dg is a cRDCDbModalPanel
             End_Procedure
         End_Object
 
-        Object oScheduledTasks_bn is a cRDCButton
-            Set Label to "Start Windows Scheduled &Tasks"
-            Set Size to 16 120
-            Set Location to 25 202
-            Set Status_Help to "Create a scheduled activity to automatically run the CrossMerge Engine program"
-            Set psImage to "ScheduledTask.ico"
-
-            Procedure OnClick
-                Handle hoPanel
-                Send Info_Box "Temporary disabled!"
-                
-//                Get Create (RefClass(cControlPanel)) to hoPanel
-//                If (hoPanel <> 0) Begin
-//                    Send OpenScheduledTasks  of hoPanel
-//                    Send Destroy             of hoPanel
-//                End
-            End_Procedure
-        End_Object
+//        Object oScheduledTasks_bn is a cRDCButton
+//            Set Label to "Start Windows Scheduled &Tasks"
+//            Set Size to 16 120
+//            Set Location to 25 202
+//            Set Status_Help to "Create a scheduled activity to automatically run the CrossMerge Engine program"
+//            Set psImage to "ScheduledTask.ico"
+//
+//            Procedure OnClick
+//                Handle hoPanel
+//                Send Info_Box "Temporary disabled!"
+//                
+////                Get Create (RefClass(cControlPanel)) to hoPanel
+////                If (hoPanel <> 0) Begin
+////                    Send OpenScheduledTasks  of hoPanel
+////                    Send Destroy             of hoPanel
+////                End
+//            End_Procedure
+//        End_Object
 
         Object oDummy_fm is a cRDCForm
             Set Size to 13 2

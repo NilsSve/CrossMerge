@@ -7,7 +7,7 @@ Use Ddvaltbl.pkg          // Validation Table Class Definitions
 Use cRDSDataDictionary.pkg
 Use SyncFuncs.pkg
 Use xxSoftwareKey.pkg
-Use cDbUpdateFunctionLibrary.inc
+Use cDbUpdateFunctionLibrary.h.pkg
 
 Open SncTable
 Open SncTHea

@@ -1,7 +1,4 @@
-﻿// SncTable.sl
-// Select a Database Table Setup Record
-
-Use cRDCDbModalPanel.pkg
+﻿Use cRDCDbModalPanel.pkg
 Use cRDCDbCJGridPromptList.pkg
 Use cRDCDbCJGridColumn.pkg
 Use cRDCButton.pkg
@@ -16,7 +13,6 @@ Cd_Popup_Object SncTable_sl is a cRDCDbModalPanel
     Set Minimize_Icon to False
     Set piMinSize to 148 473
     Set Icon to "CmBuilder.ico" 
-    Set Border_Style to Border_Thick
     Set Auto_Locate_State to True
     
     Object oSncTable_DD is a SncTable_DataDictionary

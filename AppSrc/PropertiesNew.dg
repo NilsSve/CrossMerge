@@ -219,10 +219,6 @@ Object oPropertiesNew_dg is a cRDCDbModalPanel
         Procedure OnClick
             Handle ho       
             Boolean bChangedState
-//            Get pbChangedState of oUseSkin_cb to bChangedState
-//            If (bChangedState = True) Begin
-//                Send Info_Box "You need to restart the application to see a skin change."
-//            End
             Move (Parent(Self)) to ho
             Broadcast Recursive Send DoWriteRegistryKey of ho
             Send Request_Save   of SncSys_DD

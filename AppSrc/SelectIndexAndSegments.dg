@@ -202,7 +202,6 @@ Object oSelectIndexAndSegments is a cRDCDbModalPanel
         Set peAnchors to anBottomLeft
         Set Size to 72 150
         Set Location to 231 330
-//        Set piBackColor to clLtGray
         Set Status_Help to "The segments (or fields) that the selected Target index consist of."
         Set TreeEditLabelsState to False
         Set TreeSortedState     to False
@@ -341,4 +340,3 @@ Function Edit_oSelectIndexAndSegments Handle hoDDO Returns Boolean
 
     Function_Return bOK
 End_Function
-

@@ -18,7 +18,6 @@ Object oRdcViewCollections is a cRDCDbView
     Set Location to 1 0
     Set Size to 236 431
     Set Label to "CrossMerge Engine Collections" 
-    Set Border_Style to Border_Thick
     Set Auto_Clear_DEO_State to False
     Set Icon to "CollectionDetails.ico"
     Set pbAutoActivate to True
@@ -26,7 +25,6 @@ Object oRdcViewCollections is a cRDCDbView
     Property Handle phoSncTableGrid
 
     Object oSynchronize is a cSynchronize
-        Set Location to 90 451
         Set phoPanel to (oMain(Self))
     End_Object
 

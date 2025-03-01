@@ -1,4 +1,4 @@
-//****************************************************************************
+﻿//****************************************************************************
 // $Module type: CLASS
 // $Module name: cPathButton.pkg
 // $Author     : Nils G. Svedmyr
@@ -10,7 +10,7 @@
 //    2002-08-15  Module header created
 //****************************************************************************
 Use SyncFuncs.pkg
-Use cSQLConnectionIniFile.inc
+Use cSQLConnectionIniFile.h.pkg
 
 //{ OverrideProperty=Bitmap InitialValue="FolderO16.bmp" }
 //{ OverrideProperty=piTransparentColor InitialValue=clWhite }

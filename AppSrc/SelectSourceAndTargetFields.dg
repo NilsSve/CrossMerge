@@ -1,4 +1,4 @@
-Use DFClient.pkg
+﻿Use DFClient.pkg
 Use cRDCDbModalPanel.pkg
 Use cRDCHeaderDbGroup.pkg
 Use cRDCTextbox.pkg
@@ -62,17 +62,6 @@ Object oSelectSourceAndTargetFields is a cRDCDbModalPanel
         Set phoChild to (oToChildFields2_tv(Self))
         Set Status_Help to "Double-click or press space-bar to select a Target field or the Ins key to insert a Target field"
 
-//        Procedure DoEnableDisable Integer iType
-//            If (iType = 3) Begin
-//                Set piBackColor to clNone
-//                Set piTextColor to clNone
-//            End
-//            Else Begin
-//                Set piBackColor to clLtGray
-//                Set piTextColor to clGray
-//            End
-//        End_Procedure
-
         Procedure DoUpdateData Integer iFromFile Integer iToFile Boolean bFrom
             Set piFile to iToFile
         End_Procedure
@@ -113,17 +102,6 @@ Object oSelectSourceAndTargetFields is a cRDCDbModalPanel
         Set Status_Help to "Double-click or press the Del key to de-select a Source field."
         Set pbFrom to True
         Set Server to (Main_DD(Self))
-
-//        Procedure DoEnableDisable Integer iType
-//            If (iType = 3) Begin
-//                Set piBackColor to clNone
-//                Set piTextColor to clNone
-//            End
-//            Else Begin
-//                Set piBackColor to clLtGray
-//                Set piTextColor to clGray
-//            End
-//        End_Procedure
 
         Procedure DoUpdateData Integer iFromFile Integer iToFile Boolean bFrom
             Set piFile to iFromFile
@@ -216,17 +194,6 @@ Object oSelectSourceAndTargetFields is a cRDCDbModalPanel
         Set Status_Help to "Double-click or press the Del key to de-select a Target field."
         Set pbFrom to False
         Set Server to (Main_DD(Self))
-
-//        Procedure DoEnableDisable Integer iType
-//            If (iType = 3) Begin
-//                Set piBackColor to clNone
-//                Set piTextColor to clNone
-//            End
-//            Else Begin
-//                Set piBackColor to clLtGray
-//                Set piTextColor to clGray
-//            End
-//        End_Procedure
 
         Procedure DoUpdateData Integer iFromFile Integer iToFile Boolean bFrom
             Set piFile to iToFile

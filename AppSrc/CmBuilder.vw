@@ -798,22 +798,9 @@ Object oRdcView is a cRDCDbView
                 Object oFieldNames_grd is a cRDCCJGrid
                     Set Size to 157 478
                     Set Location to 62 10
-//                    Set pbRestoreLayout to True
-//                    Set psLayoutSection to (Name(Self) + "_grid")
-//                    Set psNoItemsText to "No data found..."
-//                    Set pbHeaderReorders to True
                     Set pbHeaderPrompts to False
-//                    Set pbHeaderTogglesDirection to True
-//                    Set pbSelectionEnable to True
                     Set pbReadOnly to True
-//                    Set pbShowRowFocus to True
-//                    Set pbHotTracking to True
                     Set piLayoutBuild to 2
-//                    Set pbUseAlternateRowBackgroundColor to True
-//                    Set piSelectedRowBackColor to clGreenGreyLight
-//                    Set piHighlightBackColor   to clGreenGreyLight
-//                    Set peAnchors to anAll
-//                    Set pbShowFooter to True
 
                     Object oSourceFieldNumber_col is a cCJGridColumn
                         Set piWidth to 89
@@ -2155,8 +2142,6 @@ Object oRdcView is a cRDCDbView
                     Procedure OnChange
                         Integer iItem
                         String sMode
-//                        Get WinCombo_Current_Item      to iItem
-//                        Get WinCombo_Value Item iItem  to sMode
                         Get Value to sMode
                         If (Trim(sMode) = "") Begin
                             Move "<" to sMode
@@ -2274,21 +2259,11 @@ Object oRdcView is a cRDCDbView
                     Set Size to 157 399
                     Set Location to 62 10
                     Set peAnchors to anTopBottom
-//                    Set pbUseAlternateRowBackgroundColor to True
-//                    Set psNoItemsText to "No data found..."
-//                    Set pbShowRowFocus to True
                     Set pbAllowEdit to False
-//                    Set pbAutoAppend to False
-//                    Set pbAllowAppendRow to False
-//                    Set pbAllowInsertRow to False
                     Set pbAllowColumnRemove to False
                     Set pbAllowColumnReorder to False
                     Set pbAllowColumnResize to False
                     Set pbEditOnTyping to False
-//                    Set pbSelectionEnable to True
-//                    Set piSelectedRowBackColor to clGreenGreyLight
-//                    Set piHighlightBackColor   to clGreenGreyLight
-//                    Set pbShowFooter to True
 
                     Object oConstraint_col is a cCJGridColumn
                         Set piWidth to 620
@@ -2832,22 +2807,7 @@ Object oRdcView is a cRDCDbView
                 Object oValues_grd is a cRDCCJGrid
                     Set Size to 157 397
                     Set Location to 62 87
-//                    Set pbRestoreLayout to True
-//                    Set psLayoutSection to (Name(Self) + "_grid")
-//                    Set psNoItemsText to "No data found..."
-//                    Set pbAllowInsertRow to False
-//                    Set pbAllowAppendRow to False
                     Set pbHeaderPrompts to False
-//                    Set pbHeaderReorders to True
-//                    Set pbHeaderTogglesDirection to True
-//                    Set pbSelectionEnable to True
-//                    Set pbShowRowFocus to True
-//                    Set pbHotTracking to True
-//                    Set pbUseAlternateRowBackgroundColor to True
-//                    Set piSelectedRowBackColor to clGreenGreyLight
-//                    Set piHighlightBackColor   to clGreenGreyLight
-//                    Set peAnchors to anAll
-//                    Set pbShowFooter to True
                     Set piLayoutBuild to 2
 
                     Object oUseDefaultValue_Col is a cCJGridColumn
@@ -3461,24 +3421,12 @@ Object oRdcView is a cRDCDbView
                     Set Server to oSnctrow_DD
                     Set Size to 157 362
                     Set Location to 62 10
-//                    Set pbRestoreLayout to True
-//                    Set psLayoutSection to (Name(Self) + "_grid")
-//                    Set psNoItemsText to "No data found..."
                     Set pbHeaderReorders to False
                     Set pbHeaderPrompts to False
                     Set pbHeaderTogglesDirection to False
-//                    Set pbSelectionEnable to True
-//                    Set pbAllowInsertRow to False
                     Set pbAllowAppendRow to True
-//                    Set pbShowRowFocus to True
-//                    Set pbShowFooter to True
                     Set pbMultipleSelection to False
-//                    Set pbHotTracking to True
                     Set pbEditOnClick to True
-//                    Set pbUseAlternateRowBackgroundColor to True
-//                    Set piSelectedRowBackColor to clGreenGreyLight
-//                    Set piHighlightBackColor   to clGreenGreyLight
-//                    Set peAnchors to anAll    
                     Set piLayoutBuild to 1
 
                     Procedure OnEntering
@@ -3975,24 +3923,11 @@ Object oRdcView is a cRDCDbView
                 Object oFlags_lst is a cRDCCJGrid
                     Set Size to 157 399
                     Set Location to 62 10
-//                    Set psNoItemsText to "No data found..."
-//                    Set pbRestoreLayout to True
-//                    Set psLayoutSection to (Name(Self) + "_grid")
-//                    Set pbShowRowFocus to True
                     Set pbAllowEdit to False
-//                    Set pbAutoAppend to False
-//                    Set pbAllowAppendRow to False
-//                    Set pbAllowInsertRow to False
                     Set pbAllowColumnRemove to False
                     Set pbAllowColumnReorder to False
                     Set pbAllowColumnResize to False
                     Set pbEditOnTyping to False
-//                    Set pbSelectionEnable to True
-//                    Set pbUseAlternateRowBackgroundColor to True
-//                    Set piSelectedRowBackColor to clGreenGreyLight
-//                    Set piHighlightBackColor   to clGreenGreyLight
-//                    Set pbShowFooter to True
-//                    Set peAnchors to anTopBottom
 
                     Object oFlags_col is a cCJGridColumn
                         Set piWidth to 620
