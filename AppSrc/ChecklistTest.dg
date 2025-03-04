@@ -1,0 +1,229 @@
+Use cCJChecklistPanel.pkg
+Use cScrollingContainer.pkg
+Use cChecklistCheckbox.pkg
+Use Windows.pkg
+
+Open SncTable
+
+Object oCheckListPanel is a cCJCheckListPanel
+    Set Size to 310 181
+    Set psLabel to "Checklist For Data Table Connections"
+
+    Procedure OnCreateChecklistPanel
+        Boolean bState
+
+        // ToDo: This resizing doesn't work. We need a way to tell the client_area
+        // to resize the app...
+        //        Get Size to iSize
+        //        Get ReadDword of ghoApplication "Settings" "CheckListWith" "180" to iWidth
+        //        Set Size to (Hi(iSize)) iWidth
+        //        Send OnResize of (Client_Id(phoMainPanel(ghoApplication)))
+
+        Get ReadDword of ghoApplication "Settings" "CheckLists" "1" to bState
+        Set ComVisible to bState
+    End_Procedure
+
+    Object oScrollingContainer is a cScrollingContainer
+        Object oScrollingClientArea is a cScrollingClientArea
+            Set Color to clInfoBk
+
+            Object oMandatoryInfo_tb is a TextBox
+                Set Size to 10 57
+                Set Location to 7 8
+                Set Label to "Mandatory Connection Steps:" 
+                Set Color to clInfoBk
+                Set FontUnderline to True
+            End_Object
+
+            Object oDataTables_cb is a cChecklistCheckbox
+                Set Auto_Size_State to False
+                Set Size to 10 124
+                Set Location to 22 7
+                Set Label to "Is Database Tables settings OK?"
+                Set FontWeight to fw_Bold
+
+                Procedure DoUpdate
+                    Handle hoDD
+                    String sSourceTable sTargetTable
+                    Boolean bLoginOK
+
+                    Move (LastErr <> 75) to bLoginOK
+                    Get phoMain_DDO of ghoApplication to hoDD
+                    Get Field_Current_Value of hoDD Field SncTable.FromDataTable to sSourceTable
+                    Get Field_Current_Value of hoDD Field SncTable.ToDataTable   to sTargetTable
+                    Set Checked_State to (bLoginOK = True and sSourceTable <> CS_None and sTargetTable <> CS_None)
+                End_Procedure
+
+            End_Object
+
+            Object oFields_cb is a cChecklistCheckbox
+                Set Auto_Size_State to False
+                Set Size to 10 121
+                Set Location to 39 7
+                Set Label to "Is Field/Columns settings OK?" 
+                Set FontWeight to fw_Bold
+
+                Procedure DoUpdate
+                    Handle hoDD
+                    String sSelFromFields sSelToFields sValue
+                    Integer iFieldSelectionType iFromStartField iFromStopField iToStartField
+                    Boolean bHasRecord
+
+                    Get phoMain_DDO of ghoApplication to hoDD
+                    Get HasRecord of hoDD to bHasRecord
+                    If (bHasRecord = False) Begin
+                        Set Checked_State to False
+                        Procedure_Return
+                    End
+
+                    Get Field_Current_Value of hoDD Field Snctable.Synchtype to iFieldSelectionType
+                    If (iFieldSelectionType = 1) Begin
+                        Set Checked_State to True
+                        Procedure_Return
+                    End
+                    If (iFieldSelectionType = 2) Begin
+                        Get Field_Current_Value of hoDD Field Snctable.FromStartField to sValue
+                        If (sValue contains "<") Begin
+                            Move 0 to iFromStartField
+                        End 
+                        Else Begin
+                            Move (Trim(sValue)) to iFromStartField
+                        End
+                        Get Field_Current_Value of hoDD Field Snctable.FromStopField  to sValue
+                        If (sValue contains "<") Begin
+                            Move 0 to iFromStopField
+                        End 
+                        Else Begin
+                            Move (Trim(sValue)) to iFromStopField
+                        End
+                        Get Field_Current_Value of hoDD Field Snctable.ToStartField   to sValue
+                        If (sValue contains "<") Begin
+                            Move 0 to iToStartField
+                        End 
+                        Else Begin
+                            Move (Trim(sValue)) to iToStartField
+                        End
+                        Set Checked_State to (iFromStartField <> 0 and iFromStopField <> 0 and iToStartField <> 0)
+                    End
+                    If (iFieldSelectionType = 3) Begin
+                        Get Field_Current_Value of hoDD Field Snctable.SelFromFields  to sSelFromFields
+                        Get Field_Current_Value of hoDD Field Snctable.SelToFields    to sSelToFields
+                        Set Checked_State to (sSelFromFields <> "" and sSelToFields <> "")
+                    End
+                End_Procedure
+
+            End_Object
+
+            Object oIndex_cb is a cChecklistCheckbox
+                Set Auto_Size_State to False
+                Set Size to 10 118
+                Set Location to 56 7
+                Set Label to "Is Index/Sorting settings OK?"
+                Set FontWeight to fw_Bold
+
+                Procedure DoUpdate
+                    Handle hoDD
+                    String sFromFieldsToIdx
+                    Integer iToIdxSelCount
+
+                    Get phoMain_DDO of ghoApplication to hoDD
+                    Get Field_Current_Value of hoDD Field SncTable.FromFieldsToIdx to sFromFieldsToIdx
+                    Get Field_Current_Value of hoDD Field SncTable.ToIdxSelCount to iToIdxSelCount
+                    Set Checked_State to (sFromFieldsToIdx <> "" and iToIdxSelCount <> 0)
+                End_Procedure
+
+            End_Object
+
+            Object oOtherInfo_tb is a TextBox
+                Set Size to 10 40
+                Set Location to 78 8
+                Set Label to "Other Connection Settings:"
+                Set Color to clInfoBk
+                Set FontUnderline to True
+            End_Object
+
+            Object oFilters_cb is a cChecklistCheckbox
+                Set Size to 10 50
+                Set Location to 93 7
+                Set Label to "Has Filters been specified?"
+
+                Procedure DoUpdate
+                    Handle hoDD
+                    String sFilters
+
+                    Get phoMain_DDO of ghoApplication to hoDD
+                    Get Field_Current_Value of hoDD Field SncTable.Constraints to sFilters
+                    Set Checked_State to (sFilters <> "")
+                End_Procedure
+
+            End_Object
+
+            Object oNulDefaults_cb is a cChecklistCheckbox
+                Set Size to 10 50
+                Set Location to 111 7
+                Set Label to "Has NULL Defaults been specified?"
+
+                Procedure DoUpdate
+                    Handle hoDD
+                    String sDefaults
+
+                    Get phoMain_DDO of ghoApplication to hoDD
+                    Get Field_Current_Value of hoDD Field SncTable.ToDefaults to sDefaults
+                    Set Checked_State to (sDefaults <> "")
+                End_Procedure
+
+            End_Object
+
+            Object oValueConversion_cb is a cChecklistCheckbox
+                Set Size to 10 50
+                Set Location to 130 7
+                Set Label to "Has any Value Conversion tables been setup?"
+
+                Procedure DoUpdate
+                    Handle hoDD
+                    Integer iValueConversions
+
+                    Get phoMain_DDO of ghoApplication to hoDD
+                    Get Field_Current_Value of hoDD Field SncTable.SncTHea_Count to iValueConversions
+                    Set Checked_State to (iValueConversions <> 0)
+                End_Procedure
+
+            End_Object
+
+            Object oMarkSourceRows_cb is a cChecklistCheckbox
+                Set Size to 10 50
+                Set Location to 149 7
+                Set Label to "Has Mark Source Rows been setup?"
+
+                Procedure DoUpdate
+                    Handle hoDD
+                    String sSynchFlags
+
+                    Get phoMain_DDO of ghoApplication to hoDD
+                    Get Field_Current_Value of hoDD Field SncTable.SynchFlags to sSynchFlags
+                    Set Checked_State to (sSynchFlags <> "")
+                End_Procedure
+
+            End_Object
+
+            Object oNotes_cb is a cChecklistCheckbox
+                Set Size to 10 50
+                Set Location to 168 7
+                Set Label to "Has notes been added?"
+
+                Procedure DoUpdate
+                    Handle hoDD
+                    String sNotes
+
+                    Get phoMain_DDO of ghoApplication to hoDD
+                    Get Field_Current_Value of hoDD Field SncTable.Notes to sNotes
+                    Set Checked_State to (sNotes <> "")
+                End_Procedure
+
+            End_Object
+
+        End_Object
+
+    End_Object
+
+End_Object

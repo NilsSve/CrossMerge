@@ -1,0 +1,50 @@
+
+//****************************************************************************
+// $Module type: CLASS
+// $Module name: Class
+// $Author     : Nils Svedmyr
+// Created     : 2001-07-30 @ 13:20
+//
+// Description : See procedure Select_toggling for bug fix of super class.
+//               The class will automatically set the oApply_bn button's enabled_state
+//               to true, when the dbCheckbox is toggled. The buttons name _must_ be
+//               oApply_bn, else the button will not be un-shadowed.
+//               I haven't figured out to do this smarter since the oApply_bn object
+//               (or whatever it's called) is probably not yet created when the dbCheckbox is...
+//
+// $Rev History
+//    2001-07-30  Module header created
+//****************************************************************************
+Use Dfenchk.pkg
+Use cRDCDbCheckbox.pkg
+Register_Object oToolbar
+Register_Procedure Set phoCopy  Handle ho
+Register_Procedure Set phoPaste Handle ho
+Register_Procedure Set phoCut   Handle ho
+
+Register_Object oApply_bn // Register here, in case it doesn't exist to satisfy the compiler.
+
+Class cSysDbCheckbox is a cRDCDbCheckBox
+    Procedure Construct_Object
+        Forward Send Construct_Object
+    End_Procedure 
+
+    // There's a bug in the OnChange event for dbCheckbox's
+    // that causes the event not to trigger the first time
+    // the dbCheckbox is clicked. After the first time it
+    // works ok. At least this is true for system files.
+    // So we use Select_Toggling instead.
+    Procedure Select_Toggling Integer iItem Boolean bState
+        Handle hoApply_bn
+        Integer iSrv
+        Boolean bSrvState
+        Forward Send Select_Toggling iItem bState
+        Get Server to iSrv
+        If iSrv Begin
+            Get Changed_State of iSrv to bSrvState
+            Move (oApply_bn(Self))    to hoApply_bn
+            If (bSrvState and hoApply_bn) Set Enabled_State of hoApply_bn to True
+        End
+    End_Procedure
+
+End_Class 

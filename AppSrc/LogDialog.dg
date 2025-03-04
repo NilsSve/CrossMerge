@@ -1,0 +1,231 @@
+//  Modifications:
+//  ~~~~~~~~~~~~~
+//  25/04/2012  PDC Changed label of oClose_bn from 'Cancel' to 'Close'.
+//                  Added find buttons (oFindButton_c3d).
+//
+Use cRDCDbModalPanel.pkg
+Use DataDict.pkg
+Use cRDCForm.pkg
+Use cRDCDbForm.pkg
+Use cRDCButton.pkg
+Use cImageList.pkg
+
+Use SNCLOG.DD
+
+Object oLogDialog is a cRDCDbModalPanel
+    Set Border_Style to Border_Normal
+    Set Minimize_Icon to False
+    Set Label to "Log Details"
+    Set Location to 2 1
+    Set Size to 158 455
+    Set Locate_Mode to Center_On_Parent
+    Set Extended_Window_Style to WS_EX_TOOLWINDOW False
+    Set Extended_Window_Style to WS_EX_DLGMODALFRAME True
+
+    Object Snclog_DD is a Snclog_DataDictionary
+        Procedure New_Current_Record Integer iOld Integer iNew
+            Forward Send New_Current_Record iOld iNew
+            Send DoApplyEditValues
+        End_Procedure
+    End_Object
+
+    Set Main_DD to Snclog_DD
+    Set Server to Snclog_DD
+
+    Object oSnclog_Statustext_edt is a Edit
+        Set Label to "Status Text:"
+        Set Size to 73 363
+        Set Location to 6 82
+        Set Status_Help to "Error, Warning or Status message for the selected log record."
+        Set Color to clBtnFace
+        Set Label_Row_Offset to 0
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to jMode_Right
+        Set Read_Only_State to True
+    End_Object
+
+    Object oSnclog_Tablename_edt is a Edit
+        Set Label to "Database Connection:"
+        Set Size to 25 363
+        Set Location to 81 82
+        Set Status_Help to "User display name/Name of the database tables that were synchronized."
+        Set Color to clBtnFace
+        Set Label_Row_Offset to 0
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to jMode_Right
+        Set Read_Only_State to True
+    End_Object
+
+    Object Snclog_Datetime is a cRDCForm
+        Set Label to "Date and Time:"
+        Set Size to 13 76
+        Set Location to 108 82
+        Set Status_Help to "Date and time the record was created."
+        Set Color to clBtnFace
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to jMode_Right
+        Set Entry_State Item 0 to False
+    End_Object
+
+    Object Snclog_Networkusername is a cRDCDbForm
+        Entry_Item Snclog.Networkusername
+        Set Label to "User:"
+        Set Size to 13 76
+        Set Location to 122 82
+        Set Status_Help to "Network Name of the logged in person when the Connection Engine was run."
+        Set Color to clBtnFace
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to jMode_Right
+        Set Entry_State Item 0 to False
+    End_Object
+
+    Object Snclog_Recid is a cRDCDbForm
+        Entry_Item Snclog.Recid
+        Set Label to "Log Record Id:"
+        Set Size to 13 76
+        Set Location to 138 82
+        Set Status_Help to "Unique record id for the Connection Engine log."
+        Set Color to clBtnFace
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to jMode_Right
+        Set Entry_State Item 0 to False
+    End_Object
+
+    // PDC 25/04/2012   Added:
+    Object oFindButton_c3d is a Container3d
+        Set Size to 15 62
+        Set Location to 137 166
+        Set peAnchors to anBottomLeft
+
+        //        Object oFindToolbar is a cToolbar
+        //            Set pbInMDIPanel  to False
+        //            Set pbWrapable    to False
+        //            Set pbNoDivider   to True
+        //            Set piIndent      to 0
+        //
+        //            Object oImages is an cImageList
+        //                Set piMaxImages to 4
+        //                Procedure OnCreate
+        //                    Integer iVoid
+        //                    Get AddTransparentImage "Bgn.bmp"   clFuchsia to iVoid
+        //                    Get AddTransparentImage "Prev.bmp"  clFuchsia to iVoid
+        //                    Get AddTransparentImage "Next.bmp"  clFuchsia to iVoid
+        //                    Get AddTransparentImage "End.bmp"   clFuchsia to iVoid
+        //                End_Procedure
+        //            End_Object
+        //
+        //            Object oImagesHot is a cRDScImageList
+        //                // These images are shown when the mouse cursor hovers over the button
+        //                // There must be a matching number of images in all imagelists.
+        //                Set piMaxImages to 4
+        //                Procedure OnCreate
+        //                    Integer iVoid
+        //                    Get AddTransparentImage "BgnHot.bmp"  clLtGray  to iVoid
+        //                    Get AddTransparentImage "PrevHot.bmp" clLtGray  to iVoid
+        //                    Get AddTransparentImage "NextHot.bmp" clLtGray  to iVoid
+        //                    Get AddTransparentImage "EndHot.bmp"  clLtGray  to iVoid
+        //                End_Procedure
+        //            End_Object
+        //
+        //            Set phoImageList to (oImages(Self))
+        //
+        //            Object oFirst_bn is a cToolbarButton
+        //                Set pbAutoSize to True
+        //                Set psTooltip to "Go to the first log record (Ctrl+Home)"
+        //                Set piImage to 0
+        //                Procedure OnClick
+        //                    Send Find to Snclog_DD FIRST_RECORD 1
+        //                End_Procedure
+        //            End_Object
+        //
+        //            Object oPrev_bn is a cToolbarButton
+        //                Set pbAutoSize to True
+        //                Set psToolTip to "Go to the previous log record (F7)"
+        //                Set piImage   to 1
+        //                Procedure OnClick
+        //                    Send Find to Snclog_DD LT 1
+        //                End_Procedure
+        //            End_Object
+        //
+        //            Object oNext_bn is a cToolbarButton
+        //                Set pbAutoSize to True
+        //                Set psTooltip to "Go to the next log record (F8)"
+        //                Set piImage   to 2
+        //                Procedure OnClick
+        //                    Send Find to Snclog_DD GT 1
+        //                End_Procedure
+        //            End_Object
+        //
+        //            Object oLast_bn is a cToolbarButton
+        //                Set pbAutoSize to True
+        //                Set psTooltip to "Go to the last log record (Ctrl+End)"
+        //                Set piImage to 3
+        //                Procedure OnClick
+        //                    Send Find to Snclog_DD LAST_RECORD 1
+        //                End_Procedure
+        //            End_Object
+        //
+        //            Procedure Add_Focus Integer hoBase Returns Integer
+        //                Integer iRetVal
+        //                Integer iSize
+        //                Get GuiSize of (Parent(Self))    to iSize
+        //                Set GuiSize                      to (Hi(iSize)) (Low(iSize))
+        //                Set piButtonWidthMin             to (Low(iSize) -5)
+        //                Forward Get Msg_Add_Focus hoBase to iRetVal
+        //            End_Procedure
+        //
+        //            End_Object
+
+        #IFDEF ForDesigner
+        Set Border_Style to Border_Normal
+        #ELSE
+        Set Border_Style to Border_None
+        #ENDIF
+        Get GuiSize      to Windowindex
+        Set GuiSize      to (Hi(Windowindex) + 4) (Low(Windowindex) +5)
+
+        Procedure DoUpdateData Integer iFromFile Integer iToFile Boolean bFrom
+            Forward Send DoUpdateData iFromFile iToFile bFrom
+            //                Set Enabled_State of (oFindToolbar(Self)) to (iFromFile and iToFile)
+        End_Procedure
+
+    End_Object
+    // End PDC
+
+    Object oClose_bn is a cRDCButton
+        Set Label to "&Close"
+        Set Size to 14 52
+        Set Location to 141 399
+        Set Status_Help to "Close the dialog"
+        Set Default_State to True
+        Set Bitmap to "Cancel16.bmp"
+        //    Set piTransparentColor to clFuchsia
+
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure
+    End_Object
+
+    Procedure DoApplyEditValues
+        String sValue
+        Integer iRecid
+        Get Field_Current_Value of SncLog_DD Field SncLog.TableName to sValue
+        Set Value of oSnclog_Tablename_edt Item 0 to (Trim(sValue))
+        Get Field_Current_Value of SncLog_DD Field SncLog.StatusText to sValue
+        Set Value of oSnclog_Statustext_edt Item 0 to (Trim(sValue))
+        // For some odd reason this walue will not be correctly displayed
+        // by a dbform, when used by the Scheme and Synchronize programs.
+        // The other dbforms function ok. Go figure...
+        Get Field_Current_Value of SncLog_DD Field SncLog.Recid    to iRecid
+        Set Value of Snclog_Recid                                  to iRecid
+        Get Field_Current_Value of SncLog_DD Field SncLog.DateTimeCreated to sValue
+        Set Value of Snclog_Datetime Item 0 to (Trim(sValue))
+    End_Procedure
+
+    On_Key Key_Alt+Key_C Send KeyAction to oClose_bn
+    On_Key kCancel       Send KeyAction to oClose_bn
+End_Object
+
+Procedure DoPopupLogDialog
+    Send Popup of oLogDialog
+End_Procedure

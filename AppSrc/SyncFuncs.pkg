@@ -1,0 +1,1379 @@
+﻿//****************************************************************************
+// $Module type: Package
+// $Module name: SyncFuncs.pkg
+// $Author     : Nils Svedmyr
+// Created     : 2001-08-21 @ 14:06
+//
+// COPYRIGHT (c) 2001-2020 RDC Tools International
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; version 2
+// of the License.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program; (See the GPL.txt file in the Help directory) if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+// Description : Functions for the Synchronize project.
+//
+// $Rev History:
+//    2001-08-21  Module header created
+//
+//****************************************************************************
+Use DFTimer.pkg
+Use vWin32fh.pkg
+Use Seq_Chnl.pkg
+Use File_Dlg.pkg
+Use vWin32fh.pkg
+Use DfAbout.pkg
+Use Working.pkg
+Use cDbUpdateFunctionLibrary.h.pkg
+Use cSQLConnectionHandler.pkg
+
+Define CS_None for "<None>"
+
+Declare_Datafile SncTable
+
+Global_Variable Integer giFromFile
+Move 10 to giFromFile
+Global_Variable Integer giToFile
+Move 20 to giToFile
+Global_Variable Integer giFromDDF
+Move 100 to giFromDDF                // File handle for Source table's File.ddf file.
+Global_Variable Integer giToDDF
+Move 110 to giToDDF                 // File handle for Source table's File.ddf file.
+
+Send Ignore_Error of Error_Info_Object DFERR_BAD_DRIVER_NAME
+Send Ignore_Error of Error_Info_Object DFERR_CANT_LOAD_DLL
+Send Ignore_Error of Error_Info_Object DFERR_INVALID_INTERMED_FILE_KEYWORD
+Send Ignore_Error of Error_Info_Object DFERR_UNSUPPORTED_ATTRIBUTE
+
+// Propery phoDD is used by function OpenDDFFile.
+// The function is used by the Builder and Engine.
+Register_Function phoDD Handle hoDD Returns Integer
+Register_Function RdsMain_Panel_Id Returns Integer
+//Register_Object   oCrypt
+
+//Define CI_DATAFLEX_ID    for 1
+//Define CI_DB2_Drv_ID     for 2
+//Define CI_MSSQL_Drv_ID   For 3
+//Define CI_ODBC_Drv_ID    For 4
+//Define CI_Oracle_Drv_ID  For 5
+//Define CI_DFBtrv_Drv_ID  For 6
+
+Function ConvertCMDbTypeToDriverID Global Integer iCMDbType Returns String
+    String sDriverID
+
+    Case Begin
+        Case (iCMDbType = EN_DbTypeDataFlex)
+            Move DATAFLEX_ID to sDriverID
+            Case Break
+        Case (iCMDbType = EN_DbTypeDB2)
+            Move DB2_DRV_ID to sDriverID
+            Case Break
+        Case (iCMDbType = EN_DbTypeMSSQL)
+            Move MSSQLDRV_ID to sDriverID
+            Case Break
+        Case (iCMDbType = EN_DbTypeMySQL)
+            Move ODBC_DRV_ID to sDriverID
+            Case Break
+        Case (iCMDbType = EN_DbTypeOracle)
+            Move ODBC_DRV_ID to sDriverID
+            Case Break
+        Case (iCMDbType = EN_DbTypePostgre)
+            Move ODBC_DRV_ID to sDriverID
+            Case Break
+        Case (iCMDbType = EN_DbTypePervasive)
+            Move DFBTRDRV_ID to sDriverID
+            Case Break
+        Case Else
+            Move DATAFLEX_ID to sDriverID
+    Case End
+    Function_Return sDriverID
+End_Function
+
+// Fills a tSQLConnection struct with data from *the current* hoDD SncTable record.
+Function FillSQLConnectionStruct Global Boolean bFrom Handle hoDD Returns tSQLConnection
+    Integer iDbType
+    tSQLConnection SQLConnection
+    String sDriverID
+
+    If (bFrom = True) Begin
+        Get Field_Current_Value of hoDD Field SncTable.FromDriver to sDriverID
+    End    
+    Else Begin
+        Get Field_Current_Value of hoDD Field SncTable.ToDriver   to sDriverID
+    End    
+
+    If (bFrom = True) Begin
+        Move False                                                      to SQLConnection.bEnabled
+        Move sDriverID                                                  to SQLConnection.sDriverID
+        Get Field_Current_Value of hoDD Field SncTable.FromConnectionID to SQLConnection.sConnectionID
+        Get Field_Current_Value of hoDD Field SncTable.FromDbType       to SQLConnection.iDbType
+        Get Field_Current_Value of hoDD Field SncTable.FromServer       to SQLConnection.sServer
+        Get Field_Current_Value of hoDD Field SncTable.FromDatabase     to SQLConnection.sDatabase
+        Get Field_Current_Value of hoDD Field SncTable.FromNTAuth       to SQLConnection.bTrusted
+        Get Field_Current_Value of hoDD Field SncTable.FromUser         to SQLConnection.sUserID
+        Get Field_Current_Value of hoDD Field SncTable.FromPv           to SQLConnection.sPassword
+        Get Field_Current_Value of hoDD Field SncTable.FromOwner        to SQLConnection.sSchema
+    End
+    If (bFrom = False) Begin
+        Move False                                                      to SQLConnection.bEnabled
+        Move sDriverID                                                  to SQLConnection.sDriverID
+        Get Field_Current_Value of hoDD Field SncTable.ToConnectionID   to SQLConnection.sConnectionID
+        Get Field_Current_Value of hoDD Field SncTable.ToDbType         to SQLConnection.iDbType
+        Get Field_Current_Value of hoDD Field SncTable.ToServer         to SQLConnection.sServer
+        Get Field_Current_Value of hoDD Field SncTable.ToDatabase       to SQLConnection.sDatabase
+        Get Field_Current_Value of hoDD Field SncTable.ToNTAuth         to SQLConnection.bTrusted
+        Get Field_Current_Value of hoDD Field SncTable.ToUser           to SQLConnection.sUserID
+        Get Field_Current_Value of hoDD Field SncTable.ToPv             to SQLConnection.sPassword
+        Get Field_Current_Value of hoDD Field SncTable.ToOwner          to SQLConnection.sSchema
+    End
+    
+    Get ConstructConnectionString of ghoSQLConnectionHandler SQLConnection.sDriverID SQLConnection.sServer SQLConnection.sDatabase ;
+    SQLConnection.bTrusted  SQLConnection.sUserID SQLConnection.sPassword ;
+    to SQLConnection.sConnectionString
+    Set Private.pSQLConnection of ghoSQLConnectionHandler to SQLConnection
+
+    Function_Return SQLConnection
+End_Function
+
+// We need to take into account the situation where an existing connection record is edited.
+// If either the server or database was changed, the SncTable.FromDatabaseTable or SncTable.ToDatabaseTable 
+// must be set to "". Else the auto-login logic of the cDbComboFormDataTable class will attempt to login
+// to a (probably) non-existing table name.
+Function UpdateSncTableRecordFromSQLConnectionStruct Global Boolean bFrom Handle hoDD tSQLConnection SQLConnection Returns Boolean
+    Integer iDbType   
+    String sServer sDatabase
+    
+    Move False to Err
+    If (bFrom = True) Begin
+        Get Field_Current_Value of hoDD Field SncTable.FromServer         to sServer
+        Get Field_Current_Value of hoDD Field SncTable.FromDatabase       to sDatabase
+        If (Trim(sServer) <> SQLConnection.sServer or Trim(sDatabase) <> SQLConnection.sDatabase) Begin
+            Set Field_Changed_Value of hoDD Field SncTable.FromDataTable  to ""
+        End
+        Set Field_Changed_Value of hoDD Field SncTable.FromConnectionID   to SQLConnection.sConnectionID
+        Set Field_Changed_Value of hoDD Field SncTable.FromDbType         to SQLConnection.iDbType
+        Set Field_Changed_Value of hoDD Field SncTable.FromDriver         to SQLConnection.sDriverID
+        Set Field_Changed_Value of hoDD Field SncTable.FromServer         to SQLConnection.sServer
+        Set Field_Changed_Value of hoDD Field SncTable.FromDatabase       to SQLConnection.sDatabase
+        Set Field_Changed_Value of hoDD Field SncTable.FromNTAuth         to SQLConnection.bTrusted
+        Set Field_Changed_Value of hoDD Field SncTable.FromUser           to SQLConnection.sUserID
+        Set Field_Changed_Value of hoDD Field SncTable.FromPv             to SQLConnection.sPassword
+        Set Field_Changed_Value of hoDD Field SncTable.FromOwner          to SQLConnection.sSchema
+    End
+
+    If (bFrom = False) Begin
+        Get Field_Current_Value of hoDD Field SncTable.ToServer         to sServer
+        Get Field_Current_Value of hoDD Field SncTable.ToDatabase       to sDatabase
+        If (Trim(sServer) <> SQLConnection.sServer or Trim(sDatabase) <> SQLConnection.sDatabase) Begin
+            Set Field_Changed_Value of hoDD Field SncTable.ToDataTable  to ""
+        End
+        Set Field_Changed_Value of hoDD Field SncTable.ToConnectionID   to SQLConnection.sConnectionID
+        Set Field_Changed_Value of hoDD Field SncTable.ToDbType         to SQLConnection.iDbType
+        Set Field_Changed_Value of hoDD Field SncTable.ToDriver         to SQLConnection.sDriverID
+        Set Field_Changed_Value of hoDD Field SncTable.ToServer         to SQLConnection.sServer
+        Set Field_Changed_Value of hoDD Field SncTable.ToDatabase       to SQLConnection.sDatabase
+        Set Field_Changed_Value of hoDD Field SncTable.ToNTAuth         to SQLConnection.bTrusted
+        Set Field_Changed_Value of hoDD Field SncTable.ToUser           to SQLConnection.sUserID
+        Set Field_Changed_Value of hoDD Field SncTable.ToPv             to SQLConnection.sPassword
+        Set Field_Changed_Value of hoDD Field SncTable.ToOwner          to SQLConnection.sSchema
+    End
+
+    Function_Return (Err = False)
+End_Function
+
+Define C_CKDrivers       For "DB2_DRVMSSQLDRVODBC_DRVDFBTRDRVORA_DRVSQL_DRVMDS_DB2"
+
+Define C_ODBC_DRV_VER    For 5.1
+Define C_MSSQLDRV_VER    For 5.1
+Define C_DB2_DRV_VER     For 5.1
+Define C_DFBTRDRV_VER    For 5.0
+// ToDo: These Mertech driver versions needs to be updated
+//Define C_ORA_DRV_VER     for 3.2
+//Define C_SQL_DRV_VER     for 7.3
+//Define C_MDS_DB2_VER     for 7.0
+
+Object oDrvArray is a Array
+    Property Boolean pbODBC_DRV  False
+    Property Boolean pbMSSQLDRV  False
+    Property Boolean pbDB2_DRV   False
+    Property Boolean pbDFBTRDRV  False
+    Property Boolean pbORA_DRV   False
+    Property Boolean pbSQL_DRV   False
+    Property Boolean pbMDS_DB2   False
+End_Object
+
+Object oTempFileListArray is a Array
+End_Object
+
+// Takes a string as argument.
+// Returns: True if all is numeric.
+//          False if string contains any other than digits.
+Function IsNumeric Global String sValue Returns Boolean
+    Boolean bOk
+    Integer iLen iCount
+    String sChar
+
+    Move (Trim(sValue))   to sValue
+    Move (Length(sValue)) to iLen
+    If (not(iLen)) Begin
+        Function_Return False
+    End
+    Move True to bOk
+    For iCount From 1 to iLen
+        Move (Mid(sValue, 1, iCount)) to sChar
+        If (not("-0123456789" contains sChar)) Begin
+            Move False to bOk
+        End
+        If (not(bOk)) Break
+    Loop
+
+    Function_Return bOk
+End_Function
+
+// Adds a file temporary to the Filelist.cfg
+// The next empty slot is used and temporary saved
+// to the oTempFileListArray.
+Function AddFileToFileList Global String sPath String sDriver Returns Integer
+    Handle hoArray hStruct
+    Integer iFile
+    String sDisplayName sLogicalName sFileName
+
+    Get_Attribute DF_FILE_NEXT_EMPTY   of iFile to iFile
+
+    Get StripPath sPath                to sFileName
+    Move sFileName                     to sDisplayName
+    If (Length(sDisplayName) > 32) ;
+        Move (Pad(sDisplayName, 32))     to sDisplayName
+    If (Length(sDisplayName) > 8) ;
+        Move (Pad(sDisplayName, 8))      to sLogicalName
+    Else ;
+        Move sDisplayName                to sLogicalName
+
+    Set_Attribute DF_FILE_ROOT_NAME    of iFile to sFileName
+    Set_Attribute DF_FILE_LOGICAL_NAME of iFile to sLogicalName
+    Set_Attribute DF_FILE_DISPLAY_NAME of iFile to sDisplayName
+
+    Move (oTempFileListArray(Self)) to hoArray
+    Set Array_Value of hoArray Item (Item_Count(hoArray) - 1) to iFile
+
+    Move 0 to hStruct
+    Structure_Start hStruct sDriver
+    Set_Attribute DF_FILE_PHYSICAL_NAME of hStruct to sPath
+    Structure_End iFile DF_STRUCTEND_OPT_NONE
+
+    Function_Return iFile
+End_Function
+
+// Returns the highest used file number in filelist.cfg + 1.
+// A.k.a. the first available slot after the last used one:
+Function IsHighFileListNumber Global Returns Integer
+    Handle hFile
+    Integer iRetval
+    Repeat
+        Get_Attribute DF_FILE_NEXT_USED of hFile to hFile
+        If (hFile > 0) Begin
+            Move hFile to iRetval
+        End
+    Until (hFile = 0)
+    Function_Return (iRetval + 1)
+End_Function
+
+// Returns the major revision of the currently running VDF version:
+Function DFMajorRev Global Returns String
+    String sVersion
+    Move (SysConf(SysConf_DataFlex_Rev)) to sVersion
+    Move (If(Pos(".", sVersion), Left(sVersion, (Pos(".", sVersion) -1)), sVersion)) to sVersion
+    Function_Return sVersion
+End_Function
+
+// Takes a database type (1-6) as parameter and
+// Returns: The driver name as a string.
+Function ConvertDbTypeToDriver Global Integer iDbType Returns String
+    String sRetval
+    Case Begin
+        Case (iDbType = EN_DbTypeDataFlex)
+            Move DATAFLEX_ID to sRetval
+            Break
+        Case (iDbType = EN_DbTypeDB2)
+            Move DB2_DRV_ID to sRetval
+            Break
+        Case (iDbType = EN_DbTypeMSSQL)
+            Move MSSQLDRV_ID to sRetval
+            Break
+        Case (iDbType = EN_DbTypeMySQL or iDbType = EN_DbTypeOracle or iDbType = EN_DbTypePostgre)
+            Move ODBC_DRV_ID to sRetval
+            Break
+        Case (iDbType = EN_DbTypePervasive)
+            Move DFBTRDRV_ID to sRetval
+            Break
+    Case End
+    Function_Return sRetval
+End_Function
+
+// Takes a driver name as a parameter.
+// Returns: * False if the .DLL version is GE the "C_DriverVersion" constant I.e. version is ok.
+//          * The current version if the .DLL version is to old in the format "2.1" I.e. with one decimal.
+//          * -1 if the .DLL couldn't be found in the ..\Bin folder or RDC Programs folder.
+//          * -2 Unkown driver
+Function IsCurrentDriverVersion Global String sDriverID Returns String
+    String sPath sVersion sDLL sDriver
+    Integer iNumberOfDrivers iDriver iRetval iPos
+    Number nMinVersion nVersion
+    Handle hoCLIHandler hoBtrvHandler
+
+    If (sDriverID = DATAFLEX_ID) Begin
+        Function_Return "0"   // This will always be the correct version...
+    End
+    
+    Move (sDriverID - ".DLL") to sDLL
+    Get_File_Path sDLL to sPath
+    Get vFilePathExists sPath to iRetval
+    If (not(iRetval)) Begin
+        Function_Return "-1"  // .DLL file not found.
+    End
+
+    Load_Driver sDriverID
+
+    Get Create (RefClass(cCLIHandler))      to hoCLIHandler
+    Get Create (RefClass(cDFBtrDrvHandler)) to hoBtrvHandler
+
+    // Loop through all loaded drivers.
+    Get_Attribute DF_NUMBER_DRIVERS to iNumberOfDrivers
+
+    For iDriver from 1 to iNumberOfDrivers
+        Send Ignore_Error of Error_Object_Id DFERR_BAD_PARAMETER
+        Get_Attribute DF_DRIVER_NAME of iDriver to sDriver
+        Send Trap_Error of Error_Object_Id DFERR_BAD_PARAMETER
+        
+        If (sDriver = sDriverID) Begin
+            Get_Attribute DF_DRIVER_SQLSERVER_CLIENT_VERSION of iDriver to sVersion
+            Move iNumberOfDrivers to iDriver
+        End
+    Loop
+
+    Send Destroy of hoCLIHandler
+    Send Destroy of hoBtrvHandler
+    Move (Number(sVersion)) to nVersion
+    Function_Return (If(nVersion < nMinVersion, String(sVersion), "0"))
+End_Function
+
+// Loads the specified CK database driver, if not loaded.
+// Pass True for the bBatch flag to return the error message. (Used by the Synchronize program)
+// Or pass False to display a stop box with the error message.
+// Takes a database driver id as parameter and a boolean flag
+// true to return error text or false to display a stop_box with error text.
+// Returns: 0 if driver loaded ok or was already loaded.
+//          1 if driver was found but could not be loaded if not batch. Else error text.
+//         -1 if driver could not be found if not bBatch. Else error text.
+//         -2 if unkown driver if not bBatch. Else error text.
+//         -3 if driver version is to old if not bBatch. Else error text.
+// Also checks that the driver version is ok.
+Function SubLoadDriver Global String sDriver Boolean bBatch Returns String
+    String sName sRetval sText sText2
+    Integer iNumDrivers iCount iFailed iSeparator
+
+    Get IsCurrentDriverVersion sDriver to sRetval
+    If (sRetval <> "0") Begin
+        If (sRetval = "-1") Begin
+            Move ("WARNING! Could not find the connectivity kit database driver" * sDriver) to sText
+            //            ". It should reside in the RDC\Programs folder. You need to move/install the driver" * ;
+            //            sDriver - ".DLL file to the RDC\Programs folder.") to sText
+            If bBatch Begin
+                Function_Return sText
+            End
+            Else Begin
+                Send Stop_Box sText
+                Function_Return "-1"
+            End
+        End
+        If (sRetval = "-2") Begin
+            Move ("WARNING! Unkown connectivity kit database driver." * sDriver) to sText
+            If bBatch Begin
+                Function_Return sText
+            End
+            Else Begin
+                Send Stop_Box sText
+                Function_Return "-2"
+            End
+        End
+        Else If (sRetval <> "0") Begin
+            Get_Attribute DF_DECIMAL_SEPARATOR to iSeparator
+            Set_Attribute DF_DECIMAL_SEPARATOR to (Ascii("."))
+            Move ("WARNING! The version of the connectivity kit database driver" * sDriver - ".dll is to old. The version is:" * ;
+            String(sRetval) * "You need to update to at least version") to sText
+            If Not bBatch ;
+                Move "\n\nNote: This warning will not be displayed again but the program will not function properly until you do." to sText2
+            Case Begin
+                Case (sDriver <> ODBC_DRV_ID)
+                    Move (sText * String(Eval(C_ODBC_DRV_VER)) + sText2) to sText
+                    Case Break
+                Case (sDriver <> MSSQLDRV_ID)
+                    Move (sText * String(Eval(C_MSSQLDRV_VER)) + sText2) to sText
+                    Case Break
+                Case (sDriver <> DB2_DRV_ID)
+                    Move (sText * String(Eval(C_DB2_DRV_VER)) + sText2)  to sText
+                    Case Break
+                Case (sDriver = DFBTRDRV_ID)
+                    Move (sText * String(Eval(C_DFBTRDRV_VER)) + sText2) to sText
+                    Case Break
+                    //                Case (sDriver = ORA_DRV_ID)
+                    //                    Move (sText * String(Eval(C_ORA_DRV_VER)) + sText2)  to sText
+                    //                    Case Break
+                    //                Case (sDriver = SQL_DRV_ID)
+                    //                    Move (sText * String(Eval(C_SQL_DRV_VER)) + sText2)  to sText
+                    //                    Case Break
+                    //                Case (sDriver = MDS_DB2_ID)
+                    //                    Move (sText * String(Eval(C_MDS_DB2_VER)) + sText2)  to sText
+                    //                    Case Break
+                Case Else
+                    Move "Case error in function SubLoadDriver (Sysfuncs)"  to sText
+            Case End
+            Set_Attribute DF_DECIMAL_SEPARATOR to iSeparator
+            If bBatch Begin
+                Function_Return sText
+            End
+            Else Begin
+                Send Stop_Box sText
+                Function_Return "-3"
+            End
+        End
+        Function_Return "1"
+    End
+    Move 1 to iFailed
+    Get_Attribute DF_NUMBER_DRIVERS to iNumDrivers
+    For iCount From 1 to iNumDrivers
+        Get_Attribute DF_DRIVER_NAME of iCount to sName
+        If (Uppercase(sName) = Uppercase(sDriver)) Begin
+            Move 0 to iFailed
+        End
+    Loop
+    If iFailed Begin
+        Move False to Err
+        Load_Driver sDriver
+        If Not (Err) Begin
+            Move 0 to iFailed
+        End
+    End
+    If (bBatch And iFailed) Begin
+        Function_Return ("WARNING! Could not load database driver" * String(sDriver) + ".dll")
+    End
+    Function_Return (String(iFailed))
+End_Function
+
+// Loads the passed driver name id.
+// If bBatch returns the error text else returns 0.
+// Always returns 0 if the loading of the driver has failed on a previous load attempt,
+// i.e. an error has been reported before, while running a program.
+// Uses the SubLoaddriver function.
+Function IsLoadCheckDriver Global String sDriver Boolean bBatch Returns String
+    String sRetval
+    Move (Trim(sDriver)) to sDriver
+    Case Begin
+        Case (sDriver = ODBC_DRV_ID)
+            If (Not(bBatch) And pbODBC_DRV(oDrvArray(Self))) Begin
+                Function_Return "0"
+            End
+            Get SubLoadDriver sDriver bBatch to sRetval            // LoadDriver is a function in SncFuncs.pkg
+            Set pbODBC_DRV of oDrvArray to True
+            Case Break
+        Case (sDriver = DB2_DRV_ID)
+            If (Not(bBatch) And pbDB2_DRV(oDrvArray(Self))) Begin
+                Function_Return "0"
+            End
+            Get SubLoadDriver sDriver bBatch to sRetval
+            Set pbDB2_DRV of oDrvArray to True
+            Case Break
+            //        Case (sDriver = MDS_DB2_ID)
+            //            If (Not(bBatch) And pbMDS_DB2(oDrvArray(Self))) Begin
+            //                Function_Return "0"
+            //            End
+            //            Get SubLoadDriver sDriver bBatch to sRetval
+            //            Set pbMDS_DB2 of oDrvArray to True
+            //            Case Break
+        Case (sDriver = MSSQLDRV_ID)
+            If (Not(bBatch) And pbMSSQLDRV(oDrvArray(Self))) Begin
+                Function_Return "0"
+            End
+            Get SubLoadDriver sDriver bBatch to sRetval
+            Set pbMSSQLDRV of oDrvArray to True
+            Case Break
+            //        Case (sDriver = SQL_DRV_ID)
+            //            If (Not(bBatch) And pbSQL_DRV(oDrvArray(Self))) Begin
+            //                Function_Return "0"
+            //            End
+            //            Get SubLoadDriver sDriver bBatch to sRetval
+            //            Set pbSQL_DRV of oDrvArray to True
+            //            Case Break
+            //        Case (sDriver = ORA_DRV_ID)
+            //            If (Not(bBatch) And pbORA_DRV(oDrvArray(Self))) Begin
+            //                Function_Return "0"
+            //            End
+            //            Get SubLoadDriver sDriver bBatch to sRetval
+            //            Set pbORA_DRV of oDrvArray to True
+            //            Case Break
+        Case (sDriver = DFBTRDRV_ID)
+            If (Not(bBatch) And pbDFBTRDRV(oDrvArray(Self))) Begin
+                Function_Return "0"
+            End
+            Get SubLoadDriver sDriver bBatch to sRetval
+            Set pbDFBTRDRV of oDrvArray to True
+            Case Break
+        Case Else
+            Move "Case error in function IsLoadCheckDriver (Sysfuncs)"  to sRetval
+    Case End
+    If (bBatch And (Length(sRetval) > 2)) Begin
+    End
+    Else Begin
+        Move "0" to sRetval  // 0= Ok
+    End
+    Function_Return sRetval
+End_Function
+
+Function LoginExtract Global String sLogin String sKeyWord Returns String
+    Integer iStart iEnd
+    String sRetval
+    Move (Trim(sLogin)) to sLogin
+    Move (Pos(Uppercase(sKeyWord), Uppercase(sLogin))) to iStart
+    If Not iStart Begin
+        Function_Return ""
+    End
+    Move (Left(sLogin, (iStart -1)))    to sRetval
+    Move (Replace(sRetval, sLogin, '')) to sLogin
+    Move (Pos(";", sLogin))             to iEnd
+    If iEnd ;
+        Move (Mid(sLogin, (iEnd - Length(sKeyWord) -1) ,(Length(sKeyWord) +1))) to sRetval
+    Else ;
+        Move (Mid(sLogin, 255 ,(Length(sKeyWord) +1))) to sRetval // Assume enf of string
+    Function_Return sRetval
+End_Function
+
+Function FieldType Global Integer iType Returns String
+    If (iType = DF_ASCII) Begin
+        Function_Return "ASCII"
+    End
+    If (iType = DF_BCD) Begin
+        Function_Return "Numeric"
+    End
+    If (iType = DF_DATE) Begin
+        Function_Return "Date"
+    End
+    If (iType = DF_TEXT) Begin
+        Function_Return "Text"
+    End
+    If (iType = DF_BINARY) Begin
+        Function_Return "Binary"
+    End
+    If (iType = DF_OVERLAP) Begin
+        Function_Return "Overlap"
+    End
+    Function_Return "UNKNOWN"
+End_Function
+
+Function ExtractValue Global String sText String sDelimit Returns String
+    Integer iPos
+    Move (String(sText) - String(sDelimit)) to sText
+    Move (Pos(sDelimit, sText))             to iPos
+    Function_Return (Left(sText, (iPos - 1)))
+End_Function
+
+// 0=LT 1=LE 2=EQ 3=GE 4=GT 5=NE 6=Matches 7=Contains
+Function ExtractMode Global String sText Returns String
+    String sMode
+    Integer iPos iMode
+    Move (Pos(" ", sText)) to iPos
+    If Not iPos Begin
+        Function_Return ""
+    End
+    Move (Left(sText, (iPos - 1))) to sMode
+    If ("01234567" Contains sMode) Begin
+        Move sMode to iMode
+        If (iMode = 0) Begin
+            Function_Return "<"
+        End
+        If (iMode = 1) Begin
+            Function_Return "<="
+        End
+        If (iMode = 2) Begin
+            Function_Return "="
+        End
+        If (iMode = 3) Begin
+            Function_Return ">="
+        End
+        If (iMode = 4) Begin
+            Function_Return ">"
+        End
+        If (iMode = 5) Begin
+            Function_Return "<>"
+        End
+        If (iMode = 6) Begin
+            Function_Return "Matches"
+        End
+        If (iMode = 7) Begin
+            Function_Return "Contains"
+        End
+        Function_Return ""
+    End
+
+    Else Begin
+        If (sMode = "<") Begin
+            Function_Return "0"
+        End
+        If (sMode = "<=") Begin
+            Function_Return "1"
+        End
+        If (sMode = "=") Begin
+            Function_Return "2"
+        End
+        If (sMode = ">=") Begin
+            Function_Return "3"
+        End
+        If (sMode = ">") Begin
+            Function_Return "4"
+        End
+        If (sMode = "<>") Begin
+            Function_Return "5"
+        End
+        If (sMode = "Matches") Begin
+            Function_Return "6"
+        End
+        If (sMode = "Contains") Begin
+            Function_Return "7"
+        End
+        Function_Return ""
+    End
+    Function_Return ""
+End_Function
+
+//*** Function: Find_file
+//*** Purpose : Find the given name in DFPATH. If it exists, return the full
+//***           name.
+Function Find_File Global String sFileName Returns String
+    String  sFullName sPath sPath_sep sDir
+    Integer iSeparator iSeppos bFileExist
+
+    //*** Only check if there are no directory separators in the name.
+    Move "" to sFullName
+    Move 0  to iSeparator
+    If (SysConf(SYSCONF_DIR_SEPARATOR)) in sFileName Begin
+        Move 1 to iSeparator
+    End
+
+    If (Not(iSeparator)) Begin
+        Move  0 to bFileExist
+        Move (SysConf(SYSCONF_PATH_SEPARATOR)) to sPath_sep
+        Get_Attribute DF_OPEN_PATH to sPath
+        If (Length(sPath)) Begin
+            Repeat
+                Move (Pos(sPath_sep, sPath)) to iSeppos
+                If iSeppos Begin
+                    Move (Left(sPath,  (iSeppos - 1))) to sDir
+                    Move (Right(sPath, (Length(sPath) - iSeppos))) to sPath
+                    If (Length(sDir)) Begin
+                        Append sDir (SysConf(SYSCONF_DIR_SEPARATOR)) sFileName
+                        File_Exist sDir bFileExist
+                        If bFileExist Begin
+                            Move sDir to sFullName
+                        End
+                    End
+                End
+            Until ((Not(iSeppos)) Or bFileExist)
+
+            If (Not(bFileExist)) Begin
+                If (Length(sPath)) Begin
+                    Move sPath to sDir
+                    Append sDir (SysConf(SYSCONF_DIR_SEPARATOR)) sFileName
+                    File_Exist sDir bFileExist
+                    If bFileExist Begin
+                        Move sDir to sFullName
+                    End
+                End
+            End
+        End
+
+        Else Begin
+            Move "." to sDir
+            Append sDir (SysConf(SYSCONF_DIR_SEPARATOR)) sFileName
+            File_Exist sDir bFileExist
+            If bFileExist Begin
+                Move sDir to sFullName
+            End
+        End
+
+    End
+
+    Else Begin
+        Move sFileName to sFullName
+    End
+    Function_Return (Trim(sFullName))
+End_Function
+
+//*****************************************************************************
+//*** Function: StripPath                                                  ***
+//*** Purpose : Strip the path of a file path. Returns only the last name   ***
+//***           in the path.                                                ***
+//***                                                                       ***
+//*** Arguments:                                                            ***
+//***   sFilePath  The path to the file.                                   ***
+//***                                                                       ***
+//*** Returns:                                                              ***
+//***   The file name only.                                                 ***
+//*****************************************************************************
+Function StripPath Global String sFilePath Returns String
+    String  sFileName sChar sDirSep
+    Integer iCount iReady
+
+    Move (SysConf(SYSCONF_DIR_SEPARATOR)) to sDirSep
+    Move (Length(sFilePath))              to iCount
+    Move DFFALSE                          to iReady
+    While ((iCount > 0) And (Not(iReady)))
+        Move (Mid(sFilePath, 1, iCount))    to sChar
+        If (sChar = sDirSep) Begin
+            Move DFTRUE to iReady
+        End
+        Else Begin
+            Decrement iCount
+        End
+    Loop
+
+    Move (Right(sFilePath, (Length(sFilePath) - iCount))) to sFileName
+    Function_Return sFileName
+End_Function
+
+//*****************************************************************************
+//*** Function: StripFile                                                  ***
+//*** Purpose : Strip the file name of a file path. Returns only the        ***
+//***           the path.                                                   ***
+//***                                                                       ***
+//*** Arguments:                                                            ***
+//***   sFilePath  The path to the file.                                   ***
+//***                                                                       ***
+//*** Returns:                                                              ***
+//***   The path only.                                                      ***
+//*****************************************************************************
+Function StripFile Global String sFilePath Returns String
+    String  sPathName sChar sDirSep
+    Integer iCount iReady
+
+    Move (SysConf(SYSCONF_DIR_SEPARATOR)) to sDirSep
+    Move (Length(sFilePath))              to iCount
+    Move DFFALSE                          to iReady
+
+    While ((iCount > 0) And (Not(iReady)))
+        Move (Mid(sFilePath, 1, iCount))    to sChar
+        If (sChar = sDirSep) Begin
+            Move DFTRUE to iReady
+        End
+        Else Begin
+            Decrement iCount
+        End
+    Loop
+
+    Move "" to sPathName
+    If iCount ;
+        Move (Left(sFilePath, iCount - 1)) to sPathName
+
+    Function_Return sPathName
+End_Function
+
+//*****************************************************************************
+//*** Function: StripExt                                                    ***
+//*** Purpose : Strip the extension of a filename.                          ***
+//***                                                                       ***
+//*** Arguments:                                                            ***
+//***   sFilePath  The path to the file.                                   ***
+//***                                                                       ***
+//*** Returns:                                                              ***
+//***   The filename without the extension.                                 ***
+//*****************************************************************************
+Function StripExt Global String sFilePath Returns String
+    String  sFileName sChar
+    Integer iCount iReady
+
+    Move (Trim(sFilePath))   to sFilePath
+    Move (Length(sFilePath)) to iCount
+    Move DFFALSE             to iReady
+
+    While ((iCount > 0) And (Not(iReady)))
+        Move (Mid(sFilePath, 1, iCount)) to sChar
+        Decrement iCount
+        If (sChar = ".") Begin
+            Move DFTRUE to iReady
+        End
+    Loop
+    If iReady Begin
+        Move (Left(sFilePath, iCount)) to sFileName
+    End
+    Else Begin
+        Move sFilePath to sFileName
+    End
+    Function_Return sFileName
+End_Function
+
+Function DataflexNameOnly Global String sFullPath Returns String
+    String sPath sTable sRetval
+    Get StripFile sFullPath to sPath
+    Get StripPath sFullPath to sTable
+    Get StripExt  sTable    to sRetval
+    Function_Return sRetval
+End_Function
+
+// Returns a string with the first character capitalized, and
+// the rest of the string in lowercase:
+Function UpperFirstChar Global String sValue Returns String
+    String sChar
+    Move (Uppercase(Left(sValue, 1))) to sChar
+    If (sChar <> "<") Begin
+        Move (sChar + Right(Lowercase(sValue), (Length(sValue) -1))) to sValue
+    End
+    Function_Return sValue
+End_Function
+
+// Parameters: File handle and field number
+// Returns   : A formatted field string including type, length and precision. E.g. "Customerno (ASCII 8,2)"
+Function FieldSpecs Global Integer iFile Integer iField Returns String
+    String sSep sFieldName sType
+    Integer iType iLength iPrec
+    Send Ignore_Error of Error_Info_Object 54
+    Send Ignore_Error of Error_Info_Object 77
+    Get_Attribute DF_DECIMAL_SEPARATOR                to sSep
+    Move (Character(sSep))                            to sSep
+    Get_Attribute DF_FIELD_NAME      of iFile iField  to sFieldname
+    Get UpperFirstChar sFieldName                     to sFieldName
+    Get_Attribute DF_FIELD_TYPE      of iFile iField  to iType
+    Get FieldType iType                               to sType
+    Get_Attribute DF_FIELD_LENGTH    of iFile iField  to iLength
+    Get_Attribute DF_FIELD_PRECISION of iFile iField  to iPrec
+    If (iType = DF_BCD) Begin
+        Move (iLength - iPrec) to iLength
+    End
+    Else Begin
+        Move 0 to iPrec
+    End
+    Send Trap_Error of Error_Info_Object 54
+    Send Trap_Error of Error_Info_Object 77
+    Function_Return (String(sFieldName) *  "(" + String(sType) * String(iLength) + sSep + String(iPrec) + ")")
+End_Function
+
+Procedure ReDisplayWindow Global
+    Handle hWnd hVoid hoMain
+    Get RdsMain_Panel_Id to hoMain
+    Get Window_Handle of hoMain to hWnd
+    If hWnd Begin
+        Move (UpdateWindow(hWnd)) to hVoid
+    End
+End_Procedure
+
+Function DDObjectId Global Handle hoDD Integer iFile String sField Returns Handle
+    Handle  ho
+    Integer iCount iItems iSearchField
+
+    Field_Map iFile (Trim(sField))              to iSearchField
+    Get Data_Set_User_Interface_Count of hoDD   to iItems
+    For iCount From 1 to iItems
+        Get Data_Set_User_Interface of hoDD iCount to ho
+        If (ho <> 0 and Data_File(ho) <> 0 and Data_File(ho) = iFile and Data_Field(ho) = iSearchField) Break
+    Loop
+
+    Function_Return ho
+End_Function
+
+// On Successful open of the DDF file returns the file handle:
+// Else returns 0
+Function OpenDDFFile Global Boolean bFrom String sPath String sDriver Boolean bSilent Returns Integer
+    Integer iFile iRetval iDataFile
+    String sOrgPath sPassword
+    Boolean bOpen
+    
+    If (bFrom = True) Begin
+        Move giFromDDF to iFile   // Global variable in Syncfuncs.pkg
+    End
+    Else Begin
+        Move giToDDF   to iFile
+    End
+    Get_Attribute DF_FILE_OPENED of iFile to bOpen
+    If (bOpen = True) Begin
+        If (bFrom = True) Begin
+            Move giFromFile to iDataFile
+        End
+        Else Begin
+            Move giToFile to iDataFile
+        End
+        Get_Attribute DF_FILE_OPENED of iDataFile to bOpen
+        If (bOpen = True) Begin
+            Close iDataFile
+        End
+    End
+
+    // IMPORTANT:
+    // Until the P.SQL driver can handle both a Source and a Target table, we need to make sure
+    // that both meta files are closed before attempting to do an open.
+    Close giFromDDF
+    Close giToDDF
+
+    Get CreateX$Files sPath to iRetval  // Global function in syncfuncs.pkg
+    If (not(iRetval)) Begin
+        If (not(bSilent)) Begin
+            Send Stop_Box ("The files X$File.int, X$Field.int and X$Index.int were missing in the folder" * sPath * "CrossMerge tried to create them but failed. Check your rights for creating files in that folder. Cannot continue.")
+        End
+        Function_Return 0
+    End
+
+    DFBTR_REMOVE_ALL_OWNERS
+    DFBTR_ADD_OWNER "..SC...."
+    If (bFrom = True) Begin
+        Get Field_Current_Value of (phoDD(Self)) Field SncTable.FromPv to sPassword
+    End
+    Else Begin
+        Get Field_Current_Value of (phoDD(Self)) Field SncTable.ToPv   to sPassword
+    End
+    Move (Trim(sPassword))                                                   to sPassword
+    If (Length(sPassword) > 0) DFBTR_DDF_OWNER sPassword
+
+    Get_Attribute DF_OPEN_PATH      to sOrgPath
+    Set_Attribute DF_OPEN_PATH      to sPath //(sPath - ";" - sOrgPath)
+    Send Ignore_Error of Error_Info_Object 75    // 'Can't open data file'
+
+    Open (sDriver - ":" - sPath - "X$FILE") as iFile
+
+    Set_Attribute DF_OPEN_PATH to sOrgPath  // RESET DF_OPEN_PATH!
+    Send Trap_Error of Error_Info_Object 75
+    Get_Attribute DF_FILE_OPENED of iFile to bOpen
+    If (bOpen = False) Begin
+        If (bSilent = False) Begin
+            Send Stop_Box ("Could not open Pervasive.SQL Meta Data file:" * sPath - "\File.ddf. Is it password protected?")
+        End
+        Function_Return 0
+    End
+
+    Function_Return iFile
+End_Function
+
+// Returns: Filenumber if the file was successfully opened.
+//          0 if it could not be opened.
+Function RDSOpenAsFile Global Handle hoDD Boolean bFrom Boolean bBatch Returns Integer
+    String sDriverID sPath sOrgPath sTable sServer sUser sPassword sOwner sConnect sDataBase
+    Integer iFile iNTAuth iType iRetval iDSNType iFileOemToAnsi iClientVersion
+    Boolean bOpen bTrusted 
+    Handle hoDriver
+    tSQLConnection SQLConnection
+    
+//    Send Refind_Records of hoDD
+    If (bBatch = False and Active_State(Self)) Begin
+//        Send StartWorkingMessage "Opening Database Table..."
+    End
+    If (bFrom = True) Begin
+        Move giFromFile                                                 to iFile
+        Get Field_Current_Value of hoDD Field SncTable.FromDriver       to sDriverID
+        Get Field_Current_Value of hoDD Field SncTable.FromFilePath     to sPath
+        Get Field_Current_Value of hoDD Field SncTable.FromDataTable    to sTable
+        Get Field_Current_Value of hoDD Field SncTable.FromDataBase     to sDatabase
+        Get Field_Current_Value of hoDD Field SncTable.FromNTAuth       to iNTAuth
+        Get Field_Current_Value of hoDD Field SncTable.FromdbType       to iType
+        Get Field_Current_Value of hoDD Field SncTable.FromServer       to sServer
+        Get Field_Current_Value of hoDD Field SncTable.FromUser         to sUser
+        Get Field_Current_Value of hoDD Field SncTable.FromOwner        to sOwner
+        Get Field_Current_Value of hoDD Field SncTable.FromPv           to sPassword
+        Get Field_Current_Value of hoDD Field SncTable.FromDSNType      to iDSNType
+        Get Field_Current_Value of hoDD Field SncTable.FrFileOemToAnsi  to iFileOemToAnsi
+    End
+    Else Begin
+        Move giToFile                                                   to iFile
+        Get Field_Current_Value of hoDD Field SncTable.ToDriver         to sDriverID
+        Get Field_Current_Value of hoDD Field SncTable.ToFilePath       to sPath
+        Get Field_Current_Value of hoDD Field SncTable.ToDataTable      to sTable
+        Get Field_Current_Value of hoDD Field SncTable.ToDataBase       to sDatabase
+        Get Field_Current_Value of hoDD Field SncTable.ToNTAuth         to iNTAuth
+        Get Field_Current_Value of hoDD Field SncTable.TodbType         to iType
+        Get Field_Current_Value of hoDD Field SncTable.ToServer         to sServer
+        Get Field_Current_Value of hoDD Field SncTable.ToUser           to sUser
+        Get Field_Current_Value of hoDD Field SncTable.ToOwner          to sOwner
+        Get Field_Current_Value of hoDD Field SncTable.ToPv             to sPassword
+        Get Field_Current_Value of hoDD Field SncTable.ToDSNType        to iDSNType
+        Get Field_Current_Value of hoDD Field SncTable.ToFileOemToAnsi  to iFileOemToAnsi
+    End
+
+    Move (Trim(sDriverID)) to sDriverID
+    Move (Trim(sPath))     to sPath
+    Move (Trim(sTable))    to sTable
+    Move (Trim(sDataBase)) to sDatabase
+    Move (Trim(sServer))   to sServer
+    Move (Trim(sUser))     to sUser
+    Move (Trim(sOwner))    to sOwner
+    Move (Trim(sPassword)) to sPassword 
+    Move (iNTAuth = 1)     to bTrusted
+
+    If (sTable = CS_None) Begin
+        Move "" to sTable
+    End
+    If (iFile = 0 or sTable = "") Begin
+        Function_Return 0 // Nothing to do yet...
+    End
+    Get vFolderFormat sPath to sPath
+    If (sServer contains CS_None) Begin
+        Move "" to sServer
+    End
+
+    If (iType <> EN_DbTypeDataFlex and iType <> EN_DbTypePervasive and sServer = "") Begin
+        If (bBatch = False) Begin
+            Function_Return 0 // Nothing to do...
+        End
+    End
+
+    Send Ignore_Error of Error_Info_Object 72    // 'File not open'
+    Send Ignore_Error of Error_Info_Object 75    // 'Can't open data file'
+    Send Ignore_Error of Error_Info_Object 4271  // 'Unable to open intermediate file'
+    Send Ignore_Error of Error_Info_Object 12293 // 'Login unsuccessful'
+    Send Ignore_Error of Error_Info_Object 12295 // 'Table not in connection'
+    Send Ignore_Error of Error_Info_Object 12289 // General MS SQL Error
+    Get IsLoadCheckDriver sDriverID False to iRetval
+
+    If (iType <> EN_DbTypeDataFlex and iType <> EN_DbTypePervasive) Begin
+        Get FillSQLConnectionStruct bFrom hoDD to SQLConnection
+        Get SqlUtilCheckIfTableNameSpelling of ghoDbUpdateFunctionLibrary sDriverID sDataBase sTable sOwner to sTable
+    End
+    Close iFile
+    
+    Case Begin
+        Case (sDriverID = DATAFLEX_ID)
+            Open (sPath + sTable) as iFile
+            Get_Attribute DF_FILE_OPENED of iFile to bOpen
+            If (bOpen = False) Begin
+                If (bBatch = False) Begin
+                    Send Info_Box ("Could not open DataFlex data table:" * sPath + sTable)
+                End
+                Move 0 to iFile
+            End
+            Case Break
+        Case (sDriverID = DB2_DRV_ID) 
+            Move ("DSN=" + String(sServer) + ";UID=" + sUser + ";PWD=" + sPassword)               to sConnect
+            If (Length(sOwner) > 0) Begin
+                Move (sDriverID + ":" + sOwner + "#" + sTable + "@" + sConnect) to sConnect
+            End
+            Else Begin
+                Move (sDriverID + ":" + sTable + "@" + sConnect)                to sConnect
+            End
+            Send Ignore_Error of Error_Info_Object 12293
+            Open sConnect as iFile
+            Send Trap_Error of Error_Info_Object 12293
+            Get_Attribute DF_FILE_OPENED of iFile to bOpen
+            If (bOpen = False) Begin
+                If (bBatch = False) Begin
+//                    Send StopWorkingMessage
+                End
+                If (bBatch = False) Begin
+                    Send Info_Box ("Could not open IBM DB2 Universal Database data table:" * sTable)
+                End
+                Move 0 to iFile
+                Open SncTable // For some odd reason we need this if login fails and the cancel button is pressed.
+            End
+            Case Break
+        Case (sDriverID = MSSQLDRV_ID)
+            If (iNTAuth) Begin
+                Move ("SERVER=" + sServer + ";DATABASE=" + sDataBase + ";Trusted_Connection=Yes") to sConnect
+            End
+            Else Begin
+                Move ("SERVER=" + String(sServer) + ";DATABASE=" + sDataBase) to sConnect
+            End
+            
+            If (bTrusted = True) Begin                
+                Get Create (RefClass(cDbUpdateMSSQLDriver)) to hoDriver
+                Set Name of hoDriver to "oDbUpdateDatabaseDriver"
+                Set psDriverID of hoDriver to MSSQLDRV_ID
+                Get SQLClientVersionInteger of hoDriver MSSQLDRV_ID to iClientVersion
+                Send Destroy of hoDriver
+    
+                If (iClientVersion >= 18) Begin
+                    Append sConnect ";Encrypt=Optional;TrustServerCertificate=Yes"
+                    Move (Replaces(" ", sConnect, "")) to sConnect
+                End
+            End
+
+            Login sConnect sUser sPassword MSSQLDRV_ID
+
+            If (sOwner <> "") Begin
+                Move (MSSQLDRV_ID + ":" + sOwner + "#" + sTable + "@" + sConnect) to sConnect
+            End
+            Else Begin
+                Move (MSSQLDRV_ID + ":" + sTable + "@" + sConnect) to sConnect
+            End
+            Move (sConnect + ";UID=" + sUser + ";PWD=" + String(sPassword)) to sConnect
+            Open sConnect as iFile
+            Get_Attribute DF_FILE_OPENED of iFile to bOpen
+            If (bOpen = False) Begin
+                If (bBatch = False) Begin
+//                    Send StopWorkingMessage
+                End
+                If (bBatch = False) Begin
+                    Send Info_Box ("Could not open Microsoft SQL data table:" * sTable)
+                End
+                Move 0 to iFile
+                Open SncTable // For some odd reason we need this if login fails and the cancel button is pressed.
+            End
+            Case Break
+        Case (sDriverID = ODBC_DRV_ID)
+            If (iDSNType = 2) Begin
+                Get StripExt sServer                to sServer
+                Move ("FILEDSN=" + sPath + sServer) to sServer
+                Move ""                             to sOwner // Can't be used with FILEDSN.
+                Move sServer                        to sConnect
+            End
+            Else  Begin
+                Move ("DSN="     + sServer)                                                         to sServer
+                Move (String(sServer) + ";UID=" + sUser + ";PWD=" + sPassword)                      to sConnect
+            End
+            If (Length(sOwner) > 0) Begin
+                Move (sDriverID + ":" + sOwner + "#" + sTable + "@" + sConnect) to sConnect
+            End
+            Else Begin
+                Move (sDriverID + ":" + sTable + "@" + sConnect)                to sConnect
+            End
+
+            Open sConnect as iFile
+
+            Get_Attribute DF_FILE_OPENED of iFile to bOpen
+            If (bOpen = False) Begin
+                If (bOpen = False) Begin
+                    If (bBatch = False) Begin
+//                        Send StopWorkingMessage
+                    End
+                    If (bBatch = False) Begin
+                        Send Info_Box ("Could not open ODBC data table:" * sTable + ". You could try to press the Login button to check that the login info is correct.")
+                    End
+                    Move 0 to iFile
+                    Open SncTable // For some odd reason we need this if login fails and the cancel button is pressed.
+                End
+            End
+            Case Break
+        Case (sDriverID = DFBTRDRV_ID)  // Pervasive.SQL
+            Get OpenDDFFile bFrom sPath sDriverID False to bOpen
+            If (bOpen = False) Begin
+//                Send StopWorkingMessage
+                Function_Return
+            End
+
+            Send Ignore_Error of Error_Info_Object 72    // 'File not open'
+            Send Ignore_Error of Error_Info_Object 75    // 'Can't open data file'
+            Send Ignore_Error of Error_Info_Object 4271  // 'Unable to open intermediate file'
+            Send Ignore_Error of Error_Info_Object 12293 // 'Login unsuccessful'
+            Send Ignore_Error of Error_Info_Object 12295 // 'Table not in connection'
+            Send Ignore_Error of Error_Info_Object 12289 // General MS SQL Error
+
+            Get_Attribute DF_OPEN_PATH to sOrgPath
+            Set_Attribute DF_OPEN_PATH to sPath     //(sPath - ";" - sOrgPath)
+            Open (sDriverID + ":" + sPath + sTable) as iFile
+            Set_Attribute DF_OPEN_PATH  to sOrgPath  // RESET DF_OPEN_PATH!
+            Get_Attribute DF_FILE_OPENED of iFile to bOpen
+
+            Send Trap_Error of Error_Info_Object 72
+            Send Trap_Error of Error_Info_Object 75
+            Send Trap_Error of Error_Info_Object 4271
+            Send Trap_Error of Error_Info_Object 12293
+            Send Trap_Error of Error_Info_Object 12295
+            Send Trap_Error of Error_Info_Object 12289
+        
+            If (bOpen = False) Begin
+//                Send StopWorkingMessage
+                If (bBatch = False) Begin
+                    Send Info_Box ("Could not open Pervasive data table:" * sPath + sTable + ".")
+                End
+                Move 0 to iFile
+            End
+            Case Break
+        Case Else
+//            Send StopWorkingMessage
+            Function_Return 0
+    Case End
+
+    If (iFile) Begin
+        Set_Attribute DF_REPORT_UNSUPPORTED_ATTRIBUTES of iFile to False
+    End
+
+    If (iFile and bBatch and (iType <> EN_DbTypeDataFlex and iType <> EN_DbTypePervasive)) Begin
+        Set_Attribute DF_FILE_TABLE_CHARACTER_FORMAT of iFile to (If(iFileOemToAnsi = 1, "ANSI", "OEM"))
+        Set_Attribute DF_FILE_GET_RID_AFTER_CREATE   of iFile to True
+        Set_Attribute DF_FILE_MAX_ROWS_FETCHED       of iFile to 0 //1
+        Set_Attribute DF_FILE_REFIND_AFTER_SAVE      of iFile to False
+    End
+
+    Move False to Err
+//    Send StopWorkingMessage
+
+    Function_Return iFile
+End_Function
+
+// Will try to uppercase the UserID in the connect string and retry to open the file
+Function IsRetryOpenFileUpperUserName Global String sConnect Integer iFile Returns Integer
+    Integer iRetval iStart iEnd iCount
+    String sChar
+    
+    Move (Pos("UID=", sConnect))  to iStart
+    If (not(iStart)) Begin
+        Function_Return 0
+    End
+    Move (iStart + 4) to iStart
+    Move (Pos(";PWD=", sConnect)) to iEnd
+    For iCount From iStart to (iEnd - 1)
+        Move (Mid(sConnect, 1, iCount))            to sChar
+        Move (Uppercase(sChar))                    to sChar
+        Move (Overstrike(sChar, sConnect, iCount)) to sConnect
+    Loop 
+    Open sConnect as iFile
+    Get_Attribute DF_FILE_OPENED  of iFile to iRetval
+    Function_Return iRetval
+End_Function
+
+// Returns True if exist or successfully created. Else False:
+Function CreateX$Files Global String sPath Returns Integer
+    Integer iRetval iCh iExist
+    Get Seq_New_Channel to iCh
+    If (not(iCh)) Begin
+        Send Stop_Box ("No available output channel. Could not create X_File.int in folder:" * String(sPath))
+        Function_Return 0
+    End
+
+    Move 1 to iExist
+    Get vFolderFormat sPath to sPath
+    Get vFilePathExists (sPath - "X_File.int") to iRetval
+    If (not(iRetval)) Begin
+        Direct_Output channel iCh (sPath - "X_File.int")
+        Writeln Channel iCh "Driver_Name         DFBTRDRV"
+        Writeln Channel iCh ""
+        Writeln Channel iCh "DDF_Name            X$FILE"
+        Writeln Channel iCh ""
+        Writeln Channel iCh 'Owner               "..SC...."'
+        Writeln Channel iCh ""
+        Close_Output Channel iCh
+        If iExist Begin
+            Get vFilePathExists (sPath - "X_File.int") to iExist
+        End
+    End 
+
+    Get vFilePathExists (sPath - "X_Field.int") to iRetval
+    If (not(iRetval)) Begin
+        Direct_Output channel iCh (sPath - "X_Field.int")
+        Writeln Channel iCh "Driver_Name         DFBTRDRV"
+        Writeln Channel iCh ""
+        Writeln Channel iCh "DDF_Name            X$FIELD"
+        Writeln Channel iCh ""
+        Writeln Channel iCh 'Owner               "..SC...."'
+        Writeln Channel iCh ""
+        Close_Output Channel iCh
+        If iExist Begin
+            Get vFilePathExists (sPath - "X_Field.int") to iExist
+        End
+    End 
+
+    Get vFilePathExists (sPath - "X_Index.int") to iRetval
+    If (not(iRetval)) Begin
+        Direct_Output channel iCh (sPath - "X_Index.int")
+        Writeln Channel iCh "Driver_Name         DFBTRDRV"
+        Writeln Channel iCh ""
+        Writeln Channel iCh "DDF_Name            X$INDEX"
+        Writeln Channel iCh ""
+        Writeln Channel iCh 'Owner               "..SC...."'
+        Writeln Channel iCh ""
+        Close_Output Channel iCh
+        If iExist Begin
+            Get vFilePathExists (sPath - "X_Index.int") to iExist
+        End
+    End 
+
+    Send Seq_Release_Channel iCh
+    Function_Return iExist
+End_Function
+
+Procedure DoCreateIntFile Global String sDriver String sServer String sTable String sOwner Integer iRecordIdentity
+    String sPath
+    Integer iRetval iChnl
+    
+    Get psDataPath of (phoWorkspace(ghoApplication)) to sPath
+    Get vFolderFormat sPath to sPath
+    Get vFilePathExists (sPath - sTable - ".INT")  to iRetval
+    If iRetval Begin                                                // If the file already exists.
+        //    Procedure_Return // *** TEMP *** Do not re-create.
+        Get vDeleteFile (sPath - sTable - ".int")    to iRetval
+        Get vDeleteFile (sPath - sTable - ".cch")    to iRetval
+    End
+    Get Seq_New_Channel to iChnl
+    If (iChnl < 0) Begin
+        Procedure_Return
+    End
+
+    Direct_Output channel iChnl (sPath - sTable - ".int")
+    Writeln Channel iChnl "DRIVER_NAME "   sDriver
+    If (Length(sServer) > 0) Begin
+        Writeln Channel iChnl "SERVER_NAME "   sServer
+    End
+    If (sDriver <> DFBTRDRV_ID) Begin
+        Writeln Channel iChnl "DATABASE_NAME " sTable
+    End
+    If (Length(sOwner) > 0) Begin
+        Writeln Channel iChnl "SCHEMA_NAME "   sOwner
+    End
+    Writeln Channel iChnl ""
+    Writeln Channel iChnl "PRIMARY_INDEX 1"
+    Writeln Channel iChnl "USE_DUMMY_ZERO_DATE  YES"
+    Writeln Channel iChnl ""
+    Writeln Channel iChnl ""
+    Writeln Channel iChnl "INDEX_NUMBER 1"
+    Writeln Channel iChnl "INDEX_NUMBER_SEGMENTS 1"
+    Writeln Channel iChnl ("INDEX_SEGMENT_FIELD " + String(iRecordIdentity))
+    Close_Output Channel iChnl
+    Send Seq_Release_Channel iChnl
+End_Procedure
+
+Function IsChangedPrimaryIndex Global String sDriver String sServer String sTable Integer iIdentity Integer iFile Returns Integer
+    String sPath
+    Integer iRetval iRecordIdentity 
+    Boolean bOpen
+    
+    Get psDataPath of (phoWorkspace(ghoApplication)) to sPath
+    Get vFolderFormat sPath to sPath
+    Get vFilePathExists (sPath - sTable - ".INT")  to iRetval
+    If (not(iRetval)) Begin
+        Send Stop_Box ("Could not find the" * sPath - sTable - ".INT file.")
+        Function_Return False
+    End 
+    Get_Attribute DF_FILE_OPENED of iFile to bOpen
+    If (bOpen =  True) Begin
+        Send Stop_Box ("The table" * sTable * "is not open. Could not check primary index.")
+        Function_Return False
+    End 
+    Get_Attribute DF_FILE_RECORD_IDENTITY of iFile to iRecordIdentity
+    If (iRecordIdentity <> iIdentity) Begin
+        Close iFile
+        Send DoCreateIntFile sDriver sServer sTable iRecordIdentity
+        Function_Return True
+    End 
+    Function_Return False
+End_Function
+
+Procedure DoChangeRecordIdentity Global Handle hoDD Boolean bFrom Integer iRecordIdentity
+    String sDriver sServer sTable
+    Integer iFile iRetval
+    
+    If (bFrom = True) Begin
+        Move giFromFile                                              to iFile
+        Get Field_Current_Value of hoDD Field SncTable.FromDriver    to sDriver
+        Get Field_Current_Value of hoDD Field SncTable.FromDataTable to sTable
+        Get Field_Current_Value of hoDD Field SncTable.FromServer    to sServer
+    End 
+    Else Begin
+        move giToFile                                                to iFile
+        Get Field_Current_Value of hoDD Field SncTable.ToDriver      to sDriver
+        Get Field_Current_Value of hoDD Field SncTable.ToDataTable   to sTable
+        Get Field_Current_Value of hoDD Field SncTable.ToServer      to sServer
+    End 
+
+    Send DoCreateIntFile sDriver sServer sTable iRecordIdentity
+    Get RDSOpenAsFile hoDD bFrom False to iRetval
+End_Procedure

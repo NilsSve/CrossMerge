@@ -1,0 +1,16 @@
+//AB/ OBJECTDEF
+Object
+    //AB-StoreStart
+    //Show_Dialog is a predefined function method in the SaveAsDialog class
+    //get Show_Dialog to an integer variable to call the SaveAsDialog
+    //
+    //DoCallSaveAsDialog is NOT a predefined method in the SaveAsDialog class
+    //DoCallSaveAsDialog it is just used an example
+    //you can send DoCallSaveAsDialog from another object, such as a button
+    //
+    //Procedure DoCallSaveAsDialog
+    //    integer iVoid
+    //    get Show_Dialog of SaveAsDialog1 to iVoid
+    //End_Procedure  // DoCallSaveAsDialog
+    //AB-StoreEnd
+End_Object

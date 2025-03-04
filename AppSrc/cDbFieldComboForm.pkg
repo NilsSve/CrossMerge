@@ -1,0 +1,144 @@
+//****************************************************************************
+// $Module type: CLASS
+// $Module name: cDbFieldComboForm
+// $Author     : Nils Svedmyr
+// Created     : 2001-07-21 @ 10:46
+//
+// Description
+//
+// $Rev History
+//    2001-07-21  Module header created
+//****************************************************************************
+Use cRDSDataDictionary.pkg  
+Use cRDCDbComboForm.pkg
+Use SyncFuncs.pkg
+Declare_Datafile SncTable
+Declare_Datafile SncTHea
+
+Class cDbFieldComboForm is a cRDCDbComboForm
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        Property Handle  phoDD (Main_DD(Self))
+        Property Integer piFile 0
+        // Do _not_ use psNone as it plays tricks with the DDO buffer (numeric)
+        Property String psNone ("- <None>")
+        { InitialValue=True }
+        Property Boolean pbFrom True
+
+        Set Code_Display_Mode  to CB_Code_Display_Description //cb_Code_Display_Both
+        Set Combo_Sort_State   to False
+        Set Entry_State Item 0 to False
+
+        On_Key kFind                Send msg_None
+        On_Key kFind_Next           Send msg_None
+        On_Key kFind_Previous       Send msg_None
+        On_Key kSuper_Find          Send msg_None
+        On_Key kSuper_Find_Next     Send msg_None
+        On_Key kSuper_Find_Previous Send msg_None
+        On_Key kBegin_Of_Data       Send msg_None
+        On_Key kEnd_Of_Data         Send msg_None
+    End_Procedure
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+    End_Procedure
+
+    Procedure DoCheckClear 
+        Send Combo_Delete_Data
+    End_Procedure
+
+    Procedure DoUpdateData Integer iFromFile Integer iToFile Boolean bFrom
+        If (pbFrom(Self) <> bFrom) Begin
+            Procedure_Return
+        End
+        If (bFrom = True) Begin
+            Set piFile to iFromFile
+        End
+        Else Begin
+            Set piFile to iToFile
+        End
+        If (piFile(Self) = 0) Begin
+            Procedure_Return
+        End
+        Send DoFillData
+    End_Procedure
+
+    Procedure DoFillData
+        Handle hoDD
+        Integer iFile iField iCount iFields iType iNumber iStart iFileNo iFieldNo
+        Boolean bOpen
+        String sFieldName sDriver sValue
+        String[] asFieldNames
+
+        Get phoDD to hoDD
+        Get piFile to iFile
+        If iFile Begin
+            Get_Attribute DF_FILE_OPENED of iFile to bOpen
+        End
+        If (bOpen = False) Begin
+            Procedure_Return
+        End
+
+        Get_Attribute DF_FILE_DRIVER        of iFile to sDriver
+        Get_Attribute DF_FILE_NUMBER_FIELDS of iFile to iFields
+        If (sDriver = DATAFLEX_ID) Begin
+            Move 0 to iStart
+        End
+        Else Begin
+            Move 1 to iStart
+        End
+        Send Combo_Delete_Data
+
+        For iCount From iStart to iFields
+            Get_Attribute DF_FIELD_TYPE of iFile iCount to iType
+            If (iType <> DF_OVERLAP) Begin
+                Get_Attribute DF_FIELD_NUMBER of iFile iCount to iNumber
+                Get FieldSpecs iFile iCount to sFieldName // Function in SyncFuncs.pkg
+                Move sFieldName to asFieldNames[(SizeOfArray(asFieldNames))]
+                Send Combo_Add_Item (String(iNumber) + " - " + sFieldName) iCount                    
+            End
+        Loop
+
+        If (hoDD <> 0 and pbGetHasCurrRowId(hoDD) = True) Begin
+            Get Data_File  to iFile
+            Get Data_Field to iField
+            Get File_Field_Current_Value of hoDD iFile iField to sValue
+            If (sValue contains "<") Begin
+                Move 0 to iFieldNo
+            End      
+            Else Begin
+                Move sValue to iFieldNo
+            End                                    
+            Get piFile to iFileNo
+            Get FieldSpecs iFileNo iFieldNo to sFieldName
+            Move (SearchArray(sFieldName, asFieldNames)) to iField  
+            If (pbFrom(Self) = True) Begin
+                Increment iField
+            End
+            Move (String(iField) + " - " + sFieldName) to sFieldName
+            Get WinCombo_Item_Matching sFieldName to iField  
+            Get Combo_Item_Matching sFieldName to iField
+            If (iField > -1) Begin
+                Set WinCombo_Current_Item to iField  
+                Set Value Item 0 to sFieldName
+            End
+            Else Begin
+                Set WinCombo_Current_Item to 0
+                Set Value Item 0 to sFieldName
+            End
+        End
+    End_Procedure
+
+    Function FileFieldNumber Returns Integer
+        String sField
+        Integer iPos iField
+        Get Value Item 0 to sField
+        Move (Pos("-", sField)) to iPos
+        If (iPos > 1) Begin
+            Move (Left(sField, (iPos -2))) to iField
+        End
+        Function_Return iField
+    End_Function
+
+End_Class

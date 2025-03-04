@@ -1,0 +1,18 @@
+//AB/ OBJECTDEF
+Object
+    //AB-StoreStart
+    //Procedure DoFillList
+    //    // Fill the list by sending Add_item
+    //    send Add_Item msg_None "{List item Value}"
+    //    send Add_Item msg_None "{List item Value}"
+    //End_Procedure  // DoFillList
+
+    //Send DoFillList // message must be sent to fill the list
+
+    //Procedure OnChange
+    //    Integer iCurrent
+    //    Get Current_item to iCurrent // item number of current item
+    //
+    //End_Procedure  // OnChange
+    //AB-StoreEnd
+End_Object

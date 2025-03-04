@@ -1,0 +1,87 @@
+// File Name : SNCTHEA.DD
+// Class Name: Sncthea_DataDictionary
+// Revision  : 12
+// Version   : 2
+Use  Windows.pkg           // Basic Definitions
+Use  Datadict.pkg          // DataDictionary Class Definition
+Use  Ddvaltbl.pkg          // Validation Table Class Definitions
+
+Open Sncthea
+Open Snctrow
+Open Snctable
+Open Sncsys
+Use cRDSDataDictionary.pkg
+
+Class Sncthea_DataDictionary  is A cRDSDataDictionary
+
+    Procedure Deleting
+        Forward Send Deleting
+        Add -1 to SncTable.SncTHea_Count
+        SaveRecord SncTable
+        If (SncTHea.ID = SncSys.SncTHeaID) Begin
+            Add -1 to SncSys.SncTHeaID
+            SaveRecord SncSys
+        End
+    End_Procedure   
+
+    Procedure Creating
+        Forward Send Creating
+        Add 1 to SncTable.SncTHea_Count
+        SaveRecord SncTable
+    End_Procedure   
+
+    Procedure Construct_object
+        Forward Send Construct_Object
+
+        Set Main_File to Sncthea.File_Number
+
+        Set Add_System_File to SncSys.File_Number DD_Lock_On_All
+
+        Set Foreign_Field_Options  DD_KEYFIELD   to DD_AUTOFIND    DD_NOPUT       DD_FINDREQ
+        Set Foreign_Field_Options  DD_INDEXFIELD to DD_NOPUT       DD_FINDREQ
+        Set Foreign_Field_Options  DD_DEFAULT    to DD_DISPLAYONLY
+
+        // Child (Client) file structure................
+        Send Add_Client_File  Snctrow.File_Number
+
+        // Parent (Server) file structure...............
+        Send Add_Server_File  Snctable.File_Number
+
+        // External (System) file structure.............
+        Send Add_System_File  Sncsys.File_Number  DD_LOCK_ON_ALL
+
+        // Field-based properties.......................
+
+        // Sncthea.Snctable_Recid
+        Set Field_Class_Name Field SncTHea.SncTableID to "cRDSDbForm"
+        Set Key_Field_State Field SncTHea.SncTableID to True
+
+        // Sncthea.Recid
+        Set Field_Class_Name Field SncTHea.ID to "cRDSDbForm"
+        Set Field_Label_Long Field SncTHea.ID to "Record ID"
+        Set Field_Label_Short Field SncTHea.ID to "ID"
+        Set Field_Options Field SncTHea.ID to DD_AUTOFIND
+        Set Field_Auto_Increment Field SncTHea.ID to File_Field SncSys.SncTHeaID
+
+        // Sncthea.Fromfield
+        Set Field_Class_Name Field SncTHea.FromField to "cRDSDbForm"
+        Set Field_Label_Long Field SncTHea.FromField to "Source Field"
+        Set Field_Label_Short Field SncTHea.FromField to "Source Field"
+        Set Status_Help Field SncTHea.FromField to "Source table fields. Note: You need to open and close the comboform for changes to take place."
+
+        // Sncthea.Tofield
+        Set Field_Class_Name Field SncTHea.ToField to "cRDSDbForm"
+        Set Field_Label_Long Field SncTHea.ToField to "Target Field"
+        Set Field_Label_Short Field SncTHea.ToField to "Target Field"
+        Set Status_Help Field SncTHea.ToField to "Target table fields. Note: You need to open and close the comboform for changes to take place."
+
+        // Sncthea.Snctrow_Count
+        Set Field_Class_Name Field SncTHea.NextSncTRowID to "cRDSDbForm"
+        Set Field_Options Field SncTHea.NextSncTRowID to DD_NOENTER
+    End_Procedure    
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+    End_Procedure    
+
+End_Class    

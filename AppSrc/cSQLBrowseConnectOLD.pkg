@@ -1,0 +1,182 @@
+//****************************************************************************
+// $Module type: Class
+// $Module name: cSQLBrowseConnect
+// $Author     : Ben Weijers
+// Created     : 2002-11-02 @ 11:34
+//
+// Description :
+//
+// $Rev History:
+//    2002-11-02  Module header created
+//****************************************************************************
+Use Windows
+Use CLI.pkg
+
+Global_Variable Integer ghoBrowseConnect
+
+#Replace ODBC_TABLETYPE            11
+#Replace ODBC_TABLECOMMENT         12
+
+//*****************************************************************************
+//*** ODBCEnumerateTables <DSNName> to <TableNum>                           ***
+//***                                                                       ***
+//*** Builds internal table array and returns the number of tables in the   ***
+//*** DSN.                                                                  ***
+//*****************************************************************************
+#COMMAND CLIEnumerateTables R R to R .
+    Call_Driver 0 !1 Function ODBC_ENUMERATE_TABLES Callback 0 Passing !2 CLI$StrDummy CLI$IntDummy Result !4
+#ENDCOMMAND
+
+//*****************************************************************************
+//*** ODBCTableName <TableNum> to <TableName>                               ***
+//***                                                                       ***
+//*** Returns the name of the table.                                        ***
+//*****************************************************************************
+#COMMAND CLITableName R R to R .
+    Move (Repeat(Character(0), 255)) to !4
+    GetAddress of !4 to CLI$IntDummy
+    Call_Driver 0 !1 Function ODBC_TABLE0    Callback 0 Passing CLI$StrDummy CLI$StrDummy CLI$IntDummy Result CLI$IntDummy
+    Call_Driver 0 !1 Function ODBC_TABLENAME Callback 0 Passing CLI$StrDummy CLI$StrDummy !2 Result CLI$IntDummy
+    Get Cstring !4 to !4
+#ENDCOMMAND
+
+//*****************************************************************************
+//*** ODBCSchemaName <TableNum> to <SchemaName>                             ***
+//***                                                                       ***
+//*** Returns the schema name of the table.                                 ***
+//*****************************************************************************
+#COMMAND CLISchemaName R R to R .
+    Move (Repeat(Character(0), 255)) to !4
+    GetAddress of !4 to CLI$IntDummy
+    Call_Driver 0 !1 Function ODBC_TABLE0      Callback 0 Passing CLI$StrDummy CLI$StrDummy CLI$IntDummy Result CLI$IntDummy
+    Call_Driver 0 !1 Function ODBC_TABLESCHEMA Callback 0 Passing CLI$StrDummy CLI$StrDummy !2 Result CLI$IntDummy
+    Get Cstring !4 to !4
+#ENDCOMMAND
+
+//*** Table type is a string that can have the following values:
+//***   "TABLE",
+//***   "VIEW"
+//***   "SYSTEM TABLE"
+//***   "GLOBAL TEMPORARY",
+//***   "LOCAL TEMPORARY"
+//***   "ALIAS"
+//***   "SYNONYM"
+#COMMAND CLITableType R R to R .
+    Move (Repeat(Character(0), 255)) to !4
+    GetAddress of !4 to CLI$IntDummy
+    Call_Driver 0 !1 Function ODBC_TABLE0    Callback 0 Passing CLI$StrDummy CLI$StrDummy CLI$IntDummy Result CLI$IntDummy
+    Call_Driver 0 !1 Function ODBC_TABLETYPE Callback 0 Passing CLI$StrDummy CLI$StrDummy !2 Result CLI$IntDummy
+    Get Cstring !4 to !4
+#ENDCOMMAND
+
+#COMMAND CLITableComment R R to R .
+    Move (Repeat(Character(0), 255)) to !4
+    GetAddress of !4 to CLI$IntDummy
+    Call_Driver 0 !1 Function ODBC_TABLE0       Callback 0 Passing CLI$StrDummy CLI$StrDummy CLI$IntDummy Result CLI$IntDummy
+    Call_Driver 0 !1 Function ODBC_TABLECOMMENT Callback 0 Passing CLI$StrDummy CLI$StrDummy !2 Result CLI$IntDummy
+    Get Cstring !4 to !4
+#ENDCOMMAND
+
+//*****************************************************************************
+//*** ODBCNumberOfFields <DSNName> <TableName> to <NumDSN>                  ***
+//***                                                                       ***
+//*** Returns the number of fields.                                         ***
+//*****************************************************************************
+#COMMAND CLIEnumerateFields R R R to R .
+    Call_Driver 0 !1 Function ODBC_NUMBER_FIELDS Callback 0 Passing !2 !3 CLI$IntDummy Result !5
+#ENDCOMMAND
+
+//*****************************************************************************
+//*** ODBCFieldName <FieldNumber> to <FieldName>                            ***
+//***                                                                       ***
+//*** Returns the name of the field.                                        ***
+//*****************************************************************************
+#COMMAND CLIFieldName R R to R .
+    Move (Repeat(Character(0), 255)) to !4
+    GetAddress of !4 to CLI$IntDummy
+    Call_Driver 0 !1 Function ODBC_FIELD_NAME0 Callback 0 Passing CLI$StrDummy CLI$StrDummy CLI$IntDummy Result CLI$IntDummy
+    Call_Driver 0 !1 Function ODBC_FIELD_NAME  Callback 0 Passing CLI$StrDummy CLI$StrDummy !2 Result CLI$IntDummy
+    Get Cstring !4 to !4
+#ENDCOMMAND
+
+Class cSQLBrowseConnect is An Array
+
+    Procedure Construct_Object
+        Forward Send Construct_object
+        Property String psDriver Public ""
+    End_Procedure 
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_object
+    End_Procedure 
+
+    //***
+    //*** Function: BrowseConnect
+    //*** Purpose : Call the driver's browse connect function
+    Function BrowseConnect String sInConnStr Returns String
+        String  sDriver sOutConnStr
+        Integer iArg iRetval
+
+        Get psDriver to sDriver
+        If (sDriver <> "") Begin
+            Move (Repeat(" ", 8192)) to sOutConnStr
+            Call_Driver 0 sDriver Function CLI_BROWSECONNECT Callback 0 Passing sInConnStr sOutConnStr iArg Result iRetval
+        End
+        Function_Return sOutConnStr
+    End_Function
+
+    //***
+    //*** Procedure: ExtractList
+    //*** Purpose  : Extract the list from the out connect string.
+    //***
+    Function ExtractList String sOutConnStr Returns Integer
+        String  sItem
+        Integer iStart iEnd
+
+        Send Delete_Data
+        Move (Pos("{", sOutConnStr)) to iStart
+        While (iStart > 0)
+            Move (Right(sOutConnStr, Length(sOutConnStr) - iStart)) to sOutConnStr
+            If (Left(sOutConnStr, 1) = "}") Move 0 to iStart
+            Else Begin
+                Move (Pos(",", sOutConnStr)) to iStart
+                Move (Pos("}", sOutConnStr)) to iEnd
+                If ((iStart = 0) Or (iEnd < iStart)) Move iEnd to iStart
+                If (iStart > 0) Set Value Item (Item_Count(Self)) to (Left(sOutConnStr, iStart - 1))
+                If (iStart = iEnd) Move 0 to iStart
+            End // Else Begin
+        Loop
+
+        Function_Return (Item_Count(Self))
+    End_Function
+
+    Function DataSources Returns String
+        String  sDriver sDataSource sDescription
+        Integer iLength iRetval
+
+        Get psDriver to sDriver
+        If (sDriver <> "") Begin
+            Move 8192 to iLength
+            Move (Repeat(" ", iLength)) to sDataSource
+            Move (Repeat(" ", iLength)) to sDescription
+            Call_Driver 0 sDRiver Function 10004 Callback 0 Passing sDataSource sDescription iLength Result iRetval
+        End  
+
+        Function_Return (sDataSource + "," +  sDescription)
+    End_Function 
+
+End_Class  
+
+Procedure PrintArrayItems Global Integer hoArray
+    Integer iCount iNumItems
+
+    Get Item_Count of hoArray to iNumItems
+    For iCount From 0 to (iNumItems - 1)
+        Showln (Right("   " + String(iCount + 1), 3)) " - " (Value(hoArray, iCount))
+    Loop
+End_Procedure  
+
+//*** MSSQL
+Object oSQLBrowseConnect is A cSQLBrowseConnect
+    Move Self to ghoBrowseConnect
+End_Object  

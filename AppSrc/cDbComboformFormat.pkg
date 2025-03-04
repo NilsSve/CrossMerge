@@ -1,0 +1,104 @@
+//****************************************************************************
+// $Module type: CLASS
+// $Module name: cDbComboBoxFormat.pkg
+// $Author     : Nils Svedmyr
+// Created     : 2002-07-20 @ 09:02
+//
+// Description :
+//
+// $Rev History
+//    2002-07-20  Module header created
+//****************************************************************************
+Register_Procedure CancelWizard
+Use cRDCDbComboForm.pkg
+
+Class cDbComboformDataFormatIdleHandler is a cIdleHandler
+    Procedure Construct_Object
+        Forward Send Construct_Object
+    End_Procedure
+
+    Procedure OnIdle
+        Delegate Send DoLocalUpdate
+    End_Procedure
+End_Class
+
+{ OverrideProperty=Entry_State InitialValue=False }
+{ OverrideProperty=Combo_Sort_State InitialValue=False }
+{ OverrideProperty=Label_Row_Offset InitialValue=0 }
+{ OverrideProperty=Label_Col_Offset InitialValue=2 }
+{ OverrideProperty=Label_Justification_Mode InitialValue=jMode_Right }
+{ OverrideProperty=Label_Justification_Mode EnumList="jMode_Right, jMode_Left, jMode_Center" }
+{ OverrideProperty=Size InitialValue=13,150 }
+Class cDbComboformDataFormat is a cRDCDbComboForm 
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        Property Boolean pbFrom True
+        Property Handle phoDD (Main_DD(Self))
+
+        Set Entry_State Item 0 to False
+        
+        On_Key kCancel      Send CancelWizard   // Needed by the Connect Wizard.
+        On_Key kClose_Panel Send CancelWizard
+    End_Procedure
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+        Set Combo_Sort_State to False
+    End_Procedure
+
+    Procedure DoDelegateCancel
+        Send CancelWizard
+    End_Procedure
+
+    Procedure DoCheckClear
+        Broadcast Recursive Send DoEnableDisable of (Parent(Self)) 0
+    End_Procedure
+
+    // Send from DDO on New_Current_Record:
+    Procedure DoFindData
+        Handle hoDD
+        Integer iFile iField iDbType
+        Get phoDD to hoDD
+        Get Data_File  Item 0 to iFile
+        Get Data_Field Item 0 to iField
+        Get File_Field_Current_Value   of hoDD iFile iField to iDbType
+        Broadcast Send DoEnableDisable of (Parent(Self)) iDbType
+    End_Procedure
+
+    // We want to optimize when to send DoEnableDisable.
+    // Only do it if the selection has changed. However,
+    // the base class behaves a bit different if the enter key
+    // is pressed or the mouse has been clicked. If enter is
+    // pressed the iOldDbType and iDbType value will always be
+    // the same. So if enter is pressed send DoEnableDisable
+    // unconditionally.
+    Procedure OnCloseUp
+        Handle hoDD hoParent
+        Integer iFile iField iDbType iRetval iVKey iItem
+        String sDriverID sValue    
+        Boolean bChanged
+
+        Get AnsiKey           to iVKey          // Get the last virtual key
+        Get phoDD             to hoDD
+        Get Data_File  Item 0 to iFile
+        Get Data_Field Item 0 to iField
+        Forward Send OnCloseUp      
+        
+        Get Item_Changed_State Item 0 to bChanged
+        If (bChanged = True) Begin
+                
+            Get WinCombo_Current_Item to iItem  
+            Get WinCombo_Value iItem  to sValue
+            Set Changed_Value item 0  to sValue
+    
+            Get File_Field_Current_Value of hoDD iFile iField to iDbType
+            Get ConvertDbTypeToDriver iDbType to sDriverID
+            Get IsLoadCheckDriver sDriverID False to iRetval
+            Move (Parent(Self))            to hoParent
+            Broadcast Send DoCheckClear    of hoParent
+            Broadcast Send DoEnableDisable of hoParent iDbType
+        End
+    End_Procedure
+
+End_Class

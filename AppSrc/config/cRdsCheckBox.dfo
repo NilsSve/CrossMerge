@@ -1,0 +1,10 @@
+//AB/ OBJECTDEF
+Object
+    //AB-StoreStart
+    Procedure OnChange
+        Boolean bChecked
+        Get Checked_State to bChecked
+
+    End_Procedure  // OnChange
+    //AB-StoreEnd
+End_Object

@@ -1,0 +1,105 @@
+//****************************************************************************
+// $Module type: Class
+// $Module name: cDbFormUser
+// $Author     : Nils G. Svedmyr
+// Created     : 2002-07-21 @ 09:07
+//
+// Description :
+//
+// $Rev History:
+//    2002-07-21  Module header created
+//****************************************************************************
+Use cRDCDbForm.pkg
+
+Declare_Datafile SncTable
+
+Class cDbFormUser is a cRDCDbForm
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Property Integer piDbType EN_DbTypeDataFlex
+        { InitialValue=True }
+        Property Boolean pbFrom   False
+        Property Handle  phoDD    (Main_DD(Self))
+        Set Entry_msg to DoCheckEntering
+    End_Procedure
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+    End_Procedure
+
+    Procedure DoCheckEntering
+        // If Not (Enabled_State(Self)) Send Next
+    End_Procedure
+
+    Procedure DoEnableDisable Integer iValue
+        Set piDbType to iValue
+        Set Enabled_State to (iValue > EN_DbTypeDataFlex and iValue < EN_DbTypePervasive)
+        //        If (Enabled_State(Self)) Begin
+        //            Set Color to clWindow
+        //        End
+        //        Else Begin
+        //            Set Color to clBtnFace
+        //        End
+        Send DoInitValue
+    End_Procedure
+
+    Procedure DoInitValue
+        Handle hoDD
+        Integer iFile iField iType
+        String sValue sDriverID
+        Boolean bNTAuth bEnabled
+
+        Get phoDD      to hoDD
+        Get piDbType   to iType
+        Get Data_File  to iFile
+        Get Data_Field to iField
+        Move False     to bEnabled
+
+        If (pbFrom(Self)) Begin
+            Get Field_Current_Value of hoDD Field SncTable.FromNTAuth to bNTAuth
+            Get Field_Current_Value of hoDD Field SncTable.FromDriver to sDriverID
+        End
+        Else Begin
+            Get Field_Current_Value of hoDD Field SncTable.ToNTAuth   to bNTAuth
+            Get Field_Current_Value of hoDD Field SncTable.ToDriver   to sDriverID
+        End
+
+        Case Begin
+            Case (iType = EN_DbTypeDataFlex)
+                Move "" to sValue
+                Move False to bEnabled
+                Case Break
+            Case (iType = EN_DbTypeDB2)
+                Move True to bEnabled
+                Get Network_User_Name to sValue
+                Case Break
+            Case (iType = EN_DbTypeMSSQL)
+                If (not(bNTAuth)) Begin
+                    Move True to bEnabled
+                    Get Network_User_Name to sValue
+                End
+                If (bNTAuth = True) Begin
+                    Move False to bEnabled
+                End
+                Case Break
+            Case (sDriverID = ODBC_DRV_ID)
+                If (iType = EN_DbTypeOracle) Begin
+                    Get Network_User_Name to sValue
+                End
+                Move True to bEnabled
+                Case Break
+            Case (iType = EN_DbTypePervasive)
+                Move "" to sValue
+                Move False to bEnabled
+                Case Break
+            Case Else
+                Move "" to sValue
+        Case End
+
+        Set Enabled_State  to bEnabled
+        If (not(pbGetHasCurrRowId(hoDD))) Begin
+            Set File_Field_Changed_Value of hoDD iFile iField to sValue
+        End
+    End_Procedure
+
+End_Class

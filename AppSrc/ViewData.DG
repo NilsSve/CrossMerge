@@ -1,0 +1,264 @@
+﻿Use cRDCModalPanel.pkg
+Use cDynamicReadOnlyGrid.pkg
+Use cRDCForm.pkg
+Use cRDCButton.pkg
+
+Object oViewAllData is a cRDCModalPanel
+    Set Border_Style to Border_Thick
+    Set Minimize_Icon to False
+    Set Maximize_Icon to True
+    Set Icon to "RdsText.ico"
+    Set Label to "View Data"
+    Set Size to 203 498
+    Set piMinSize to 203 497
+    Set Locate_Mode to Center_On_Parent
+    Set Extended_Window_Style to WS_EX_TOOLWINDOW    False
+    Set Extended_Window_Style to WS_EX_DLGMODALFRAME True
+
+    Property Handle  phoGrid 0
+    Property Handle  phoAutoAnsiCheck 0
+    Property String  psCharacterFormat ""
+
+    Object oDynamicReadOnlyGrid is a cDynamicReadOnlyGrid
+        Delegate Set phoGrid to Self
+        Set Size to 171 485
+        Set Location to 7 6
+        Set Highlight_Row_state to True
+        Set peAnchors to anAll
+        Set Line_Width to 1 0
+        Set Form_Width   Item 0 to 0
+        Set Header_Label Item 0 to "0"
+    End_Object
+
+    Object oFields_fm is a cRDCForm
+        Set Label to "Column count:"
+        Set Size to 13 27
+        Set Location to 183 57
+        Set Status_Help to "Number of fifelds/columns for the table that is of the type(s) inidcated in the header"
+        Set peAnchors to anBottomLeft
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to jMode_Right
+        Set Enabled_State to False
+    End_Object
+
+    Object oCurrentColumn_fm is a cRDCForm
+        Set Label to "Current column:"
+        Set Size to 13 27
+        Set Location to 183 141
+        Set peAnchors to anBottomLeft
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to jMode_Right
+        Set Enabled_State to False
+    End_Object
+
+    Object oFieldType_fm is a cRDCForm
+        Set Label to "Type:"
+        Set Size to 13 42
+        Set Location to 183 191
+        Set Status_Help to "The field/column type"
+        Set peAnchors to anBottomLeft
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to jMode_Right
+        Set Enabled_State to False
+    End_Object
+
+    Object oFieldLength_fm is a cRDCForm
+        Set Label to "Length:"
+        Set Size to 13 27
+        Set Location to 183 264
+        Set Status_Help to "The field/column lenght and precision"
+        Set peAnchors to anBottomLeft
+        Set Label_Col_Offset to 2
+        Set Label_Justification_Mode to jMode_Right
+        Set Enabled_State to False
+    End_Object
+
+    Object oFirst_bn is a cRDCButton
+        Set Label to "&First set of data"
+        Set Size to 14 61
+        Set Location to 183 319
+        Set Status_Help to "Display from beginning of data (PgUp)"
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Handle ho
+            Delegate Get phoGrid to ho
+            If ho Begin
+                Send FirstSet  of ho
+            End
+        End_Procedure
+
+        On_Key Key_F6           Send Switch
+        On_Key Key_Shift+Key_F6 Send Switch_Back
+    End_Object
+
+    Object oNext_bn is a cRDCButton
+        Set Label to "&Next set of data"
+        Set Size to 14 61
+        Set Location to 183 383
+        Set Status_Help to "View next set of data (PgDn)"
+        Set peAnchors to anBottomRight
+        Set Default_State to True
+
+        Procedure OnClick
+            Handle ho
+            Delegate Get phoGrid to ho
+            If ho Begin
+                Send NextSet of ho
+            End
+        End_Procedure
+
+        On_Key Key_F6           Send Switch
+        On_Key Key_Shift+Key_F6 Send Switch_Back
+        On_Key kCancel          Send KeyAction of oClose_bn
+    End_Object
+
+    Object oClose_bn is a cRDCButton
+        Set Label to "&Close"
+        Set Size to 14 45
+        Set Location to 183 447
+        Set Status_Help to "Close panel"
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send Close_Panel  // Augmented in panel object
+        End_Procedure
+
+        On_Key Key_F6           Send Switch
+        On_Key Key_Shift+Key_F6 Send Switch_Back
+    End_Object
+
+    Function InitGrid Integer iFile Boolean bMultiType Integer iItem String sTable Returns Integer
+        Handle ho
+        Integer iColCount
+        String sText sDriver
+
+        Set Label to ("View Data for data table:" * String(sTable))
+        Get phoGrid to ho
+        Set piFile        of ho to iFile
+        Set pbMultiType   of ho to bMultiType
+        Get_Attribute DF_FILE_DRIVER of iFile to sDriver
+        If (sDriver = DATAFLEX_ID) Begin
+            Set piPaintCol of ho to  iItem
+        End
+        Else If (sDriver = DFBTRDRV_ID) Begin
+            Set piPaintCol of ho to (iItem - 2)
+        End
+        Else Begin
+            Set piPaintCol of ho to (iItem - 1)
+        End
+        Set Default_State of oNext_bn   to (piPaintCol(ho) < 0)
+
+        Get CreateColumns of ho to iColCount
+        If not iColCount Begin
+            Send StopWorkingMessage
+            If (Err) Begin
+                Move "There is no index defined for this data table. Cannot view data."                        to sText
+            End
+            Else Begin
+                If bMultiType Begin
+                    Move "Sorry, could not find any fields of type ASCII, Numeric, or Date for this table." to sText
+                End
+                Else Begin
+                    Move "Sorry, there are no fields of type ASCII for this table."                         to sText
+                End
+            End
+            Send Info_Box sText
+            Function_Return 1
+        End
+        Send DoFillData of ho
+        If (sDriver = DATAFLEX_ID) Begin
+            Decrement iColCount
+        End
+        Set Value of oFields_fm to iColCount
+        Function_Return 0
+    End_Function
+
+    Procedure Close_Panel
+        Handle ho
+        Integer iFile iMode
+        String sDriver
+        Get phoGrid     to ho
+        Set piPaintCol  of ho to -1
+        Get piFile      of ho to iFile
+        Set pbFirstAnsi of ho to True
+        Set pbMultiType of ho to False
+        Set pbAnsi      of ho to False
+        Get_Attribute DF_FILE_DRIVER of iFile to sDriver
+        // This resets the ANSI/OEM value if changed, to files original state:
+        If (pbMultiType(ho) and (C_CKDrivers contains sDriver)) ;
+            Set_Attribute DF_FILE_TABLE_CHARACTER_FORMAT of iFile to (psCharacterFormat(ho))
+        // Do _not_ save size if viewmode_zoom!
+        Get View_Mode to iMode
+        If (iMode = ViewMode_Zoom) Begin
+            Set View_Mode to ViewMode_Normal
+        End
+        Forward Send Close_Panel
+    End_Procedure
+
+    Function Item_Count Returns Integer
+        Function_Return 0
+    End_Function
+
+    On_Key Key_Alt+Key_N Send KeyAction of oNext_bn
+    On_Key Key_Alt+Key_F Send KeyAction of oFirst_bn
+    On_Key Key_Alt+Key_C Send KeyAction of oClose_bn
+    On_Key kCancel       Send KeyAction of oClose_bn
+End_Object
+
+Procedure DoStartViewData Integer iFile Integer iState Boolean bMultiType Integer iItem String sTable Returns String
+    Handle ho hoGrid
+    Boolean bIsOpen
+    Integer iRetval
+    String sDriver sCharacterFormat sValue
+
+    Move (oViewAllData(Self)) to ho
+    Set pbSQLTable of (oDynamicReadOnlyGrid(ho)) to False
+    If iFile Begin
+        Get_Attribute DF_FILE_OPENED of iFile to bIsOpen
+    End
+    If (bIsOpen = False) Begin
+        Send Info_Box "The table is not open. Can't view data."
+        Procedure_Return
+    End
+
+    Send StartWorkingMessage "Initializing Data View..."
+    Get_Attribute DF_FILE_DRIVER of iFile to sDriver
+    If (bMultiType and (C_CKDrivers contains sDriver) and sDriver <> DFBTRDRV_ID) Begin // C_CKDrivers is a constant in SyncFuncs.pkg
+        Send Ignore_Error of Error_Info_Object 4285
+        Move False to Err
+        Get_Attribute DF_FILE_TABLE_CHARACTER_FORMAT of iFile to sCharacterFormat
+        If (not(Err)) Begin
+            Set psCharacterFormat of ho to sCharacterFormat
+            Set_Attribute DF_FILE_TABLE_CHARACTER_FORMAT of iFile to (If(iState = 1, "ANSI", "OEM"))
+        End
+        Send Trap_Error of Error_Info_Object 4285
+    End
+
+    Get phoGrid of ho to hoGrid
+    If (sDriver = DATAFLEX_ID or sDriver = DFBTRDRV_ID) Begin
+        Set piIndex of hoGrid to 0
+    End
+    If (C_CKDrivers contains sDriver and sDriver <> DFBTRDRV_ID) Begin
+        Set pbSQLTable of (oDynamicReadOnlyGrid(ho)) to True
+        Send DoSetPrimaryIndex of hoGrid iFile    // Class procedure.
+    End
+    Else If (sDriver = DFBTRDRV_ID and iItem <> -1) Begin
+        Move (iItem + 1) to iItem
+    End
+    Get InitGrid of ho iFile bMultiType iItem sTable to iRetval
+    If iRetval Begin
+        Send StopWorkingMessage
+        Procedure_Return
+    End
+    Set psMoveValueOut of hoGrid to ""
+    Send StopWorkingMessage
+    Send Popup_Modal   of ho           // POPUP dialog
+    Get psMoveValueOut of hoGrid to sValue
+    If (Length(sValue) > 0) Begin
+        Procedure_Return sValue
+    End
+    Else Begin
+        Procedure_Return ""
+    End
+End_Procedure

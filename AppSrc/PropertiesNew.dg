@@ -1,0 +1,277 @@
+﻿Use DfLine.Pkg
+Use cControlPanel.pkg
+Use cRDCDbModalPanel.pkg
+Use cRDCHeaderDbGroup.pkg
+Use cRDCComboForm.pkg
+Use cRDCCheckbox.pkg
+Use cRDCButton.pkg
+Use cRDCForm.pkg
+Use cRDCDbCheckbox.pkg
+
+Use SNCSYS.DD
+Use Windows.pkg
+
+Object oPropertiesNew_dg is a cRDCDbModalPanel
+    Set Location to 79 142
+    Set Border_Style to Border_Normal
+    Set Minimize_Icon to False
+    Set Label to "Program Properties"
+    Set Locate_Mode to Center_On_Parent
+    Set Size to 250 269
+    Set Icon to "Configure.ico"
+
+    Property String psKey "Preferences"
+
+    Object Sncsys_DD is a Sncsys_DataDictionary
+    End_Object
+
+    Set Main_DD to Sncsys_DD
+    Set Server to Sncsys_DD
+
+    Object oPassword_grp is a cRDCHeaderDbGroup
+        Set Size to 71 249
+        Set Location to 12 10
+        Set Label to "Password Protection"
+        Set psImage to "Password.ico"
+        
+        Object oSncsys_Uselogin is a cRDCDbCheckBox 
+            Entry_Item Sncsys.Uselogin
+            Set Label to "Use Login for CrossMerge Builder"
+            Set Size to 10 121
+            Set Location to 20 74
+            Set Status_Help to "Display a login dialog when starting CrossMerge Builder. The Engine will not use the dialog."
+
+            Procedure OnChangeEvent
+                Boolean bChecked bChanged
+                If (Active_State(Self)) Begin
+                    Get Changed_State       of Sncsys_DD                       to bChanged
+                    Get Field_Current_Value of Sncsys_DD Field SncSys.UseLogin to bChecked
+                    Set Enabled_State       of oName_fm                        to bChecked
+                    Set Enabled_State       of oPassword_fm                    to bChecked
+                    If bChanged Begin
+                        Set Enabled_State of oApply_bn to True
+                    End
+                End
+            End_Procedure
+        End_Object
+
+        Object oName_fm is a cRDCForm
+            Set Label to "Name:"
+            Set Size to 13 90
+            Set Location to 33 74
+            Set Status_Help to "The user name to use when starting CrossMerge Builder."
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Enabled_State to SncSys.Uselogin
+
+            Procedure DoWriteRegistryKey
+                String sValue
+                Get Value to sValue
+                Set Field_Changed_Value of Sncsys_DD Field SncSys.User to sValue
+            End_Procedure
+
+            Procedure OnChange
+                Boolean bChanged bChangedLocal
+                If (Active_State(Self)) Begin
+                    Get Changed_State of Sncsys_DD to bChanged
+                    Get Changed_State to bChangedLocal
+                    If (bChanged or bChangedLocal) Begin
+                        Set Enabled_State of oApply_bn to True
+                    End
+                End
+            End_Procedure
+
+            Procedure OnStartUp
+                String sValue
+                Get Field_Current_Value of Sncsys_DD Field SncSys.User to sValue
+                Set Value Item 0 to sValue
+            End_Procedure
+            Send OnStartUp
+
+        End_Object
+
+        Object oPassword_fm is a cRDCForm
+            Set Label to "Password:"
+            Set Size to 13 90
+            Set Location to 49 74
+            Set Status_Help to "The password to use when starting CrossMerge Builder."
+            Set Label_Col_Offset to 2
+            Set Label_Justification_Mode to jMode_Right
+            Set Enabled_State         to SncSys.Uselogin
+            Set Password_State Item 0 to True
+
+            Procedure DoWriteRegistryKey
+                String sUser sPassword         
+                Boolean bOK      
+                
+                Get Value of oName_fm to sUser
+                Get Value to sPassword
+                Set Field_Changed_Value of Sncsys_DD Field SncSys.Pv to sPassword 
+            End_Procedure
+
+            Procedure OnChange
+                Boolean bChanged bChangedLocal
+                If (Active_State(Self)) Begin
+                    Get Changed_State of Sncsys_DD to bChanged
+                    Get Changed_State to bChangedLocal
+                    If (bChanged or bChangedLocal) Begin
+                        Set Enabled_State of oApply_bn to True
+                    End
+                End
+            End_Procedure
+
+            Procedure OnStartUp
+                String sValue
+                Get Field_Current_Value of Sncsys_DD Field SncSys.Pv to sValue
+                Set Value Item 0 to sValue
+            End_Procedure
+            Send OnStartUp
+
+        End_Object
+
+    End_Object
+
+//    Object oSkins_grp is a cRDCHeaderDbGroup
+//        Set Size to 37 249
+//        Set Location to 91 10
+//        Set Label to "Application Skin"   
+//        Set psImage to "VisualSettings.ico"
+//
+//        Object oUseSkin_cb is a cRDCCheckBox
+//            Set Label to "Use skin for the application"
+//            Set Size to 10 112
+//            Set Location to 20 74
+//            Property Boolean pbChangedState False
+//    
+//            Procedure OnChangeEvent
+//                If (not(Active_State(Self))) Begin
+//                    Procedure_Return
+//                End                                  
+//                Set pbChangedState to True
+//                Set Enabled_State of oApply_bn to True  
+//            End_Procedure
+//    
+//            Procedure DoWriteRegistryKey
+//                Boolean bChecked
+//                Get Checked_State to bChecked
+//                Send WriteDWord of ghoApplication "Preferences" "UseSkin" bChecked
+//            End_Procedure
+//    
+//            Procedure DoApplyRegistryKey
+//                Boolean bState
+//                Get ReadDword of ghoApplication "Preferences" "UseSkin" False to bState
+//                Set Checked_State to bState
+//            End_Procedure
+//            Send DoApplyRegistryKey // Do on program startup.
+//            
+//        End_Object
+//
+//    End_Object
+
+    Object oDebug_grp is a cRDCHeaderDbGroup
+        Set Size to 37 249
+        Set Location to 135 11
+        Set Label to "Debug"   
+        Set psImage to "Debug.ico"
+
+        Object oDebug_cb is a cRDCCheckBox
+            Set Label to "Debug Mode On"
+            Set Location to 20 74
+            Set Status_Help to "If an error occur display the error message with a status number and the source line number. Use this when you want to report a program bug."
+            Property String psVal "pbDebugMode"
+
+            Procedure OnChangeEvent
+                If (not(Active_State(Self))) Begin
+                    Procedure_Return
+                End
+                Set Enabled_State of oApply_bn to True
+            End_Procedure
+
+            Procedure DoWriteRegistryKey
+                Boolean bChecked
+                Get Checked_State to bChecked
+                Send WriteDWord of ghoApplication (psKey(Self)) (psVal(Self)) bChecked
+            End_Procedure
+
+            Procedure DoApplyRegistryKey
+                Boolean bState
+                String sKey
+
+                Get RegistryKeyString of ghoApplication to sKey
+                Move (sKey + "\" + psKey(Self)) to sKey
+                Get ReadDWord of ghoApplication (psKey(Self)) (psVal(Self)) False to bState
+                Set Checked_State to bState
+                Set Verbose_State of Error_Info_Object to bState
+            End_Procedure
+            Send DoApplyRegistryKey // Do on program startup.
+        End_Object
+
+    End_Object
+
+    Object oApply_bn is a cRDCButton
+        Set Label to "&Apply"
+        Set Size to 14 50
+        Set Location to 230 155
+        Set Status_Help to "Apply changes.\nNote: You will not be able to see the application changes until the property dialog is closed."
+        Set Enabled_State to False
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Handle ho       
+            Boolean bChangedState
+            Move (Parent(Self)) to ho
+            Broadcast Recursive Send DoWriteRegistryKey of ho
+            Send Request_Save   of SncSys_DD
+            Set Enabled_State   to False
+        End_Procedure
+    End_Object
+
+    Object oClose_bn is a cRDCButton
+        Set Label to "&Close"
+        Set Size to 14 50
+        Set Location to 230 209
+        Set Status_Help to "Close panel. If you have made any changes, you need to press the 'Apply' button first."
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure
+    End_Object
+
+    Object oReindex_grp is a cRDCHeaderDbGroup
+        Set Size to 37 249
+        Set Location to 181 11
+        Set Label to "Reindex"   
+        Set psImage to "TableIndex.ico"
+
+        Object oReindex_btn is a cRDCButton
+            Set Size to 14 98
+            Set Location to 13 74
+            Set Label to "Reindex internal database"
+            Set psToolTip to "Use it to reindex data tables used by this tool. Note that you need to close the CrossMerge Engine before you use it."
+        
+            // fires when the button is clicked
+            Procedure OnClick
+                String sText  
+                Integer iRetval
+    
+                Move "This will reindex the data tables used by this tool. Note that you need to close the CrossMerge Engine before you use it. Continue?" to sText
+                Get YesNo_Box sText to iRetval
+                If (iRetval <> MBR_Yes) Begin
+                    Procedure_Return
+                End
+                Get ReindexFiles of (oReindex(Self)) (oReindex(Self)) to sText   
+                Get OpenAllFileListTables of (oReindex(Self)) to iRetval
+                Send Info_Box sText
+            End_Procedure
+        
+        End_Object
+
+    End_Object
+
+    On_Key Key_Alt+Key_A  Send KeyAction of oApply_bn
+    On_Key Key_Ctrl+Key_S Send KeyAction of oApply_bn
+    On_Key Key_Alt+Key_F2 Send KeyAction of oApply_bn
+    On_Key Key_Alt+Key_C  Send KeyAction of oClose_bn
+    On_Key kCancel        Send KeyAction of oClose_bn
+End_Object

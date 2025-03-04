@@ -1,0 +1,109 @@
+// File Name : SNCSCHEM.DD
+// Class Name: Sncschem_DataDictionary
+// Revision  : 23
+// Version   : 2
+Use Windows.pkg           // Basic Definitions
+Use DDvalTbl.pkg          // Validation Table Class Definitions
+Use cRDSDataDictionary.pkg // DataDictionary Class Definition
+
+Open Sncschem
+Open SncSys
+Open SncSchemRow
+
+Use cRDSDataDictionary.pkg
+
+Class SncSchem_DataDictionary is a cRDSDataDictionary
+
+    Procedure Construct_object
+        Forward Send Construct_Object
+
+        Set Main_File            to Sncschem.File_Number
+
+        Set Add_Client_File to SncSchemRow.File_Number
+
+        Set Add_System_File to SncSys.File_Number DD_Lock_On_All
+
+        Set Foreign_Field_Options  DD_KEYFIELD   to DD_AUTOFIND    DD_NOPUT       DD_FINDREQ
+        Set Foreign_Field_Options  DD_INDEXFIELD to DD_NOPUT       DD_FINDREQ
+        Set Foreign_Field_Options  DD_DEFAULT    to DD_DISPLAYONLY
+
+        // Field-based properties.......................
+
+        // Sncschem.Name
+        Set Field_Class_Name Field SncSchem.Name to "cRDSDbForm"
+        Set Field_Options Field SncSchem.Name to DD_AUTOFIND DD_REQUIRED
+
+        // Sncschem.Tables
+        Set Field_Class_Name Field SncSchem.Tables to "cRDSDbForm"
+
+        // Sncschem.Workspace
+
+        // Sncschem.DFver
+
+        // Sncschem.Deletes
+        Set Field_Class_Name Field SncSchem.Deletes to "cRDSDbCheckBox"
+
+        Set Field_Auto_Increment Field SncSchem.ID to File_Field SncSys.SncSchemID
+
+    End_Procedure
+
+    // Field_Defaults:
+    // This procedure is used to establish default field values.
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+    End_Procedure
+
+    Function Request_Validate Returns Boolean
+        Boolean bState
+        String sValue
+        Get Field_Current_Value Field SncSchem.Name to sValue
+        If (sValue = "") Begin
+            Send Info_Box "You need to enter a Collection a name. Please adjust and try again."
+            Move True to bState
+        End
+        Else Begin
+            Forward Get Request_Validate to bState
+        End
+        Function_Return bState
+    End_Function
+
+    Procedure Request_Save
+        Boolean bState
+        Send DoShowStatusHelp "Saving data..."
+        Forward Send Request_Save
+        Get Changed_State to bState
+        If bState Begin
+            Send DoShowStatusHelp "Changes not saved."
+        End
+        Else Begin
+            Send DoShowStatusHelp "Changes saved."
+        End
+    End_Procedure
+
+    Procedure Request_Delete
+        If (not(pbGetHasCurrRowId(Self))) Begin
+            Procedure_Return // Do nothing if no active record.
+        End
+        Send DoShowStatusHelp "Deleting data..."
+        Forward Send Request_Delete
+        Send DoShowStatusHelp "Data deleted."
+        If (pbGetHasCurrRowId(Self)) Begin
+            Send Clear
+        End
+    End_Procedure
+
+    Procedure DoShowStatusHelp String sText
+        Handle hoStatBar
+        If (pbGetHasCurrRowId(Self)) Begin
+            Delegate Get Statusbar_Id to hoStatBar
+            If hoStatBar Begin
+                Set Status_Help of hoStatBar to sText
+            End
+        End
+    End_Procedure
+
+End_Class
+
+#IFDEF Is$WebApp
+#ELSE
+#ENDIF

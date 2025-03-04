@@ -1,0 +1,82 @@
+//****************************************************************************
+// $Module type: CLASS
+// $Module name: cDefaultsArray
+// $Author     : Nils G. Svedmyr
+// Created     : 2001-09-15 @ 19:22
+//
+// Description :
+//
+// $Rev History
+//    2001-09-15  Module header created
+//****************************************************************************
+Use SyncFuncs.pkg
+
+Class cDefaultsArray is a Array
+    Procedure Construct_Object
+        Forward Send Construct_Object
+    End_Procedure
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+    End_Procedure
+
+    Procedure DoFillArray Integer iFile String sDefaults
+        Integer iCount iFields iType
+        String sValue sDriver
+
+        Send Delete_Data
+        If not iFile Begin
+            Procedure_Return
+        End
+        Move (Trim(sDefaults))  to sDefaults
+        Get_Attribute DF_FILE_DRIVER of iFile to sDriver
+        If (Uppercase(sDriver) = DATAFLEX_ID) Begin
+            Procedure_Return
+        End
+        Get_Attribute DF_FILE_NUMBER_FIELDS of iFile to iFields
+        For iCount From 1 to iFields
+            Get_Attribute DF_FIELD_TYPE       of iFile iCount to iType
+            If (Length(sDefaults)) Begin
+                Get ExtractField sDefaults iCount               to sValue
+            End
+            If (iType <> DF_OVERLAP) Begin
+                Set Array_Value Item (Item_Count(Self))         to sValue
+            End
+        Loop
+    End_Procedure
+
+    Function ExtractField String sDefaults Integer iField Returns String
+        Integer iStart iEnd iCount
+        String sRetval sStartChar sEndChar
+        For iCount From 1 to (iField - 1)
+            Move (Replace("|", sDefaults, "")) to sDefaults
+        Loop
+        Move (Pos("|", sDefaults))                     to iStart
+        Move (Replace("|", sDefaults, ""))             to sDefaults
+        Move (Pos("|", sDefaults))                     to iEnd
+        Move (Mid(sDefaults, (iEnd - iStart), iStart)) to sRetval
+        Move (Left(sRetval, 1))                        to sStartChar
+        Move (Right(sRetval, 1))                       to sEndChar
+        If ((sStartChar = "'" or sStartChar = '"') and (sEndChar = "'" or sEndChar = '"')) Begin
+            Move (Left(sRetval, (Length(sRetval) -1)))   to sRetval // Remove rightmost ' or "
+            Move (Right(sRetval, (Length(sRetval) -1)))  to sRetval // Remvoe leftmost ' or "
+        End
+        If (Length(sRetval) = 0) Begin
+            Move "|" to sRetval
+        End
+        Function_Return sRetval
+    End_Function
+
+    Procedure Dump
+        Integer iCount iItems
+        String sValue
+        Get Item_Count to iItems
+        Showln "Default Field values array:"
+        For iCount From 0 to (iItems -1)
+            Get String_Value Item iCount to sValue
+            Showln "sValue = " sValue
+        Loop
+        Showln ""
+    End_Procedure
+
+End_Class

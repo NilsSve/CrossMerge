@@ -1,0 +1,7 @@
+[submodule "Libraries/DFAbout"]
+[submodule "Libraries/DigitalCert"]
+	path = Libraries/DigitalCert
+	url = https://github.com/NilsSve/Library-DigitalCert.git
+[submodule "Libraries/DUF"]
+	path = Libraries/DUF
+	url = https://github.com/NilsSve/DbUpdateFramework.git

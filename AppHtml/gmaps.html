@@ -1,0 +1,85 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script src="http://maps.google.com/maps?file=api&v=2.x&key=foobar" type="text/javascript"></script>
+
+    <script type="text/javascript" language="JavaScript">
+    //<![CDATA[
+
+    var map = null;
+    var x;
+    var y;
+    var base;
+    var dragging = 0;
+    var debug = 0;
+    var interval = 100; // ms
+    
+    function load() {
+      if (GBrowserIsCompatible()) {
+        map = new GMap2(document.getElementById("map"));
+        map.addControl(new GLargeMapControl());
+        map.addControl(new GMapTypeControl());
+
+        if (debug) 
+          document.getElementById('log').style.visibility = 'visible';
+
+        GEvent.addListener(map, "dragstart", function() { dragging = 1 });
+        GEvent.addListener(map, "dragend", function() {
+          var center = map.getCenter();
+          x = center.x;
+          y = center.y;
+          dragging = 0;
+        });
+
+        y = 37.4419;
+        x = -122.1419;
+        map.setCenter(new GLatLng(y, x), 14);
+        base = get_pos(1).split(/,/);
+        
+        window.setTimeout(loop, interval);
+      }
+    }
+    
+    function loop() {
+      var pos = get_pos(0).split(/,/);
+      var ax = (pos[0] - base[0]) / 20;
+      var ay = (pos[1] - base[1]) / 20;
+      
+      x += ax * 0.0005;
+      y -= ay * 0.0005; // opposite way
+      map.panTo(new GLatLng(y, x));
+      if (debug)
+        document.getElementById('log').value += "moving to " + x + "," + y + "\n";
+        
+      if (dragging) {
+        window.setTimeout(void_loop, interval);
+      } else {
+        window.setTimeout(loop, interval);
+      }
+    }
+    
+    function void_loop() {
+      if (dragging) {
+        window.setTimeout(void_loop, interval);
+      } else {
+        window.setTimeout(loop, interval);
+      }
+    }
+    //]]>
+    </script>
+    <script language="PerlScript">
+    use Win32API::File qw(:ALL);
+
+    sub get_pos {
+        my $base = shift;
+        my $file = createFile("//./ShockMgr", "r ke") or die "Can't get ShockMgr device";
+        DeviceIoControl($file, 0x733fc, [], 0, my($buf), 0x24, my($bytes), []);
+        my @data = unpack "x4s*", $buf;
+        return join ",", ($base ? @data[3, 2] : @data[1, 0]);
+    }
+    </script>
+</head>
+<body onload="load()" onunload="GUnload()">
+  <div id="map" style="width: 800px; height: 450px"></div>
+  <textarea id="log" rows="10" cols="80" style="visibility:hidden"></textarea>
+</body>

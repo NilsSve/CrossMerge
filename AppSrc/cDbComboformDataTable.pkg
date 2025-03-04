@@ -1,0 +1,568 @@
+﻿//****************************************************************************
+// $Module type: Class
+// $Module name: cDbComboformDataTable
+// $Author     : Nils Svedmyr
+// Created     : 2002-07-22 @ 09:00
+//
+// Description :
+//
+// $Rev History
+//    2002-07-22  Module header created
+//****************************************************************************
+Use db2_drv.pkg
+Use odbc_drv.pkg
+Use MSSqldrv.pkg
+Use DFBTRDRV.PKG
+Use cRDSDataDictionary.pkg
+Use cRDCDbComboForm.pkg
+Use DeletePassword.dg
+Use cDbUpdateFunctionLibrary.pkg
+
+Declare_Datafile SncTable
+
+Class cDbComboformDataTableIdleHandler is a cIdleHandler
+    Procedure Construct_Object
+        Forward Send Construct_Object
+    End_Procedure
+
+    Procedure OnIdle
+        Delegate Send DoLocalUpdate
+    End_Procedure
+End_Class
+
+{ OverrideProperty=Entry_State InitialValue=False }
+{ OverrideProperty=Combo_Sort_State InitialValue=True }
+{ OverrideProperty=Label_Row_Offset InitialValue=0 }
+{ OverrideProperty=Label_Col_Offset InitialValue=2 }
+{ OverrideProperty=Label_Justification_Mode InitialValue=jMode_Right }
+{ OverrideProperty=Label_Justification_Mode EnumList="jMode_Right, jMode_Left, jMode_Center" }
+{ OverrideProperty=Size InitialValue=13,144 }
+Class cDbComboFormDataTable is a cRDCDbComboForm
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        
+        { Visibility=Private }
+        Property Boolean pbEnabled True
+        { Visibility=Private }
+        Property Boolean pbOpenStop False
+
+        Property Handle  phoDD (Main_DD(Self))
+        Property Integer piDbType EN_DbTypeDataFlex
+        { InitialValue=True }
+        Property Boolean pbFrom True
+        Property String  psNone CS_None
+        Property String  Private.psServer ""
+        Property String[] pasDataTables
+
+        Property Boolean pbAutoEnable True  
+        Property Handle phoIdleHandler (Create(Self, RefClass(cDbComboformDataTableIdleHandler)))
+
+        Set Label_Justification_Mode to jMode_Right
+        Set Label_Row_Offset to 0
+        Set Label_Col_Offset to 2
+        Set Entry_State Item 0 to False
+        Set Combo_Sort_State to False
+        Set Color to clWindow
+
+        On_Key Key_Alt+Key_Z  Send DoDeleteRecords // This will zerofile the table if proper password is entered.
+        On_Key Key_Ctrl+Key_Z Send DoDeleteRecords
+    End_Procedure
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+    End_Procedure
+
+    Procedure DoLocalUpdate
+        If (pbAutoEnable(Self) = False) Begin
+            Procedure_Return
+        End             
+        If (pbOpenStop(Self) = False) Begin
+            Send DoComboUpdate
+        End
+        Set Enabled_State to (IsEnabled(Self))
+    End_Procedure
+
+    { MethodType=Event }
+    Function IsEnabled Returns Boolean
+        Boolean bFrom
+        Integer iDbType
+        Handle hoDD
+        
+        Get phoDD to hoDD
+        Get pbFrom to bFrom
+        If (bFrom = True) Begin
+            Get Field_Current_Value of hoDD Field SncTable.FromDbType to iDbType    
+        End                                                               
+        Else Begin
+            Get Field_Current_Value of hoDD Field SncTable.ToDbType to iDbType    
+        End
+        Function_Return (iDbType <> EN_DbTypeDataFlex and iDbType <> EN_DbTypePervasive)
+    End_Function
+
+    // Enable the idle handler timer when the button is activated
+    Procedure Activating
+        Forward Send Activating
+        Set pbEnabled of (phoIdleHandler(Self)) to True
+    End_Procedure
+
+    // Disable the idle handler when the button is deactivated
+    Procedure Deactivating
+        Set pbEnabled of (phoIdleHandler(Self)) to False
+        Forward Send Deactivating
+    End_Procedure
+
+    Procedure Refresh Integer iNotifyMode
+        Send DoCheckClear    
+        Forward Send Refresh iNotifyMode  
+        Send DoComboFillList
+    End_Procedure
+
+    Procedure DoCheckClear
+        Integer iItem iFile iField 
+        Handle hoPanel hTable hoDD
+        Boolean bFrom bOpen 
+        String[] asDataTables
+        
+        Set pasDataTables to asDataTables
+        Set pbOpenStop to False
+        Send Combo_Delete_Data
+        Send Combo_Add_Item (psNone(Self))
+        Get WinCombo_Item_Matching (psNone(Self)) to iItem
+        If (iItem > -1) Begin
+            Set WinCombo_Current_Item to iItem
+        End  
+
+        Get_Attribute DF_FILE_OPENED of giFromFile to bOpen
+        If (bOpen = True) Begin
+            Close giFromFile
+        End
+        Get_Attribute DF_FILE_OPENED of giToFile  to bOpen
+        If (bOpen = True) Begin
+            Close giToFile
+        End
+    End_Procedure
+
+    // Called from IdleTimer
+    Procedure DoComboUpdate
+        Handle hoDD hoFrom hoTo
+        Integer iDbType iID
+        Handle hTable
+        String sDesc sTable sFromType sToType
+        Boolean bFrom bOpen
+
+        Get pbFrom to bFrom
+        Get phoDD  to hoDD  
+        Get Field_Current_Value of hoDD Field SncTable.ID to iID
+        If (iID = 0) Begin
+            Procedure_Return // Nothing to do yet.
+        End 
+
+        If (bFrom) Begin
+            Get Field_Current_Value of hoDD Field SncTable.FromDbType    to iDbType
+            Get Field_Current_Value of hoDD Field SncTable.FromDataTable to sTable
+            Move giFromFile to hTable
+        End
+        Else Begin
+            Get Field_Current_Value of hoDD Field SncTable.ToDbType    to iDbType
+            Get Field_Current_Value of hoDD Field SncTable.ToDataTable to sTable
+            Move giToFile to hTable
+        End    
+        
+        Move (Trim(sTable)) to sTable
+        If (sTable = "" or sTable = CS_None) Begin
+            Procedure_Return // Nothing to do yet.
+        End
+        
+        Get_Attribute DF_FILE_OPENED of hTable to bOpen
+        If (bOpen = False) Begin
+            Send DoOpenTable   
+        End
+    End_Procedure
+
+    Procedure OnDropDown
+        Boolean bFrom 
+        Handle hoDD
+        String sTable 
+        Integer iItem
+        
+        Send DoComboFillList   
+        Get phoDD to hoDD
+        Get pbFrom to bFrom
+        // I don't  quite understand why, but the DDO buffer is wrong when
+        // this event happens, but the global buffer is correct (!).
+        If (bFrom) Begin
+            Move (Trim(SncTable.FromDataTable)) to sTable
+        End
+        Else Begin
+            Move (Trim(SncTable.ToDataTable)) to sTable
+        End    
+        Forward Send OnDropDown
+        If (sTable <> "" and sTable <> CS_None) Begin
+            Get WinCombo_Item_Matching sTable to iItem
+            If (iItem > -1) Begin
+                Set WinCombo_Current_Item to iItem
+            End          
+        End
+    End_Procedure   
+    
+    Procedure OnCloseUp
+        Boolean bChanged     
+        Forward Send OnCloseUp
+        Get Item_Changed_State Item 0 to bChanged
+        If (bChanged = True) Begin
+            Send DoOpenTable
+        End
+    End_Procedure
+    
+    Procedure DoOpenTable
+        Handle hoDD hTable
+        String sTable sTableLocal
+        Integer iFile iField iRetval iDbType iID iItem
+        Boolean bFrom bOpen                      
+        tSQLConnection SQLConnection
+        
+        Get phoDD to hoDD                   
+        Get Field_Current_Value of hoDD Field SncTable.ID to iID
+        If (iID = 0) Begin
+            Procedure_Return
+        End
+
+        Get pbFrom   to bFrom
+        Get piDbType to iDbType 
+        If (bFrom = True) Begin
+            Move giFromFile to hTable
+        End 
+        Else Begin
+            Move giToFile to hTable
+        End
+        
+        Get Data_File  Item 0 to iFile
+        Get Data_Field Item 0 to iField            
+        
+        // Note: It is (often) to early to get the DDO value at this point,
+        // instead we need to use the combo value.
+        Get File_Field_Current_Value of hoDD iFile iField to sTable
+        Move (Trim(sTable)) to sTable
+        Get WinCombo_Current_Item to iItem
+        Get WinCombo_Value iItem to sTableLocal
+        If (sTableLocal <> sTable) Begin       
+            Move sTableLocal to sTable
+        End
+        
+        If (sTable = "" or sTable = CS_None) Begin
+            Procedure_Return 
+        End
+
+        Set File_Field_Changed_Value of hoDD iFile iField to sTable
+        Close hTable
+
+        If (iDbType = EN_DbTypePervasive) Begin
+            If (bFrom = True) Begin
+                Get_Attribute DF_FILE_OPENED of giFromDDF to bOpen
+                If (bOpen = True) Begin
+                    Close giFromDDF
+                End
+            End
+            Else Begin
+                Get_Attribute DF_FILE_OPENED of giToDDF   to bOpen
+                If (bOpen = True) Begin
+                    Close giToDDF
+                End
+            End
+        End
+        
+        Get RDSOpenAsFile hoDD bFrom False to bOpen 
+        If (bOpen = False) Begin
+            Set pbOpenStop to True
+        End
+//        Send Combo_Add_Item sTable
+//        Get WinCombo_Item_Matching sTable to iItem
+//        If (iItem > -1) Begin
+//            Set WinCombo_Current_Item to iItem
+//        End          
+    End_Procedure
+
+    Procedure Combo_Fill_List    
+        Send DoComboFillList
+    End_Procedure
+
+    Procedure DoComboFillList
+        Integer iDbType iFile iField iRetval iSize iItem iDSNType iNtAuth iCount
+        Handle hoDD hoPathObject
+        String sTable sPath sDriverID sDriverIDDUF sServer sUser sPassword sSchema sDataBase sNone sTableVal
+        Boolean bChanged bRecord bFrom
+        tSQLConnection SQLConnection
+        String[] asDataTables
+        
+        Get psNone to sNone
+        Get pbFrom to bFrom
+        Get phoDD to hoDD
+        Get pbGetHasCurrRowId of hoDD to bRecord
+        
+        If (bFrom = True) Begin
+            Get Field_Current_Value of hoDD Field SncTable.FromDbType    to iDbType
+            Get Field_Current_Value of hoDD Field SncTable.FromDriver    to sDriverID
+            Get Field_Current_Value of hoDD Field SncTable.FromDataTable to sTable
+            Get Field_Current_Value of hoDD Field SncTable.FromFilepath  to sPath
+        End
+        Else Begin
+            Get Field_Current_Value of hoDD Field SncTable.ToDbType    to iDbType
+            Get Field_Current_Value of hoDD Field SncTable.ToDriver    to sDriverID
+            Get Field_Current_Value of hoDD Field SncTable.ToDataTable to sTable
+            Get Field_Current_Value of hoDD Field SncTable.ToFilePath  to sPath
+        End
+        
+        Move (Trim(sTable)) to sTable
+        Move (Trim(sPath))  to sPath
+        If (Lowercase(sTable) <> Lowercase(sNone)) Begin
+            Get UpperFirstChar sTable to sTable
+        End
+        If (iDbType = EN_DbTypePervasive) Begin
+            If (bFrom = True) Begin
+                Get Field_Current_Value of hoDD Field SncTable.FromServer to sTable
+            End
+            Else Begin
+                Get Field_Current_Value of hoDD Field SncTable.ToServer to sTable
+            End
+        End
+        If (iDbType = EN_DbTypeDataFlex and sDriverID <> DATAFLEX_ID) Begin
+            Move DATAFLEX_ID to sDriverID
+        End
+        If (iDbType = EN_DbTypePervasive and sDriverID <> DFBTRDRV_ID) Begin
+            Move DFBTRDRV_ID to sDriverID
+        End
+        If (sDriverID = "") Begin
+            Procedure_Return   // Nothing to do yet...
+        End
+
+        If (iDbType <> EN_DbTypeDataFlex and iDbType <> EN_DbTypePervasive) Begin
+            Get FillSQLConnectionStruct bFrom hoDD to SQLConnection
+        End
+        If (iDbType <> EN_DbTypeDataFlex and iDbType <> EN_DbTypePervasive and SQLConnection.sServer = "") Begin
+            Procedure_Return   // Nothing to do yet...
+        End
+        If (iDbType = EN_DbTypeMSSQL and SQLConnection.sDatabase = "" or (SQLConnection.sDatabase contains sNone)) Begin
+            Procedure_Return   // Nothing to do yet...
+        End   
+        
+        If ((iDbType = EN_DbTypeDataFlex or iDbType = EN_DbTypePervasive) and sPath <> "") Begin // DataFlex or Pervasive
+            Get vFolderExists sPath to iRetval
+            If (not(iRetval)) Begin
+                Send Stop_Box "The specified Path does not exist."
+                Procedure_Return
+            End
+            If (Lowercase(sTable) <> Lowercase(sNone)) Begin
+                Get vFolderFormat sPath to sPath
+                Get vFolderExists (sPath + sTable) to iRetval
+                If (not(iRetval)) Begin
+                    If (iDbType = EN_DbTypeDataFlex) Begin
+                        Send Stop_Box "The specified Table Name does not exist."
+                    End
+                    If (iDbType = EN_DbTypePervasive) Begin
+                        Send Stop_Box "The specified Meta Data File does not exist."
+                    End
+                    Procedure_Return
+                End
+            End
+        End
+
+        Send Combo_Delete_Data
+        Get pasDataTables to asDataTables
+        Move (SizeOfArray(asDataTables)) to iSize
+        If (iSize = 0) Begin
+            Send FillDataTablesArray sDriverID sTable sPath SQLConnection    
+        End                                                 
+        Else Begin
+            Send FillFromTablesArray    
+        End          
+        Get WinCombo_Item_Matching sTable to iItem
+        If (iItem > -1) Begin
+            Set WinCombo_Current_Item to iItem
+        End          
+    End_Procedure
+
+    Procedure FillFromTablesArray 
+        Integer iSize iCount
+        String sTable
+        String[] asDataTables
+        
+         Get pasDataTables to asDataTables
+         Move (SizeOfArray(asDataTables)) to iSize
+         Decrement iSize
+         For iCount from 0 to iSize
+            Move asDataTables[iCount] to sTable
+            Get UpperFirstChar sTable to sTable
+            Send Combo_Add_Item sTable
+         Loop
+    End_Procedure
+    
+    Procedure FillDataTablesArray String sDriverID String sTable String sPath tSQLConnection SQLConnection
+        Integer iSize iCount iNewSize
+        String sTableVal 
+        String[] asDataTables
+        
+        Case Begin
+            Case (sDriverID = DATAFLEX_ID)  
+                Send Combo_Add_Item sTable
+                Case Break
+            Case (sDriverID = DB2_DRV_ID)
+                Get _SqlUtilEnumerateTables of ghoDbUpdateFunctionLibrary SQLConnection.sDriverID SQLConnection.sDriverID SQLConnection.sDatabase SQLConnection.sSchema to asDataTables
+                Move (SizeOfArray(asDataTables)) to iSize
+                Decrement iSize
+                For iCount from 0 to iSize
+                    Move asDataTables[iCount]    to sTableVal
+                    Get UpperFirstChar sTableVal to sTableVal
+                    Send Combo_Add_Item             sTableVal
+                Loop
+                Case Break
+            Case (sDriverID = MSSQLDRV_ID)
+                Get _SqlUtilEnumerateTables of ghoDbUpdateFunctionLibrary SQLConnection.sDriverID SQLConnection.sDatabase SQLConnection.sSchema to asDataTables
+                Move (SizeOfArray(asDataTables)) to iSize
+                Decrement iSize
+                For iCount from 0 to iSize
+                    Move asDataTables[iCount]    to sTableVal
+                    Get UpperFirstChar sTableVal to sTableVal
+                    Send Combo_Add_Item             sTableVal
+                Loop
+                Case Break
+            Case (sDriverID = ODBC_DRV_ID)
+                Get _SqlUtilEnumerateTables of ghoDbUpdateFunctionLibrary SQLConnection.sDriverID SQLConnection.sDriverID SQLConnection.sDatabase SQLConnection.sSchema to asDataTables
+                Move (SizeOfArray(asDataTables)) to iSize
+                Decrement iSize
+                For iCount from 0 to iSize
+                    Move asDataTables[iCount]    to sTableVal
+                    Get UpperFirstChar sTableVal to sTableVal
+                    Send Combo_Add_Item             sTableVal
+                Loop
+                Case Break
+            Case (sDriverID = DFBTRDRV_ID)
+                Get Combo_Add_Pervasive iSize sPath sTable to iNewSize
+                Case Break
+            Case Else
+        Case End      
+        
+        Set pasDataTables to asDataTables
+    End_Procedure
+
+    Function Combo_Add_Pervasive Integer iSize String sPath String sTable Returns Integer
+        Integer iTmpSize iFile
+
+        If (Length(sPath) = 0 or Length(sTable) = 0) Begin
+            Function_Return 0
+        End
+
+        Get OpenDDFFile (pbFrom(Self)) sPath DFBTRDRV_ID False to iFile // Global function in SyncFuncs.pkg
+        If (not(iFile)) Begin
+            Function_Return 0
+        End
+
+        Clear iFile
+        VFind iFile 0 Gt
+
+        While (Found)
+            Get_Field_Value iFile 2 to sTable
+            Move (Rtrim(sTable)) to sTable
+            If (not(sTable contains "X$")) Begin
+                Get UpperFirstChar sTable to sTable
+                Send Combo_Add_Item sTable
+            End
+            Get Text_Extent sTable to iTmpSize
+            If (iTmpSize > iSize) Begin
+                Move iTmpSize to iSize
+            End
+            VFind iFile 0 Gt
+        Loop
+        Clear iFile
+
+        Function_Return iSize
+    End_Function
+
+    Register_Object oDeletePassword_dg  // Delete password dialog.
+
+    Procedure DoDeleteRecords
+        Handle hoDD hoPassword
+        Boolean bFrom
+        Integer iFromFile iToFile iRetval iRecords iPasswordOk
+        String sFile sText
+
+        Move (oDeletePassword_dg(Self)) to hoPassword
+        If hoPassword Begin
+            Get IsDeletePasswordOk to iPasswordOk
+            If (iPasswordOk <> 1) Begin
+                If (iPasswordOk = 0) Begin
+                    Send Info_Box "Sorry. The correct password was not entered. Cannot continue deleting records."
+                End
+                Procedure_Return
+            End
+        End
+
+        Get pbFrom to bFrom
+        Get phoDD  to hoDD
+        If (pbFrom(Self)) Begin
+            Get Field_Current_Value of hoDD Field SncTable.FromDataTable to sFile
+        End
+        Else  Begin
+            Get Field_Current_Value of hoDD Field SncTable.ToDataTable   to sFile
+        End
+        Move giFromFile to iFromFile
+        Move giToFile   to iToFile
+        Move (Trim(sFile)) to sFile
+        If (pbFrom(Self) and not(iFromFile) or Length(sFile) = 0) Begin
+            Procedure_Return
+        End
+        Else If (iToFile = 0 or Length(sFile) = 0) Begin
+            Procedure_Return
+        End
+
+        If (bFrom = True) Begin
+            Get_Attribute DF_FILE_RECORDS_USED of iFromFile to iRecords
+        End
+        Else Begin
+            Get_Attribute DF_FILE_RECORDS_USED of iToFile   to iRecords
+        End
+        Move "\n\nNote: Make sure that the database table is _not_ opened by another application." to sText
+        Get YesNo_Box ("Do you want to delete all" * String(iRecords) * "records for the data table" * String(sFile) + "?" + sText) to iRetval
+        If (iRetval = MBR_No) Begin
+            Procedure_Return
+        End
+
+        If (bFrom = True) Begin
+            Get DeleteAllRecords iFromFile sFile to iRetval
+        End
+        Else Begin
+            Get DeleteAllRecords iToFile   sFile to iRetval
+        End
+    End_Procedure
+
+    Function DeleteAllRecords Integer iFile String sFile Returns Integer
+        Boolean bIsOpen
+
+        Get_Attribute DF_FILE_OPENED of iFile to bIsOpen
+        If (not(bIsOpen)) Begin
+            Send Stop_Box ("The database table" * sFile * "is not open. Cannot delete records.")
+            Function_Return 0
+        End
+
+        If (Active_State(Self)) Begin
+            Send StartWorkingMessage ("Deleting all records for database table" * String(sFile))
+        End
+
+        Move False to Err
+        ZeroFile iFile
+        Send StopWorkingMessage
+        If (Err) Begin
+            Send Info_Box ("Records could not be deleted for the database table" * String(sFile))
+        End
+        Function_Return (Err)
+    End_Function
+
+    // Weird woodoo (!)
+    // For some reason the value of the combo will always be "<None>" after saving
+    // iif (in-and-only-if) the focus is on this object. So first send the focus of
+    // to some other control, then attempt to save.
+    Procedure Request_Save 
+        Send Next
+        Delegate Send Request_Save
+    End_Procedure                 
+    
+End_Class

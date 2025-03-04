@@ -1,0 +1,215 @@
+// File Name : SNCSYS.DD
+// Class Name: Sncsys_DataDictionary
+// Revision  : 54
+// Version   : 2
+
+Use Windows.pkg           // Basic Definitions
+Use DDvalTbl.pkg          // Validation Table Class Definitions
+Use cRDSDataDictionary.pkg
+Use xxSoftwareKey.pkg
+
+Open Sncsys
+
+Class SncSys_DataDictionary  is a cRDSDataDictionary
+
+    Procedure Construct_object
+        Forward Send Construct_Object
+
+        Set Main_File            to Sncsys.File_Number
+
+        Set Foreign_Field_Options  DD_KEYFIELD   to DD_AUTOFIND    DD_NOPUT       DD_FINDREQ
+        Set Foreign_Field_Options  DD_INDEXFIELD to DD_NOPUT       DD_FINDREQ
+        Set Foreign_Field_Options  DD_DEFAULT    to DD_DISPLAYONLY
+
+        // Field-based properties.......................
+
+        // Sncsys.Log_Recid
+        Set Field_Class_Name Field SncSys.SncLogID to "cRDSDbForm"
+
+        // Sncsys.Table_Recid
+        Set Field_Class_Name Field SncSys.SncTableID to "cRDSDbForm"
+
+        // Sncsys.Default_Scheme
+        Set Field_Class_Name Field SncSys.Default_Scheme to "cRDSDbComboForm"
+        Set Status_Help Field SncSys.Default_Scheme to "Use this default Collection Name when the Connection Engine is started manually."
+
+        // Sncsys.Autostart
+        Set Field_Checkbox_Values Field SncSys.AutoStart to "1" "0"
+        Set Field_Class_Name Field SncSys.AutoStart to "DbCheckBox"
+        Set Field_Label_Long Field SncSys.AutoStart to "Auto start the CrossMerge Engine"
+        Set Status_Help Field SncSys.AutoStart to "- Not used"
+
+        // Sncsys.Show_Info
+        Set Field_Checkbox_Values Field SncSys.Show_Info to "1" "0"
+        Set Field_Class_Name Field SncSys.Show_Info to "DbCheckBox"
+        Set Field_Label_Long Field SncSys.Show_Info to "Display status panel with info while the CrossMerge Engine is running"
+        Set Status_Help Field SncSys.Show_Info to "Display info while connecting data in a Status Panel/Sentinel"
+
+        // Sncsys.Delete_Records
+        Set Field_Checkbox_Values Field SncSys.Delete_Records to "1" "0"
+        Set Field_Class_Name Field SncSys.Delete_Records to "DbCheckBox"
+        Set Field_Label_Long Field SncSys.Delete_Records to "- Not used"
+        Set Field_Label_Short Field SncSys.Delete_Records to "not used"
+        Set Status_Help Field SncSys.Delete_Records to "- Not used"
+
+        // Sncsys.Default_Ws
+        Set Field_Label_Long Field SncSys.Default_WS to "Default WorkSpace Name"
+        Set Status_Help Field SncSys.Default_WS to "- Not used"
+
+        // Sncsys.Allowdeletelog
+        Set Field_Checkbox_Values Field SncSys.AllowDeleteLog to "1" "0"
+        Set Field_Class_Name Field SncSys.AllowDeleteLog to "DbCheckBox"
+        Set Field_Label_Long Field SncSys.AllowDeleteLog to "Allow user to delete the connection log"
+        Set Status_Help Field SncSys.AllowDeleteLog to "Applicable when the CrossMerge Engine is started manually."
+
+        // Sncsys.Allowautodelete
+        Set Field_Checkbox_Values Field SncSys.AllowAutoDelete to "1" "0"
+        Set Field_Class_Name Field SncSys.AllowAutoDelete to "DbCheckBox"
+        Set Field_Label_Long Field SncSys.AllowAutoDelete to "Allow to change ' Auto Delete'  items (right checkbox column)"
+        Set Status_Help Field SncSys.AllowAutoDelete to "Applicable when the CrossMerge Engine is started manually."
+
+        // Sncsys.Allowtblchange
+        Set Field_Checkbox_Values Field SncSys.AllowTblChange to "1" "0"
+        Set Field_Class_Name Field SncSys.AllowTblChange to "DbCheckBox"
+        Set Field_Label_Long Field SncSys.AllowTblChange to "Allow to change selections of items (left checkbox column)"
+        Set Status_Help Field SncSys.AllowTblChange to "Applicable when the CrossMerge Engine is started manually."
+
+        // Sncsys.Allowcancelsent
+        Set Field_Checkbox_Values Field SncSys.AllowCancelSent to "1" "0"
+        Set Field_Class_Name Field SncSys.AllowCancelSent to "DbCheckBox"
+        Set Field_Label_Long Field SncSys.AllowCancelSent to "Allow to cancel the CrossMerge Engine when run"
+        Set Status_Help Field SncSys.AllowCancelSent to "Enable/Disable the cancel button of the status panel/sentinel"
+
+        // Sncsys.Dsn_Names
+        Set Field_Class_Name Field SncSys.DSN_Names to "cRDSDbForm"
+        Set Field_Label_Long Field SncSys.DSN_Names to "ODBC DSN name(s)"
+        Set Field_Label_Short Field SncSys.DSN_Names to "ODBC DSN name(s)"
+        Set Status_Help Field SncSys.DSN_Names to "Check for these User DSN names when starting the CrossMerge Engine. Surround each name with double quotation marks."
+
+        // Sncsys.Vdfver
+        //DDB/ Comment_Short       Field Sncsys.Vdfver to "Obsolete"
+        Set Field_Label_Long Field SncSys.DFVer to "Dataflex version"
+        Set Field_Label_Short Field SncSys.DFVer to "DF ver"
+        Set Status_Help Field SncSys.DFVer to "- Not used"
+
+        // Sncsys.Usetooltip
+        Set Field_Checkbox_Values Field SncSys.UseTooltip to "1" "0"
+        Set Field_Class_Name Field SncSys.UseTooltip to "cRDSDbCheckBox"
+        Set Field_Label_Long Field SncSys.UseTooltip to "Use ToolTip Hints"
+        Set Status_Help Field SncSys.UseTooltip to "Display tooltip help when hoovering the mouse over an object. (The text you are seeing now.)"
+
+        // Sncsys.Sncthea_Recid
+        Set Field_Class_Name Field SncSys.SncTHeaID to "cRDSDbForm"
+
+        // Sncsys.Snctrow_Recid
+        Set Field_Class_Name Field SncSys.SncTRowID to "cRDSDbForm"
+
+        // Sncsys.Runminimized
+        Set Field_Checkbox_Values Field SncSys.RunMinimized to "1" "0"
+        Set Field_Class_Name Field SncSys.RunMinimized to "DbCheckbox"
+        Set Field_Label_Long Field SncSys.RunMinimized to "Run Program Minimized when scheduled to Autorun by Windows Scheduled Tasks"
+        Set Field_Label_Short Field SncSys.RunMinimized to "Minimized"
+        Set Status_Help Field SncSys.RunMinimized to "Minimize the CrossMerge Engine program when running. Helpfull when run by Windows Scheduled tasks."
+
+        // Sncsys.Uselogin
+        Set Field_Checkbox_Values Field SncSys.UseLogin to "1" "0"
+        Set Field_Class_Name Field SncSys.UseLogin to "DbCheckbox"
+        Set Field_Label_Long Field SncSys.UseLogin to "Use Login for this program"
+        Set Status_Help Field SncSys.UseLogin to "Use login dialog with user and password when starting this program."
+
+        // Sncsys.User
+
+        // Sncsys.Pv
+
+    End_Procedure
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        Set Field_Changed_Value Field SncSys.AutoStart to 0
+        Set Field_Changed_Value Field SncSys.Show_Info to 1
+        Set Field_Changed_Value Field SncSys.Delete_Records to 1
+        Set Field_Changed_Value Field SncSys.AllowDeleteLog to 1
+        Set Field_Changed_Value Field SncSys.AllowAutoDelete to 0
+        Set Field_Changed_Value Field SncSys.AllowTblChange to 1
+        Set Field_Changed_Value Field SncSys.AllowCancelSent to 1
+        Set Field_Changed_Value Field SncSys.DFVer to 19
+        Set Field_Changed_Value Field SncSys.UseTooltip to 1
+        Set Field_Changed_Value Field SncSys.RunMinimized to 1
+        Set Field_Changed_Value Field SncSys.UseLogin to 0
+    End_Procedure
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+        Set Auto_Fill_State to True
+        Send Find_By_Recnum (Main_File(Self)) 1
+    End_Procedure
+
+    Procedure New_Current_Record Integer iOld Integer iNew
+        String sPv
+
+        Forward Send New_Current_Record iOld iNew
+
+        If (Operation_Mode = Mode_Finding or Operation_Mode = Mode_Saving) Begin
+            Get Field_Current_Value Field SncSys.Pv to sPv
+            If (sPv <> "") Begin
+                Get CMDecryptPassword sPv to sPv
+                If (sPv <> "") Begin
+                    Move sPv to SncSys.Pv
+                    Set Field_Current_Value Field SncSys.Pv to sPv
+                End
+            End
+        End
+    End_Procedure
+
+    Procedure Update
+        String sPv
+
+        Forward Send Update
+
+        // Encrypt passwords:
+        Move (Trim(SncSys.Pv)) to sPv
+        If (sPv <> "") Begin
+            Get CMEncryptPassword SncSys.Pv to SncSys.Pv
+        End
+    End_Procedure
+
+    Function Validate_Save Returns Integer
+        Integer iRetval
+        String sDSN sLeft sRight
+
+        Forward Get Validate_Save to iRetval
+
+        If iRetval Begin
+            Function_Return iRetval
+        End
+        Move (Trim(SncSys.DSN_Names)) to sDSN
+
+        If (Length(sDSN) > 0) Begin
+            Move (Left (sDSN, 1)) to sLeft
+            Move (Right(sDSN, 1)) to sRight
+            If (sLeft <> '"' or sRight <> '"') Begin
+                Send UserError "You must surround each DSN name with double quotes."
+                Move 1 to iRetval
+            End
+        End
+
+        Function_Return iRetval
+    End_Function
+
+    Procedure Request_Save
+        Send DoShowStatusHelp "Saving data..."
+        Forward Send Request_Save
+        Send DoShowStatusHelp "Changes saved."
+    End_Procedure
+
+    Procedure DoShowStatusHelp String sText
+        Handle hoStatBar
+        If (pbGetHasCurrRowId(Self)) Begin
+            Delegate Get Statusbar_Id to hoStatBar
+            If hoStatBar Begin
+                Set Status_Help of hoStatBar to sText
+            End
+        End
+    End_Procedure
+
+End_Class

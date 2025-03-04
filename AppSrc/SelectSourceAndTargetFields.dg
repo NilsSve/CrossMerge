@@ -1,0 +1,406 @@
+﻿Use DFClient.pkg
+Use cRDCDbModalPanel.pkg
+Use cRDCHeaderDbGroup.pkg
+Use cRDCTextbox.pkg
+Use cParentFieldsTreeview.pkg
+Use cChildFieldsTreeView.pkg
+Use cRDCButton.pkg
+Use cRDCForm.pkg
+Use Windows.pkg
+
+Object oSelectSourceAndTargetFields is a cRDCDbModalPanel
+    Set Label to "Select Source And Target Fields"
+    Set Size to 381 474
+    Set piMaxSize to 685 474
+    Set piMinSize to 89 211
+    Set Location to 2 2
+    Set Border_Style to Border_Thick
+    Set Locate_Mode to CENTER_ON_PARENT
+    
+    Property Handle Main_DD
+    Property Handle Server
+    Property Boolean pbOK False
+
+    Object oFromParentFields2_tb is a cRDCTextbox
+        Set Label to "Available Source Fields:"
+        Set Location to 8 19
+        Set Size to 10 79
+        Set FontWeight to fw_Bold
+    End_Object
+
+    Object oFromParentFields2_tv is a cParentFieldsTreeView
+        Set pbFrom to True
+        Set peAnchors to anTopBottom
+        Set Size to 138 183
+        Set Location to 21 10
+        Set pbFullRowSelect to True
+        Set TreeButtonsState to False
+        Set TreeRetainSelState to True
+        Set Status_Help to "Double-click or press space-bar to select a Source field or the Ins key to insert a Source field"
+        Set phoChild to (oFromChildFields2_tv(Self))
+
+        Procedure DoUpdateData Integer iFromFile Integer iToFile Boolean bFrom
+            Set piFile to iFromFile
+        End_Procedure
+    End_Object
+
+    Object oToParentFields2_tb is a cRDCTextbox
+        Set Label to "Available Target Fields:"
+        Set Location to 8 208
+        Set Size to 10 148
+        Set FontWeight to fw_Bold
+    End_Object
+
+    Object oToParentFields2_tv is a cParentFieldsTreeView
+        Set pbFrom to False
+        Set peAnchors to anTopBottom
+        Set Size to 138 183
+        Set Location to 21 200
+        Set pbFullRowSelect to True
+        Set TreeButtonsState to False
+        Set TreeRetainSelState to True
+        Set phoChild to (oToChildFields2_tv(Self))
+        Set Status_Help to "Double-click or press space-bar to select a Target field or the Ins key to insert a Target field"
+
+        Procedure DoUpdateData Integer iFromFile Integer iToFile Boolean bFrom
+            Set piFile to iToFile
+        End_Procedure
+    End_Object
+
+    Object oFromChildFields2_tb is a cRDCTextbox
+        Set Label to "Selected Source Fields:"
+        Set Location to 183 11
+        Set Size to 10 73
+        Set peAnchors to anBottomLeft
+        Set FontItalics to True
+    End_Object
+
+    Object oCopyFromToBelow_btn is a cCommandLinkButton
+        Set Size to 23 92
+        Set Location to 163 85
+        Set psImage to "CopyToBelow.ico"
+        Set piImageSize to 32
+        Set Label to "Copy"
+        Set psToolTip to "Copy the selected Source field to the list below"
+        Set peAnchors to anBottomLeft
+
+        Procedure OnClick
+            Send DoCopyItem of oFromParentFields2_tv
+        End_Procedure
+
+    End_Object
+
+    Object oFromChildFields2_tv is a cChildFieldsTreeView
+        Set peAnchors to anBottomLeft
+        Set Size to 138 183
+        Set Location to 196 10
+        Set pbFullRowSelect to True
+        Set TreeButtonsState to False
+        Set TreeRetainSelState to True
+        Set phoParent to (oFromParentFields2_tv(Self))
+        Set psFieldName to "SelFromFields"
+        Set Status_Help to "Double-click or press the Del key to de-select a Source field."
+        Set pbFrom to True
+        Set Server to (Main_DD(Self))
+
+        Procedure DoUpdateData Integer iFromFile Integer iToFile Boolean bFrom
+            Set piFile to iFromFile
+            Send OnCreateTree
+        End_Procedure
+
+        Procedure UpdateDDO
+            Send DoUpdateDDBuffer (Main_DD(Self)) "SelFromFields" "SelFieldCount"  // Class procedure.
+        End_Procedure
+
+        Procedure DoAddItem String sLabel Integer iData
+            Integer iItems
+            Forward Send DoAddItem sLabel iData
+            Get ItemCount to iItems
+            Set Value of oSelFromCount_fm to iItems
+            Set Enabled_State of oAppend_bn to True
+            Send UpdateDDO
+        End_Procedure
+
+        Procedure DoInsertItem String sLabel Integer iData
+            Integer iItems
+            Forward Send DoInsertItem sLabel iData
+            Get ItemCount                   to iItems
+            Set Value of oSelFromCount_fm   to iItems
+            Send UpdateDDO
+        End_Procedure
+
+        Procedure DoCutItem
+            Integer iItems
+            Forward Send DoCutItem
+            Get ItemCount to iItems
+            Set Value of oSelFromCount_fm to iItems
+            Send UpdateDDO
+        End_Procedure
+
+        Procedure DoCreateTree
+            Integer iItems
+            Forward Send DoCreateTree
+            Get ItemCount to iItems
+            Set Value of oSelFromCount_fm   to iItems
+            Set Enabled_State of oAppend_bn to iItems
+        End_Procedure
+
+        Procedure DoFindMatchingItem Integer iItem
+            Handle hNew
+            Get ItemHandle iItem to hNew
+            Set CurrentTreeItem  to hNew
+        End_Procedure
+
+        Procedure OnItemChanged Handle hItem Handle hItemOld
+            Integer iItem
+            Get ItemNumber hItem to iItem
+            Send DoFindMatchingItem of (oToChildFields2_tv(Self)) iItem
+        End_Procedure
+
+    End_Object
+
+    Object oToChildFields2_tb is a cRDCTextbox
+        Set Label to "Selected Target Fields:"
+        Set Location to 183 202
+        Set Size to 10 70
+        Set peAnchors to anBottomLeft
+        Set FontItalics to True
+    End_Object
+
+    Object oCopyToToBelow_btn is a cCommandLinkButton
+        Set Size to 23 73
+        Set Location to 163 278
+        Set psImage to "CopyToBelow.ico"
+        Set piImageSize to 32
+        Set Label to "Copy"
+        Set psToolTip to "Copy the selected Target field to the list below"
+        Set peAnchors to anBottomLeft
+
+        Procedure OnClick
+            Send DoCopyItem of oToParentFields2_tv
+        End_Procedure
+
+    End_Object
+
+    Object oToChildFields2_tv is a cChildFieldsTreeView
+        Set peAnchors to anBottomLeft
+        Set Size to 138 183
+        Set Location to 196 200
+        Set pbFullRowSelect to True
+        Set TreeButtonsState to False
+        Set TreeRetainSelState to True
+        Set phoParent to (oToParentFields2_tv(Self))
+        Set psFieldName to "SelToFields"
+        Set Status_Help to "Double-click or press the Del key to de-select a Target field."
+        Set pbFrom to False
+        Set Server to (Main_DD(Self))
+
+        Procedure DoUpdateData Integer iFromFile Integer iToFile Boolean bFrom
+            Set piFile to iToFile
+            Send OnCreateTree
+        End_Procedure
+
+        Procedure UpdateDDO
+            Send DoUpdateDDBuffer (Main_DD(Self)) "SelToFields"   ""  // Class procedure.
+        End_Procedure
+
+        Procedure DoAddItem String sLabel Integer iData
+            Integer iItems
+            Forward Send DoAddItem sLabel iData
+            Get ItemCount to iItems
+            Set Value of oSelToCount_fm to iItems
+            Send UpdateDDO
+        End_Procedure
+
+        Procedure DoInsertItem String sLabel Integer iData
+            Integer iItems
+            Forward Send DoInsertItem sLabel iData
+            Get ItemCount to iItems
+            Set Value of oSelFromCount_fm to iItems
+            Send UpdateDDO
+        End_Procedure
+
+        Procedure DoCutItem
+            Integer iItems
+            Forward Send DoCutItem
+            Get ItemCount to iItems
+            Set Value of oSelToCount_fm to iItems
+            Send UpdateDDO
+        End_Procedure
+
+        Procedure DoCreateTree
+            Integer iItems
+            Forward Send DoCreateTree
+            Get ItemCount to iItems
+            Set Value of oSelToCount_fm to iItems
+        End_Procedure
+
+        Procedure DoFindMatchingItem Integer iItem
+            Handle hNew
+            Get ItemHandle iItem to hNew
+            Set CurrentTreeItem  to hNew
+        End_Procedure
+
+        Procedure OnItemChanged Handle hItem Handle hItemOld
+            Integer iItem
+            Get ItemNumber hItem to iItem
+            Send DoFindMatchingItem of (oFromChildFields2_tv(Self)) iItem
+        End_Procedure
+
+    End_Object
+
+    Object oSelFromCount_fm is a cRDCForm
+        Set Label to "Selected Source Fields"
+        Set Size to 13 21
+        Set Location to 338 172
+        Set Status_Help to "Number of selected fields/columns for the source table"
+        Set peAnchors to anBottomLeft
+        //        Set Label_Col_Offset to 0
+        //        Set Label_Justification_Mode to jMode_Right
+        Set Form_Datatype to 0
+        Set Enabled_State to False
+
+        Procedure Set Enabled_State Boolean bState
+            Forward Set Enabled_State to False
+        End_Procedure
+    End_Object
+
+    Object oSelToCount_fm is a cRDCForm
+        Set Label to "Selected Target Fields"
+        Set Size to 13 21
+        Set Location to 338 362
+        Set Status_Help to "Number of selected fields/columns for the Target table"
+        Set peAnchors to anBottomLeft
+        //        Set Label_Col_Offset to 0
+        //        Set Label_Justification_Mode to jMode_Right
+        Set Form_Datatype to 0
+        Set Enabled_State to False
+
+        Procedure Set Enabled_State Boolean bState
+            Forward Set Enabled_State to False
+        End_Procedure
+    End_Object
+
+    Object oOK_btn is a cRDCButton
+        Set Label    to "&OK"
+        Set Location to 361 361
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Set pbOK to True
+            Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+    Object oCancel_btn is a cRDCButton
+        Set Size to 14 50
+        Set Label    to "&Cancel"
+        Set Location to 361 417
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Set pbOK to False
+            Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+    Object oDeleteFrom_btn is a cRDCButton
+        Set Size to 14 73
+        Set Location to 201 389
+        Set Label to "Remove Source Field"
+        Set psToolTip to "Remove the selected Source field"
+        Set peAnchors to anBottomLeft
+
+        Procedure OnClick
+            Send DoCutItem of oFromChildFields2_tv
+        End_Procedure
+
+    End_Object
+
+    Object oDeleteTo_btn is a cRDCButton
+        Set Size to 14 73
+        Set Location to 219 389
+        Set Label to "Remove Target Field"
+        Set psToolTip to "Remove the selected Target field"
+        Set peAnchors to anBottomLeft
+
+        Procedure OnClick
+            Send DoCutItem of oToChildFields2_tv
+        End_Procedure
+
+    End_Object
+
+    Object oAppend_bn is a cRDCButton
+        Set Label to "&Append Field"
+        Set Size to 13 73
+        Set Location to 237 389
+        Set Status_Help to "Append a field to the currently selected Source field"
+        Set psImage to "AppendColumn.ico"
+        Set peAnchors to anBottomLeft
+
+        Procedure OnClick
+            Handle ho hItem
+            Integer iFile
+            String sLabel sField
+
+            Move (oFromChildFields2_tv(Self)) to ho
+            Get piFile of ho to iFile
+            Get CurrentTreeItem of ho to hItem
+            If (not(hItem)) Begin
+                Get RootItem of ho to hItem
+            End
+            Get ItemLabel of ho hItem to sLabel
+            If (not(iFile) or (Length(sLabel) = 0)) Begin
+                Procedure_Return
+            End
+            Send Activate of ho
+            Get IsStartoAppend_dg (Main_DD(Self)) iFile sLabel to sField
+            If (sField <> "") Begin
+                Set ItemLabel  of ho hItem to (String(sLabel) * "+" * String(sField))
+                Send UpdateDDO of ho
+            End
+        End_Procedure
+
+    End_Object
+
+    Procedure Popup
+        Handle hoDDO
+        
+        Get Main_DD to hoDDO
+        Set phoChild of oFromParentFields2_tv to (oFromChildFields2_tv(Self))
+        Set phoChild of oToParentFields2_tv   to (oToChildFields2_tv(Self))
+
+        Set Server of oFromChildFields2_tv    to hoDDO
+        Set Server of oToChildFields2_tv      to hoDDO
+
+        Send DoCreateTree of oFromChildFields2_tv
+        Send DoCreateTree of oToChildFields2_tv
+
+        Forward Send Popup
+    End_Procedure   
+    
+    Procedure Page Integer iPageObject
+        Forward Send Page iPageObject
+        Set Icon to "SelectAll.ico"
+    End_Procedure
+
+    On_Key Key_Alt+Key_A Send KeyAction of oAppend_bn
+    On_Key Key_Alt+Key_O Send KeyAction of oOk_btn
+    On_Key Key_Alt+Key_C Send KeyAction of oCancel_btn
+End_Object
+
+Function Edit_oSelectSourceAndTargetFields Handle hoDDO Returns Boolean
+    Handle ho
+    Boolean bOK
+
+    Move (oSelectSourceAndTargetFields(Self)) to ho
+    Set Main_DD of ho to hoDDO
+    Set Server  of ho to hoDDO
+
+    Send Popup of ho
+    Get pbOK of ho to bOK
+
+    Function_Return bOK
+End_Function

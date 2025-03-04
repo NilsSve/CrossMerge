@@ -1,0 +1,39 @@
+Use cRDSDataDictionary.pkg
+
+Open SncSchemRow
+Open SncSchem
+
+Class SncSchemRow_DataDictionary is a cRDSDataDictionary
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Set Main_File to SncSchemRow.File_Number
+
+        Set Add_Server_File to SncSchem.File_Number
+
+        Set Foreign_Field_Option DD_KEYFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_KEYFIELD DD_FINDREQ to True
+        Set Foreign_Field_Option DD_INDEXFIELD DD_NOPUT to True
+        Set Foreign_Field_Option DD_DEFAULT DD_DISPLAYONLY to True
+
+        Set Field_Auto_Increment Field SncSchemRow.ID to File_Field SncSchem.NextSncSchemRowID
+
+        Set Field_Label_Long Field SncSchemRow.SncSchemID to "Parent ID"
+        Set Field_Label_Short Field SncSchemRow.SncSchemID to "Parent ID"
+
+        Set Field_Checkbox_Values Field SncSchemRow.DeleteSource to "1" "0"
+
+        Set Field_Checkbox_Values Field SncSchemRow.DeleteTarget to "1" "0"
+
+        Set Field_Checkbox_Values Field SncSchemRow.SncTableHide to "1" "0"
+
+    End_Procedure
+
+    Procedure Field_Defaults
+        Forward Send Field_Defaults
+        Set Field_Changed_Value Field SncSchemRow.DeleteSource to 0
+        Set Field_Changed_Value Field SncSchemRow.DeleteTarget to 0
+        Set Field_Changed_Value Field SncSchemRow.SncTableHide to 0
+    End_Procedure
+
+End_Class

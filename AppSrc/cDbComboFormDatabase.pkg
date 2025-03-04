@@ -1,0 +1,327 @@
+//****************************************************************************
+// $Module type: Class
+// $Module name: cDbComboFormDatabase.pkg
+// $Author     : Nils Svedmyr
+// Created     : 2002-07-20 @ 09:02
+//
+// Description :
+//
+// $Rev History
+//    2002-07-20  Module header created
+//****************************************************************************
+Use cRDSDataDictionary.pkg  
+Use cRDCDbComboForm.pkg
+Use DfAbout.pkg             // Network user name function
+Use SyncFuncs.pkg
+//Use cRDCDbComboForm.pkg
+Declare_Datafile SncTable
+
+{ OverrideProperty=Entry_State InitialValue=False }
+{ OverrideProperty=Combo_Sort_State InitialValue=True }
+{ OverrideProperty=Label_Row_Offset InitialValue=0 }
+{ OverrideProperty=Label_Col_Offset InitialValue=2 }
+{ OverrideProperty=Label_Justification_Mode InitialValue=jMode_Right }
+{ OverrideProperty=Label_Justification_Mode EnumList="jMode_Right, jMode_Left, jMode_Center" }
+{ OverrideProperty=Size InitialValue=13,150 }
+Class cDbComboFormDatabase is a cRDCDbComboForm
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        { InitialValue=True }
+        Property String  psNone CS_None
+        Property Boolean pbFrom True
+        Property Boolean pbFillError False
+        Property Integer piDbType EN_DbTypeDataFlex
+        Property Handle  phoDD (Main_DD(Self))
+        Property String[] pasDataBases
+
+        Set Entry_State Item 0 to False
+        Set Enabled_State to False
+    End_Procedure
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+        Set Combo_Sort_State to True
+    End_Procedure
+
+    Procedure DoSetDefaults
+        Handle hoDD
+        Integer iFile iField
+
+        Get Data_File  to iFile
+        Get Data_Field to iField
+        Get phoDD      to hoDD
+        If (pbGetHasCurrRowId(hoDD) = False) Begin
+            Send Combo_Delete_Data
+            Send Combo_Add_Item (psNone(Self))
+            Set WinCombo_Current_Item to 0
+        End
+    End_Procedure
+
+    Procedure DoCheckClear
+        Send Combo_Delete_Data
+        Send Combo_Add_Item (psNone(Self))
+        Set WinCombo_Current_Item to 0
+    End_Procedure
+
+//    Procedure DoEnableDisable Integer iDbType
+//        Set piDbType to iDbType
+//    End_Procedure
+
+    // Must be send from DDO when finding a record:
+    // This will only display a previously saved database name.
+    // Note: This is an optimization,
+    // when the list is dropped down the list will be filled.
+    Procedure DoFindData
+        Handle hoDD
+        Boolean bChanged
+        Integer iFile iField iItem
+        String sValue
+
+        Get phoDD    to hoDD
+
+        Get Data_File                to iFile
+        Get Data_Field               to iField
+        Get File_Field_Changed_State of hoDD iFile iField to bChanged
+        Get File_Field_Current_Value of hoDD iFile iField to sValue
+        Send Combo_Delete_Data
+        // Reset values and state. This is needed because combo_delete_data clears the DDO buffer:
+        Set File_Field_Changed_Value of hoDD iFile iField to sValue
+        Set File_Field_Changed_State of hoDD iFile iField to bChanged
+        Move (Trim(sValue))                               to sValue
+        If (sValue = "") Begin
+            Move CS_None to sValue
+        End
+        Send Combo_Add_Item sValue
+        Get WinCombo_Item_Matching sValue to iItem
+        If (iItem > -1) Begin
+            Set WinCombo_Current_Item to iItem
+        End
+    End_Procedure
+
+//    Function EnumerateDatabases Integer iDbType Returns Integer
+//        Handle hoArray hoDD
+//        String sDriverID
+//        String[] asDatabases
+//        tSQLConnection SQLConnection
+//        Boolean bFrom
+//        
+//        // Start by resetting the current array of databases to ""
+//        Set pasDataBases to asDatabases
+//        Get phoDD to hoDD
+//        Get pbFrom to bFrom
+//        If (bFrom = True) Begin
+//            Get Field_Current_Value of hoDD Field SncTable.FromDriver to sDriverID
+//        End
+//        Else Begin
+//            Get Field_Current_Value of hoDD Field SncTable.ToDriver   to sDriverID
+//        End                                                                       
+//        If (sDriverID = "") Begin
+//            Move DATAFLEX_ID to sDriverID
+//        End
+//        
+//        Get FillSQLConnectionStruct bFrom hoDD to SQLConnection
+//        Set Private.pSQLConnection of ghoSQLConnectionHandler to SQLConnection
+//        Get SqlUtilEnumerateDatabases of ghoDbUpdateFunctionLibrary sDriverID to asDatabases
+//        Set pasDataBases to asDatabases
+//       
+//        Function_Return (SizeOfArray(asDatabases))
+//    End_Function
+//
+//    Procedure FillSQLDatabases String sDriver
+//        Handle ho hoDD
+//        Integer iFile iField iCount iNumItems
+//        Boolean bNtAuth
+//        String sServer sDataBase sUser sPassword sConnect sText
+//
+//        Get Private.phoArray to ho
+//        Get phoDD            to hoDD
+//        Send Delete_Data     of ho
+//        Get Data_File        to iFile
+//        Get Data_Field       to iField
+//        If (pbFrom(Self)) Begin
+//            Get Field_Current_Value of hoDD Field SncTable.FromServer   to sServer
+//            Get Field_Current_Value of hoDD Field SncTable.FromUser     to sUser
+//            Get Field_Current_Value of hoDD Field SncTable.FromPv       to sPassword
+//            Get Field_Current_Value of hoDD Field SncTable.FromNTAuth   to bNtAuth
+//        End
+//        Else Begin
+//            Get Field_Current_Value of hoDD Field SncTable.ToServer     to sServer
+//            Get Field_Current_Value of hoDD Field SncTable.ToUser       to sUser
+//            Get Field_Current_Value of hoDD Field SncTable.ToPv         to sPassword
+//            Get Field_Current_Value of hoDD Field SncTable.ToNTAuth     to bNtAuth
+//        End
+//        If (sServer contains CS_None) Begin
+//            Procedure_Return
+//        End
+//
+//        Move (Trim(sServer))             to sServer
+//        Move (Trim(sUser))               to sUser
+//        Move (Trim(sPassword))           to sPassword
+//        Set psDriver of ghoBrowseConnect to sDriver
+//        If (Active_State(Self)) Begin
+//            Send StartWorkingMessage ("Connecting to the" * String(sServer) * "Database Server...")
+//        End
+//
+//        // ToDo: Replace with DUF
+//        If (bNtAuth = True) Begin
+//            Move ("DRIVER={SQL Server};SERVER=" + String(sServer) + ";Trusted_Connection=Yes") to sConnect
+//            Send Ignore_Error of Error_Info_Object 12293 // "Login unsuccessful"
+//            Move False to Err
+//            Login sConnect "" "" sDriver
+//
+//            If (not(Err)) Begin
+//                Move False to Err
+//                Send Ignore_Error of Error_Info_Object 12289
+//                Get BrowseConnect of ghoBrowseConnect sConnect to sDataBase
+//                Send Trap_Error   of Error_Info_Object 12293
+//            End
+//            Send Trap_Error   of Error_Info_Object 12289
+//            If (Err) Begin
+//                Send StopWorkingMessage
+//                Set pbFillError to True
+//                Move "The enumeration of databases failed. It was not possible to use Windows Authentication to enumerate the databases." to sText
+//                Move (sText * "\nTry to uncheck the 'Use Windows Authentication' and enter a user account and password, then try again.") to sText
+//                Send Info_Box sText
+//                Procedure_Return
+//            End
+//        End
+//
+//        Else Begin
+//            Move (";UID=" + sUser + ";PWD=" + sPassword + ";")                to sConnect
+//            Move (Trim(sConnect))                                             to sConnect
+//            Move ("DRIVER={SQL Server};SERVER=" + String(sServer) + sConnect) to sConnect
+//            Move False to Err
+//            Send Ignore_Error of Error_Info_Object 12289
+//            Get BrowseConnect of ghoBrowseConnect sConnect  to sDataBase
+//            Send Trap_Error   of Error_Info_Object 12289
+//        End
+//
+//        If (Err = False) Begin
+//            Set pbFillError    to False
+//            Get ExtractList    of ghoBrowseConnect sDataBase   to iNumItems
+//            For iCount From 0  to (iNumItems - 1)
+//                Get String_Value of ghoBrowseConnect Item iCount to sDataBase
+//                Move (Trim(sDatabase))                           to sDataBase
+//                Set Array_Value  of ho Item (Item_Count(ho))     to sDataBase
+//            Loop
+//            // ...and sort items...
+//            Send Sort_Items of ho
+//        End
+//
+//        Else Begin
+//            Send StopWorkingMessage
+//            Set pbFillError to True
+//            Send Info_Box "Could not connect to the server. Check your username and password or your rights with the system operator."
+//            Procedure_Return
+//        End
+//
+//        Send StopWorkingMessage
+//    End_Procedure
+//
+//    Function DatabaseName Integer iCount Returns String
+//        String sRetval
+//        String[] asDatabases
+//        
+//        Get pasDataBases to asDatabases
+//        Move asDatabases[iCount] to sRetval
+//        Function_Return sRetval
+//    End_Function
+//
+//    // Public access method to fill combo:
+//    // This message is send by OnCloseUp in cDbComboformServer class:
+//    // NOTE: Has been changed to using the OnDropDown procedure in this class.
+//    Procedure DoRefreshCombo
+//        Send DoComboFillList
+//    End_Procedure
+//
+//    Procedure DoComboFillList
+//        Integer iDbType iOrgSize iSize iTmpSize iDatabases iCount iFile iField iItem
+//        Handle hoDD
+//        String sDatabase sValue
+//        Boolean bRecord bChanged
+//
+//        If (Active_State(Self) = False) Begin
+//            Procedure_Return
+//        End
+//        Get piDbType                  to iDbType
+//        Get phoDD                     to hoDD
+//        If (iDbType = EN_DbTypeDataFlex or iDbType = EN_DbTypePervasive) Begin
+//            Procedure_Return
+//        End
+//
+//        Get pbGetHasCurrRowId of hoDD to bRecord
+//        Get Data_File                 to iFile
+//        Get Data_Field                to iField
+//        Get File_Field_Changed_State  of hoDD iFile iField to bChanged
+//        Get File_Field_Current_Value  of hoDD iFile iField to sValue
+//        Move (Trim(sValue))                                to sValue
+//        Send Combo_Delete_Data
+//
+//        // This is needed because combo_delete_data clears the DDO buffer:
+//        If (Trim(Length(sValue) > 0)) Begin
+//            Set File_Field_Changed_Value of hoDD iFile iField to sValue
+//            Set File_Field_Changed_State of hoDD iFile iField to bChanged
+//        End
+//
+//        If (bRecord = True) Begin
+//            Move (psNone(Self)) to sValue
+//        End
+//        Get WinCombo_Item_Matching sValue to iItem
+//        If (iItem > -1) Begin
+//            Set WinCombo_Current_Item to iItem
+//        End
+//        Else Begin
+//            Set WinCombo_Current_Item to 0
+//        End
+//    End_Procedure
+//
+//    Procedure OnDropDown
+//        Handle hoDD
+//        Get phoDD to hoDD
+//
+//        If (pbGetHasCurrRowId(hoDD) and Combo_Item_Count(Self) < 3) Begin
+//            Send DoComboFillList
+//        End
+//        Else If (Combo_Item_Count(Self) < 2) Begin
+//            Send DoComboFillList
+//        End
+//        // Do not drop-down list if there was a problem with
+//        // connecting to the database server:
+////        If (pbFillError(Self) = False) Begin
+//            //      Forward Send OnDropDown
+////        End
+//    End_Procedure
+
+//    Procedure OnCloseUp
+//        //    Handle hoDD
+//        //    Integer iFile iField
+//        //    String sOldValue sNewValue
+//        //    Get phoDD      to hoDD
+//        //    Get Data_File  to iFile
+//        //    Get Data_Field to iField
+//        //    Get File_Field_Current_Value of hoDD iFile iField to sOldValue
+//        Forward Send OnCloseUp
+//
+//        // *** This no longer works - so skip the optimization and always do an update...
+//        //    Get File_Field_Current_Value of hoDD iFile iField to sNewValue
+//        //    If (Trim(sOldValue) <> Trim(sNewValue))
+//        Send DoUpdateDataBaseCombo
+//    End_Procedure
+
+    // This will update a data table combo with available SQL data tables,
+    // if available.
+//    Procedure DoUpdateDataBaseCombo
+//        Handle ho hoDD
+//        Get phoDD to hoDD
+//        If (pbFrom(Self)) Begin
+//            Get DDObjectId hoDD SncTable.File_Number "FromDataTable" to ho // Global function in sysfuncs.pkg
+//        End
+//        Else Begin
+//            Get DDObjectId hoDD SncTable.File_Number "ToDataTable"   to ho
+//        End
+//        If (ho <> 0) Begin
+//            Send DoSetDefaults of ho
+//        End
+//    End_Procedure
+
+End_Class

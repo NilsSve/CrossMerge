@@ -1,0 +1,12 @@
+//AB/ OBJECTDEF
+Object
+    //AB-StoreStart
+    // OnSetPosition is always called when the slider changes.
+    //Procedure OnSetPosition
+    //    Integer iCurPos
+    //    get Current_Position to iCurPos
+    //
+    //End_Procedure
+
+    //AB-StoreEnd
+End_Object

@@ -1,0 +1,268 @@
+//****************************************************************************
+// $Module type: CLASS
+// $Module name: cLoginButton
+// $Author     : Nils G. Svedmyr
+// Created     : 2002-08-15 @ 12:48
+//
+// Description :
+//
+// $Rev History
+//    2002-08-15  Module header created
+//****************************************************************************
+Use SyncFuncs.pkg
+
+//{ OverrideProperty=Bitmap InitialValue="Keys16.bmp" }
+//{ OverrideProperty=piTransparentColor InitialValue=clWhite }
+{ OverrideProperty=Label InitialValue="&Login" }
+{ OverrideProperty=Status_Help InitialValue="Click to login to the selected database server." }
+{ OverrideProperty=Bitmap_Style InitialValue=Bitmap_Actual }
+{ OverrideProperty=Bitmap_Style DesignTime=False }
+Class cLoginButton is a Button
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Property Integer piDbType EN_DbTypeDataFlex
+        Property Boolean pbFrom   True
+        Property Handle  phoDD    (Main_DD(Self))
+        Property Handle  phoViewButton 0
+        Set Status_Help to "Click to login to the selected database server/data source."
+    End_Procedure
+
+    Procedure End_Construct_Object
+        Forward Send End_Construct_Object
+    End_Procedure
+
+    Procedure DoUpdateData Integer iFromFile Integer iToFile Boolean bFrom
+        Handle hoDD
+        Integer iType
+        String sServer
+        Boolean bFromLocal
+
+        Get pbFrom   to bFromLocal
+        Get piDbType to iType
+        If (bFrom <> bFromLocal) Begin
+            Procedure_Return
+        End
+
+        Get phoDD to hoDD
+        If bFromLocal Begin
+            Get Field_Current_Value of hoDD Field SncTable.FromServer to sServer
+        End
+        Else Begin
+            Get Field_Current_Value of hoDD Field SncTable.ToServer   to sServer
+        End
+        Move (Trim(sServer)) to sServer
+        If (sServer contains CS_None) Begin
+            Move "" to sServer
+        End
+        Set Enabled_State to (iType > EN_DbTypeDataFlex and Length(sServer) > 0)
+        //  If Not (pbFrom(Self)) showln "iType = " iType " " Self " sServer = " sServer " DoUpdateData"
+    End_Procedure
+
+    Procedure DoEnableLoginButton
+        Set Enabled_State to True
+    End_Procedure
+
+    Procedure DoEnableDisable Integer iType
+        Handle hoDD
+        String sServer
+
+        Set piDbType to iType
+        Get phoDD    to hoDD
+        If (pbFrom(Self)) Begin
+            Get Field_Current_Value of hoDD Field SncTable.FromServer to sServer
+        End
+        Else Begin
+            Get Field_Current_Value of hoDD Field SncTable.ToServer   to sServer
+        End
+        Move (Trim(sServer))                   to sServer
+        If (sServer contains CS_None) Begin
+            Move "" to sServer
+        End
+        //    Set Enabled_State to (iType > EN_DbTypeDataFlex and Length(sServer) > 0)
+        Set Enabled_State to True
+    End_Procedure
+
+    Procedure OnClick
+        Send DoServerConnect
+    End_Procedure
+
+    Procedure DoServerConnect
+        String sServer sUser sPassword sDriverID sOwner sDataTable sPath
+        Integer iFile iType iOk iDSNType
+        Boolean bIsOpen bNtAuth
+        Handle hoDD hoViewButton
+
+        Get phoDD         to hoDD
+        Get phoViewButton to hoViewButton
+
+        If (pbFrom(Self)) Begin
+            Move giFromFile to iFile
+            Get Field_Current_Value of hoDD Field SncTable.FromDbType    to iType
+            Get Field_Current_Value of hoDD Field SncTable.FromServer    to sServer
+            Get Field_Current_Value of hoDD Field SncTable.FromOwner     to sOwner
+            Get Field_Current_Value of hoDD Field SncTable.FromUser      to sUser
+            Get Field_Current_Value of hoDD Field SncTable.FromDriver    to sDriverID
+            Get Field_Current_Value of hoDD Field SncTable.FromPV        to sPassword
+            Get Field_Current_Value of hoDD Field SncTable.FromDataTable to sDataTable
+            Get Field_Current_Value of hoDD Field SncTable.FromFilePath  to sPath
+            Get Field_Current_Value of hoDD Field SncTable.FromDSNType   to iDSNType
+            Get Field_Current_Value of hoDD Field SNCTABLE.FromNTAuth    to bNtAuth
+        End
+        Else Begin
+            Move giToFile to iFile
+            Get Field_Current_Value of hoDD Field SncTable.ToDbType      to iType
+            Get Field_Current_Value of hoDD Field SncTable.ToServer      to sServer
+            Get Field_Current_Value of hoDD Field SncTable.ToOwner       to sOwner
+            Get Field_Current_Value of hoDD Field SncTable.ToUser        to sUser
+            Get Field_Current_Value of hoDD Field SncTable.ToDriver      to sDriverID
+            Get Field_Current_Value of hoDD Field SncTable.ToPV          to sPassword
+            Get Field_Current_Value of hoDD Field SncTable.ToDataTable   to sDataTable
+            Get Field_Current_Value of hoDD Field SncTable.ToFilePath    to sPath
+            Get Field_Current_Value of hoDD Field SncTable.ToDSNType     to iDSNType
+            Get Field_Current_Value of hoDD Field SNCTABLE.ToNTAuth      to bNtAuth
+        End
+
+        // This should not be possible to happen, but just in case:
+        If (iType < EN_DbTypeDataFlex) Begin
+            If hoViewButton Begin
+                Set Enabled_State of hoViewButton to False
+            End
+            Send Info_Box "Program error. The login button should have been disabled. There's no need to login."
+            Procedure_Return
+        End
+
+        Move (Trim(sServer))    to sServer
+        Move (Trim(sOwner))     to sOwner
+        Move (Trim(sUser))      to sUser
+        Move (Trim(sDriverID))  to sDriverID
+        Move (Trim(sPassword))  to sPassword
+        Move (Trim(sDataTable)) to sDataTable
+        Move (Trim(sPath))      to sPath
+        If (sServer    contains CS_None) Begin
+            Move "" to sServer
+        End
+        If (sDataTable contains CS_None) Begin
+            Move "" to sDataTable
+        End
+
+        If (Length(sServer) = 0) Begin
+            Send Info_Box "No database server/data source has been selected. Please select one and try again."
+            Procedure_Return
+        End
+
+        If (sDriverID = "") Begin
+            Send Stop_Box "Database Driver name is invalid"
+            Procedure_Return
+        End
+
+        If (Active_State(Self)) Begin
+            Send StartWorkingMessage ("Connecting to" * String(sServer) + "...")
+        End
+        Move False to Err // Will be set by the Login command.
+        Send Ignore_Error of Error_Info_Object   75  // 'Can't open data file'
+        Send Ignore_Error of Error_Info_Object 12293 // 'Data source name not found'
+        Send Ignore_Error of Error_Info_Object 12295 // 'Table not in connection'
+
+        Case Begin
+            Case (iType = EN_DbTypeDataFlex)
+                Send StopWorkingMessage
+                Procedure_Return
+                Case Break
+            Case (iType = EN_DbTypeDB2)
+                // Logout sDriver sServer
+                If iFile Begin
+                    Get_Attribute DF_FILE_OPENED of iFile to bIsOpen
+                End
+                If (bIsOpen and sOwner <> "") Begin
+                    Set_Attribute DF_FILE_OWNER of iFile to sOwner
+                End
+                Login sServer sUser sPassword sDriverID
+                Case Break
+            Case (iType = EN_DbTypeMSSQL)
+                Send Ignore_Error of Error_Info_Object 12289 // 'Database level error'. to avoid MS SQL Error box.
+                If iFile Begin
+                    Get_Attribute DF_FILE_OPENED of iFile to bIsOpen
+                End
+                If (bIsOpen and sOwner <> "") Begin
+                    Set_Attribute DF_FILE_OWNER of iFile to sOwner
+                End
+                If (bNtAuth = True) Begin
+                    Move ("SERVER=" + sServer + ";Trusted_Connection=Yes") to sServer
+                End
+                Login sServer sUser sPassword sDriverID
+                Send Trap_Error of Error_Info_Object 12289
+                Case Break
+            Case (sDriverID = ODBC_DRV_ID)
+                If (iFile <> 0) Begin
+                    Get_Attribute DF_FILE_OPENED of iFile to bIsOpen
+                End
+                If (bIsOpen and sOwner <> "") Begin
+                    // ToDo: Not sure about this: Set df_file_owner
+//                    Set_Attribute DF_FILE_OWNER of iFile to sOwner
+                End
+                If (iDSNType = 2) Begin
+                    Move (sPath - "\" - sServer) to sServer
+                End
+                Login sServer sUser sPassword sDriverID
+                Case Break
+            Case (iType = EN_DbTypeOracle)
+                If iFile Begin
+                    Get_Attribute DF_FILE_OPENED of iFile to bIsOpen
+                End
+                If (bIsOpen and sOwner <> "") Begin
+                    Set_Attribute DF_FILE_OWNER of iFile to sOwner
+                End
+                Login sServer sUser sPassword sDriverID
+                Case Break
+            Case (iType = EN_DbTypePervasive)
+                If (Length(sPassword) > 0) Begin
+                    DFBTR_REMOVE_ALL_OWNERS
+                    DFBTR_ADD_OWNER sPassword
+                End
+                Case Break
+            Case Else
+                Send StopWorkingMessage
+                Procedure_Return
+        Case End
+
+        Send StopWorkingMessage
+        If not (Err) Begin
+            Move 1 to iOk
+            If (Length(sDataTable) > 0) Begin
+                Get_Attribute DF_FILE_OPENED of iFile to bIsOpen
+                If not bIsOpen Begin
+                    Get RDSOpenAsFile hoDD (pbFrom(Self)) True to bIsOpen
+                    If not bIsOpen Begin
+                        Move -1 to iOk
+                    End
+                    Else Begin
+                        Move  1 to iOk
+                    End
+                End
+            End
+        End
+
+        If (iOk < 1) Begin
+            If hoViewButton Begin
+                Set Enabled_State of hoViewButton to False
+            End
+            If (iOk = 0) Begin
+                Send Info_Box "Login unsuccessful. Please correct login details and try again."
+            End
+            If (iOk = -1) Begin
+                Send Info_Box "Login successful but for an unkown reason the data table could not be re-opened."
+            End
+        End
+        Else If (iOk = 1) Begin
+            If hoViewButton Begin
+                Set Enabled_State of hoViewButton to True
+            End
+            Send Info_Box "Login successful."
+        End
+
+        Send Trap_Error of Error_Info_Object    75
+        Send Trap_Error of Error_Info_Object 12293
+        Send Trap_Error of Error_Info_Object 12295
+    End_Procedure
+
+End_Class
