@@ -1,6 +1,0 @@
-ID
-SncSchemID
-SncTableID
-DeleteSource
-DeleteTarget
-SncTableHide

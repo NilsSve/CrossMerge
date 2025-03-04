@@ -1,8 +1,0 @@
-//AB/ OBJECTDEF
-Object
-    //AB-StoreStart
-    Procedure OnCreateTree
-        // Add tree items here, with the AddTreeItem function.
-    End_Procedure  // OnCreateTree
-    //AB-StoreEnd
-End_Object

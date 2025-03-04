@@ -1,9 +1,0 @@
-#REPLACE FILE82 SncSchem
-#REPLACE SncSchem.Recnum |FN82,0
-#REPLACE SncSchem.Name |FS82,1
-#REPLACE SncSchem.Tables |FS82,2
-#REPLACE SncSchem.Workspace |FS82,3
-#REPLACE SncSchem.DFVer |FN82,4
-#REPLACE SncSchem.Deletes |FS82,5
-#REPLACE SncSchem.ID |FN82,6
-#REPLACE SncSchem.NextSncSchemRowID |FN82,7

@@ -1,8 +1,0 @@
-//AB/ OBJECTDEF
-Object oEnumerateServersButton is a cEnumerateServersButton
-    //AB-StoreStart
-    Procedure OnClick
-      Send DoFillList Of (phoDbComboformServer(Self))
-    End_Procedure // OnClick
-    //AB-StoreEnd
-End_Object

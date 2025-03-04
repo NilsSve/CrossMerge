@@ -1,8 +1,0 @@
-#REPLACE FILE83 SncLog
-#REPLACE SncLog.Recnum |FN83,0
-#REPLACE SncLog.ID |FN83,1
-#REPLACE SncLog.DateTimeCreated |FS83,2
-#REPLACE SncLog.StatusText |FS83,3
-#REPLACE SncLog.NetworkUserName |FS83,4
-#REPLACE SncLog.TableName |FS83,5
-#REPLACE SncLog.SncTableSortField |FS83,6

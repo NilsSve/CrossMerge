@@ -1,8 +1,0 @@
-#REPLACE FILE86 SncSchemRow
-#REPLACE SncSchemRow.Recnum |FN86,0
-#REPLACE SncSchemRow.ID |FN86,1
-#REPLACE SncSchemRow.SncSchemID |FN86,2
-#REPLACE SncSchemRow.SncTableID |FN86,3
-#REPLACE SncSchemRow.DeleteSource |FN86,4
-#REPLACE SncSchemRow.DeleteTarget |FN86,5
-#REPLACE SncSchemRow.SncTableHide |FN86,6

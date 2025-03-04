@@ -1,8 +1,0 @@
-//AB/ OBJECTDEF
-Object oFromPathButton is a cPathButton
-    //AB-StoreStart
-    Procedure OnClick
-      Send DoOpenFileDialog
-    End_Procedure // OnClick
-    //AB-StoreEnd
-End_Object

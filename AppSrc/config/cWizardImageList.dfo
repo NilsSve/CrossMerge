@@ -1,8 +1,0 @@
-//AB/ OBJECTDEF
-Object
-   //AB-StoreStart
-   Procedure OnCreate
-      //Send DoLoadTransparentImage "imagename" clFuchsia
-   End_Procedure // OnCreate
-   //AB-StoreEnd
-End_Object

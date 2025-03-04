@@ -1,8 +1,0 @@
-//AB/ OBJECTDEF
-Object oBitmapButton is a cBitmapButton
-    //AB-StoreStart
-    Procedure OnClick
-
-    End_Procedure // OnClick
-    //AB-StoreEnd
-End_Object
