@@ -1,6 +1,0 @@
-ID
-DateTimeCreated
-StatusText
-NetworkUserName
-TableName
-SncTableSortField
