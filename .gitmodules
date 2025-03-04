@@ -6,3 +6,4 @@
 [submodule "Libraries/DUF"]
 	path = Libraries/DUF
 	url = https://github.com/NilsSve/DbUpdateFramework.git
+	branch = main
