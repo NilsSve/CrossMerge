@@ -1,0 +1,47 @@
+======================================================
+DFrepair 1.0
+ The following options are in use for this session:
+  LogFile      : C:\Projects\DF18\CMOS\Data\VDFRepair.log.
+  Verbose      : ON.
+  Repair       : ON.
+  Cleanup      : OFF.
+  Bare         : OFF.
+  Reclaim      : OFF.
+  Condense     : OFF.
+ Index options:
+  BadDataFlag  : FILE.
+  DupDataFlag  : FILE.
+  MaxSortBuffer: NOT SET.
+======================================================
+
+**********************************************************************
+C:\Projects\DF18\CMOS\Data\sncschemrow.dat
+Analyzing...
+                                 Reported -   Analyzed
+======================================================
+Total record (used + deleted):         33 -         31
+Number of used records       :        -22 -          4
+Number of deleted records    :         55 -         27
+Physical size                :       3896 -       3860
+
+Attributes of interest
+======================================================
+DF_FILE_RECORD_LENGTH  : 24
+DF_FILE_REUSE_DELETED  : 1
+DF_FILE_REVISION       : 3.0
+DF_FILE_INTEGRITY_CHECK: 1
+DF_FILE_COMPRESSION    : 0
+======================================================
+Recreate table: C:\Projects\DF18\CMOS\Data\sncschemrow.dat
+Creating temporary table C:\Projects\DF18\CMOS\Data\sncschemrow.NEW.
+Rename original table to C:\Projects\DF18\CMOS\Data\sncschemrow.ORG.
+Rename temporary table to C:\Projects\DF18\CMOS\Data\sncschemrow.dat.
+Reindex table: C:\Projects\DF18\CMOS\Data\sncschemrow.dat
+Time spent on table C:\Projects\DF18\CMOS\Data\sncschemrow.dat: 00:00:00.
+======================================================
+Summary information
+  Logged to C:\Projects\DF18\CMOS\Data\VDFRepair.log
+  Total files tested        : 1
+  Total files needing repair: 1
+  Total files repaired      : 1
+======================================================
