@@ -1,4 +1,4 @@
-Use cApplication.pkg
+﻿Use cApplication.pkg
 Use cCJCommandBars.pkg
 
 // Note: The ghoChecklistPanel object handle can only be used if there's only *one*
@@ -127,10 +127,11 @@ Class cCJCheckListPanel is a Container3d
             Get CreateNamed     of ghoCommandBars (RefClass(cCJDialogBar)) sObjName to hoChecklistPane
             If (hoChecklistPane) Begin
                 Set pvComObject     of hoChecklistPane to vChecklistPane
-                Set ComTitle        of hoChecklistPane to sLabel
                 Set ComChildHandle  of hoChecklistPane to hWnd
                 Set ComVisible      of hoChecklistPane to False
-                Set ComShowGripper  of hoChecklistPane to True
+                Set ComShowGripper  of hoChecklistPane to True   
+                Set ComShowCaption  of hoChecklistPane to True  
+                Set ComCloseable    of hoChecklistPane to True
                 Set ComResizable    of hoChecklistPane to bResizable
                 Send ComSetSize     of hoChecklistPane iWidth iHeight
             End

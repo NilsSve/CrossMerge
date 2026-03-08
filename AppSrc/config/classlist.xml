@@ -1,17 +1,17 @@
 <?xml version="1.0"?>
 <classList xmlns="http://www.dataaccess.com/VisualDataFlex/2006/classlist/">
-	<VDFLibraryTimeStamp>2024-03-29T09:06:04</VDFLibraryTimeStamp>
-	<DFLibraryVersion>1</DFLibraryVersion>
+	<VDFLibraryTimeStamp>2025-06-06T16:09:48</VDFLibraryTimeStamp>
+	<DFLibraryVersion>2</DFLibraryVersion>
 	<libraries>
 		<library>
-			<libraryPath>Libraries\DUF\DUF24.0.sws</libraryPath>
-			<libraryTimeStamp>2025-02-21T20:17:27</libraryTimeStamp>
-			<libraryID>Lib5</libraryID>
+			<libraryPath>Libraries\DigitalCert\DigitalCert25.0.sws</libraryPath>
+			<libraryTimeStamp>2025-01-17T16:00:53</libraryTimeStamp>
+			<libraryID>Lib4</libraryID>
 		</library>
 		<library>
-			<libraryPath>Libraries\DigitalCert\DigitalCert24.0.sws</libraryPath>
-			<libraryTimeStamp>2025-01-17T15:00:53</libraryTimeStamp>
-			<libraryID>Lib4</libraryID>
+			<libraryPath>Libraries\DUF\DUF25.0.sws</libraryPath>
+			<libraryTimeStamp>2025-05-02T10:48:19</libraryTimeStamp>
+			<libraryID>Lib5</libraryID>
 		</library>
 	</libraries>
 	<classes>
@@ -1132,6 +1132,20 @@
 			<image>ControlOpenDialog.ico</image>
 			<package>cSelectFolderDialog.pkg</package>
 			<groupName>Dialogs</groupName>
+			<libraryID>0</libraryID>
+		</class>
+		<class>
+			<className>cWebWidgetPalette</className>
+			<image>cWebWidgetPalette.ico</image>
+			<package>cWebWidgetPalette.pkg</package>
+			<groupName>Web Controls</groupName>
+			<libraryID>0</libraryID>
+		</class>
+		<class>
+			<className>cWebWidgetContainer</className>
+			<image>cWebWidgetContainer.ico</image>
+			<package>cWebWidgetContainer.pkg</package>
+			<groupName>Web Containers</groupName>
 			<libraryID>0</libraryID>
 		</class>
 		<class>
