@@ -18,6 +18,15 @@ CrossMerge is available as an open-source version, which is free to use. However
 
 CrossMerge was compiled using DataFlex version 2024 and requires a DataFlex 2024 Client Engine license to run. Alternatively, if you have a DataFlex Development license, you can compile it with DataFlex 20.0 or later.
 
+## Setup after cloning
+
+After cloning this repository, run **`setup.bat`** once from the repository root. It:
+
+- downloads / updates the library submodules under `Libraries\` (DigitalCert, DUF) to the versions this workspace expects;
+- configures this clone so a normal `git pull` keeps those libraries in sync automatically from then on.
+
+Re-run `setup.bat` any time the `Libraries\` folders look empty or out of date, or when a new submodule is added.
+
 ---
 
 DataFlex is a registered trademark of Data Access Corporation, Miami, FL, USA. Please note that DataFlex is not free software.
