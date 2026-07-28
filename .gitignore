@@ -1,5 +1,11 @@
 # Files to be ignored by git in a DataFlex workspace
 
+# Libraries are NOT stored in this repo. setup.bat provides them: on a machine
+# with the shared RDC library pool it makes Libraries\ a junction to it (one
+# shared, editable copy); otherwise it clones isolated copies inside. Either
+# way the folder is local-only, never committed. (Do not git clean -x it.)
+/Libraries/
+
 # AppHtml
 **/apphtml/global.asa
 

@@ -20,12 +20,21 @@ CrossMerge was compiled using DataFlex version 2024 and requires a DataFlex 2024
 
 ## Setup after cloning
 
-After cloning this repository, run **`setup.bat`** once from the repository root. It:
+The libraries this workspace uses (DFAbout, DigitalCert, DUF, RDCToolsLib, vwin32fh) are **not**
+stored in this repository (they are gitignored). Run **`setup.bat`** once from the repository root
+and it provides them, behaving differently by machine so one arrangement serves both maintainer and
+user:
 
-- downloads / updates the library submodules under `Libraries\` (DigitalCert, DUF) to the versions this workspace expects;
-- configures this clone so a normal `git pull` keeps those libraries in sync automatically from then on.
+- On a machine with the shared RDC library pool next door (a sibling `..\Libraries` carrying the
+  marker file `.rdc-library-pool`), it makes `Libraries\` a **junction** to that pool — one shared,
+  editable copy of every library.
+- Otherwise it **clones** the five libraries into this workspace's own `Libraries\` folder:
+  isolated, self-contained, and it never writes anywhere outside this workspace. (DUF comes from
+  the current `Library-DUF` repo; the old `DbUpdateFramework` repo is superseded by it.)
 
-Re-run `setup.bat` any time the `Libraries\` folders look empty or out of date, or when a new submodule is added.
+It also runs `skip-local-data.cmd` so your local `Data\` database changes stay on your machine.
+Either way `Libraries\` is local-only and never committed — re-run `setup.bat` any time it looks
+missing or out of date. (Because `Libraries\` may be a junction, do not run `git clean -x` here.)
 
 ---
 
