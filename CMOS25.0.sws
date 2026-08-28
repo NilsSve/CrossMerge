@@ -12,5 +12,4 @@ Project1=CMBuilder.src
 Lib1=Libraries\DFAbout\DFAbout25.0.sws
 Lib2=Libraries\RDCToolsLib\RDCToolsLibLibrary25.0.sws
 Lib3=Libraries\vwin32fh\StudioLibrary\vWin32fh-Library-DF25.0.sws
-Lib4=Libraries\DigitalCert\DigitalCert25.0.sws
-Lib5=Libraries\DUF\DUFLibrary25.0.sws
+Lib4=Libraries\DUF\DUFLibrary25.0.sws

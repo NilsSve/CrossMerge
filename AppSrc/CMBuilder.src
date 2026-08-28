@@ -15,22 +15,6 @@
 Use DFAllEnt.pkg
 Use cRDCCJCommandBarSystem.pkg
 
-Use cDigitalSoftwareCertificate.pkg
-Object oDigitalSoftwareCertificate is a cDigitalSoftwareCertificate
-    Move Self to ghoDigitalSoftwareCertificate
-
-    // Set pbWarnIfNotDigitallySigned = True if you like to have a warning when the
-    // program is started, but the program has not been digitally signed.
-    // Only applies when run outside the Studio.
-    Set pbWarnIfNotDigitallySigned to False
-
-    // This message does the actual checking for a valid digital certificate.
-    // If the program has been tampered with e.g. it has been infected by a virus,
-    // the user will get a warning and the program will be aborted.
-//    Send ValidateProgramOnStartup
-
-End_Object
-
 Object oHtmlHelp is a cHtmlHelp
     Set pbAlwaysOnTop to False
 End_Object
